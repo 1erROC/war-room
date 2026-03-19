@@ -1350,17 +1350,16 @@ function getBriefIdFromUrl() {
 }
 
 function buildShareUrl(briefId) {
-  const base = `${window.location.origin}/briefing/index.html`;
-  const url = new URL(base);
+  const url = new URL("./index.html", window.location.href);
 
   if (briefId) url.searchParams.set("b", briefId);
+  else url.searchParams.delete("b");
 
   return url.toString();
 }
 
 function syncUrlWithBriefId(briefId) {
-  const url = new URL(window.location.href);
-  url.pathname = "/briefing/index.html";
+  const url = new URL("./index.html", window.location.href);
 
   if (briefId) url.searchParams.set("b", briefId);
   else url.searchParams.delete("b");
