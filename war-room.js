@@ -1582,14 +1582,24 @@ async function pasteTokenFromClipboard() {
 function bindCoreFields() {
   Object.entries(fields).forEach(([key, f]) => {
     f.input.addEventListener("input", () => {
-      if (["start", "tot", "end", "timelineStart", "timelineEnd"].includes(key)) f.input.value = sanitizeTime(f.input.value);
-      if (key === "timelineZoom") f.input.value = sanitizeTimelineZoom(f.input.value);
-      if (key === "windDir" && f.input.value !== "") f.input.value = clamp(+f.input.value, 0, 360);
-      if (key === "windSpeed" && fields.windGust.input.value !== "" && +fields.windGust.input.value < +f.input.value) fields.windGust.input.value = f.input.value;
-      if (key === "windGust" && fields.windSpeed.input.value !== "" && +f.input.value < +fields.windSpeed.input.value) f.input.value = fields.windSpeed.input.value;
-      if ((key === "start" || key === "end") && !validTimelineTime(fields.timelineStart.input.value) && !validTimelineTime(fields.timelineEnd.input.value)) {
+      if (["start", "tot", "end", "timelineStart", "timelineEnd"].includes(key)) {
+        f.input.value = sanitizeTime(f.input.value);
+      }
+
+      if (key === "timelineZoom") {
+        f.input.value = sanitizeTimelineZoom(f.input.value);
+      }
+
+      if (key === "windDir" && f.input.value !== "") {
+        f.input.value = clamp(+f.input.value, 0, 360);
+      }
+
+      if ((key === "start" || key === "end") &&
+          !validTimelineTime(fields.timelineStart.input.value) &&
+          !validTimelineTime(fields.timelineEnd.input.value)) {
         ensureTimelineDefaultsFromOverview();
       }
+
       renderState();
     });
 
