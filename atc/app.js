@@ -88,7 +88,8 @@ function createPackage(data = {}) {
     color: data.color || randomColor(),
     alert: !!data.alert,
     zoneId: data.zoneId || "stby",
-    editing: false
+    editing: false,
+    collapsed: data.collapsed !== undefined ? !!data.collapsed : true
   };
 }
 
@@ -183,63 +184,71 @@ function renderBoardConfigInputs() {
 
 function packageCardHtml(pkg) {
   return `
-    <article class="package-card ${pkg.alert ? "is-alert" : ""} ${pkg.editing ? "is-editing" : ""}" draggable="true" data-package-id="${pkg.id}" style="--package-color:${esc(pkg.color)}">
+    <article class="package-card ${pkg.alert ? "is-alert" : ""} ${pkg.editing ? "is-editing" : ""} ${pkg.collapsed ? "is-collapsed" : ""}" draggable="true" data-package-id="${pkg.id}" style="--package-color:${esc(pkg.color)}">
       <div class="package-head">
         <div class="package-title-wrap">
           <h3 class="package-name">${esc(pkg.name)}</h3>
-          <div class="package-task">${esc(pkg.task)}</div>
         </div>
 
-        <label class="package-alert-toggle">
-          <input type="checkbox" data-alert-toggle="${pkg.id}" ${pkg.alert ? "checked" : ""} />
-          Alerte
-        </label>
-      </div>
+        <div class="package-head-actions">
+          <label class="alert-switch" title="Basculer ALERTE">
+            <input type="checkbox" data-alert-toggle="${pkg.id}" ${pkg.alert ? "checked" : ""} />
+            <span class="alert-slider"></span>
+          </label>
 
-      <div class="package-grid">
-        <div class="package-data">
-          <div class="package-data-label">Aircraft</div>
-          <div class="package-data-value">${esc(pkg.aircraft)}</div>
-        </div>
-        <div class="package-data">
-          <div class="package-data-label">Nombre</div>
-          <div class="package-data-value">${esc(pkg.count)}</div>
-        </div>
-        <div class="package-data">
-          <div class="package-data-label">Armement</div>
-          <div class="package-data-value">${esc(pkg.loadout)}</div>
-        </div>
-        <div class="package-data">
-          <div class="package-data-label">Fréquence</div>
-          <div class="package-data-value">${esc(pkg.freq)}</div>
-        </div>
-        <div class="package-data">
-          <div class="package-data-label">Statut</div>
-          <div class="package-data-value">${esc(pkg.status)}</div>
-        </div>
-        <div class="package-data">
-          <div class="package-data-label">Base</div>
-          <div class="package-data-value">${esc(pkg.base)}</div>
+          <button class="package-btn package-compact-btn" type="button" data-toggle-collapse="${pkg.id}">
+            ${pkg.collapsed ? "Ouvrir" : "Réduire"}
+          </button>
+
+          <button class="package-btn" type="button" data-edit-package="${pkg.id}">
+            ${pkg.editing ? "Fermer" : "Editer"}
+          </button>
         </div>
       </div>
 
-      <div class="package-footer">
-        <div class="package-status">${esc(pkg.status)}</div>
-        <div class="package-actions">
-          <button class="package-btn" type="button" data-edit-package="${pkg.id}">${pkg.editing ? "Fermer" : "Editer"}</button>
+      <div class="package-main-content">
+        <div class="package-grid">
+          <div class="package-data">
+            <div class="package-data-label">Aircraft</div>
+            <div class="package-data-value">${esc(pkg.aircraft)}</div>
+          </div>
+          <div class="package-data">
+            <div class="package-data-label">Nombre</div>
+            <div class="package-data-value">${esc(pkg.count)}</div>
+          </div>
+          <div class="package-data">
+            <div class="package-data-label">Armement</div>
+            <div class="package-data-value">${esc(pkg.loadout)}</div>
+          </div>
+          <div class="package-data">
+            <div class="package-data-label">Fréquence</div>
+            <div class="package-data-value">${esc(pkg.freq)}</div>
+          </div>
+          <div class="package-data">
+            <div class="package-data-label">Statut</div>
+            <div class="package-data-value">${esc(pkg.status)}</div>
+          </div>
+          <div class="package-data">
+            <div class="package-data-label">Base</div>
+            <div class="package-data-value">${esc(pkg.base)}</div>
+          </div>
         </div>
-      </div>
 
-      <div class="package-edit-panel">
-        <div class="package-edit-grid">
-          <input type="text" value="${esc(pkg.aircraft)}" data-package-field="${pkg.id}:aircraft" placeholder="Appareil" />
-          <input type="number" min="1" value="${esc(pkg.count)}" data-package-field="${pkg.id}:count" placeholder="Nombre" />
-          <input type="text" value="${esc(pkg.loadout)}" data-package-field="${pkg.id}:loadout" placeholder="Armement" />
-          <input type="text" value="${esc(pkg.freq)}" data-package-field="${pkg.id}:freq" placeholder="Fréquence" />
-          <select data-package-field="${pkg.id}:status">
-            ${STATUS_OPTIONS.map((status) => `<option value="${esc(status)}"${status === pkg.status ? " selected" : ""}>${esc(status)}</option>`).join("")}
-          </select>
-          <input type="text" value="${esc(pkg.destination)}" data-package-field="${pkg.id}:destination" placeholder="Destination" />
+        <div class="package-footer">
+          <div class="package-status">${esc(pkg.status)}</div>
+        </div>
+
+        <div class="package-edit-panel">
+          <div class="package-edit-grid">
+            <input type="text" value="${esc(pkg.aircraft)}" data-package-field="${pkg.id}:aircraft" placeholder="Appareil" />
+            <input type="number" min="1" value="${esc(pkg.count)}" data-package-field="${pkg.id}:count" placeholder="Nombre" />
+            <input type="text" value="${esc(pkg.loadout)}" data-package-field="${pkg.id}:loadout" placeholder="Armement" />
+            <input type="text" value="${esc(pkg.freq)}" data-package-field="${pkg.id}:freq" placeholder="Fréquence" />
+            <select data-package-field="${pkg.id}:status">
+              ${STATUS_OPTIONS.map((status) => `<option value="${esc(status)}"${status === pkg.status ? " selected" : ""}>${esc(status)}</option>`).join("")}
+            </select>
+            <input type="text" value="${esc(pkg.destination)}" data-package-field="${pkg.id}:destination" placeholder="Destination" />
+          </div>
         </div>
       </div>
     </article>
@@ -408,6 +417,17 @@ boardConfigGrid.addEventListener("input", (e) => {
 document.addEventListener("click", (e) => {
   const alertToggle = e.target.closest("[data-alert-toggle]");
   if (alertToggle) return;
+
+  const collapseBtn = e.target.closest("[data-toggle-collapse]");
+  if (collapseBtn) {
+    const pkg = state.packages.find((p) => p.id === collapseBtn.dataset.toggleCollapse);
+    if (!pkg) return;
+
+    pkg.collapsed = !pkg.collapsed;
+    addLog(`${pkg.name} ${pkg.collapsed ? "réduit" : "déployé"}`);
+    renderAll();
+    return;
+  }
 
   const editBtn = e.target.closest("[data-edit-package]");
   if (editBtn) {
