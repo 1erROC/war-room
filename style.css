@@ -1751,10 +1751,14 @@ body::before{
   .ato-editor-grid.three-col,
   .ato-editor-grid.five-col,
   .aco-editor-grid,
-  .timeline-editor-settings,
-  .token-publish-grid{
+  .timeline-editor-settings{
     grid-template-columns:1fr
   }
+
+  .token-publish-top{
+    grid-template-columns:1fr;
+  }
+
   .mode-panel-wrap{align-items:flex-start}
   .weather-graph,.aco-graph{min-height:520px}
   .ato-data-grid,
@@ -1770,7 +1774,6 @@ body::before{
   .aco-cards-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .timeline-list-grid{grid-template-columns:88px 82px 1fr}
   .timeline-list-text{grid-column:1 / -1}
-  .token-box-full{grid-column:auto}
 }
 
 @media (max-width:720px){
@@ -1802,7 +1805,7 @@ body::before{
   .aco-cards-grid,
   .weather-stats-grid,
   .aco-stats-grid,
-  .token-publish-grid{
+  .token-publish-top{
     grid-template-columns:1fr
   }
   .mode-actions{
