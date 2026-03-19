@@ -199,6 +199,46 @@ async function resolvePackagesFromBriefId(briefId) {
   return packages;
 }
 
+function getZoneLabel(zoneId) {
+  if (zoneId === "hangar") return "HANGAR";
+  return state.columns.find((c) => c.id === zoneId)?.title || "Colonne";
+}
+
+function movePackageToZone(pkg, targetZone, mode = "sélection") {
+  if (!pkg || !targetZone) return false;
+
+  const previousZone = pkg.zoneId;
+  if (previousZone === targetZone) return false;
+
+  pkg.zoneId = targetZone;
+
+  const fromLabel = getZoneLabel(previousZone);
+  const toLabel = getZoneLabel(targetZone);
+
+  addLog(`${pkg.name} déplacé de ${fromLabel} vers ${toLabel} (${mode})`);
+  return true;
+}
+
+function getZoneOptionsHtml(selectedZoneId) {
+  const options = [
+    { id: "hangar", label: "HANGAR" },
+    ...state.columns.map((col) => ({
+      id: col.id,
+      label: col.title || "Colonne"
+    }))
+  ];
+
+  return options
+    .map(
+      (zone) => `
+        <option value="${esc(zone.id)}"${zone.id === selectedZoneId ? " selected" : ""}>
+          ${esc(zone.label)}
+        </option>
+      `
+    )
+    .join("");
+}
+
 function renderBoardConfigInputs() {
   const count = Math.max(1, Math.min(8, +columnCountInput.value || 1));
 
@@ -253,10 +293,19 @@ function packageCardHtml(pkg) {
         </div>
 
         <div class="package-head-actions">
-          <label class="alert-switch" title="Basculer ALERTE">
-            <input type="checkbox" data-alert-toggle="${pkg.id}" ${pkg.alert ? "checked" : ""} />
-            <span class="alert-slider"></span>
-          </label>
+          <div class="package-head-zone">
+            <select class="package-zone-select" data-package-zone="${pkg.id}" title="Changer de zone">
+              ${getZoneOptionsHtml(pkg.zoneId)}
+            </select>
+          </div>
+
+          <div class="package-alert-wrap" title="Emergency">
+            <span class="package-alert-label">EMERG</span>
+            <label class="alert-switch">
+              <input type="checkbox" data-alert-toggle="${pkg.id}" ${pkg.alert ? "checked" : ""} />
+              <span class="alert-slider"></span>
+            </label>
+          </div>
 
           <button class="package-btn package-compact-btn" type="button" data-toggle-collapse="${pkg.id}">
             ${pkg.collapsed ? "Ouvrir" : "Réduire"}
@@ -318,6 +367,7 @@ function packageCardHtml(pkg) {
 
         <div class="package-footer">
           <div class="package-status">${esc(pkg.status)}</div>
+          <div class="package-zone-badge">${esc(getZoneLabel(pkg.zoneId))}</div>
         </div>
 
         <div class="package-edit-panel">
@@ -376,7 +426,11 @@ function renderBoard() {
             <div class="board-column-freq">${esc(col.freq || "--")}</div>
           </div>
           <div class="board-column-drop dropzone" data-zone-id="${col.id}">
-            ${packages.length ? packages.map(packageCardHtml).join("") : `<div class="empty-state">Aucun package dans cette colonne.</div>`}
+            ${
+              packages.length
+                ? packages.map(packageCardHtml).join("")
+                : `<div class="empty-state">Aucun package dans cette colonne.</div>`
+            }
           </div>
         </section>
       `;
@@ -447,24 +501,10 @@ function bindDragAndDrop() {
       const pkg = state.packages.find((p) => p.id === draggedPackageId);
       if (!pkg) return;
 
-      const previousZone = pkg.zoneId;
       const targetZone = zone.dataset.zoneId;
+      const moved = movePackageToZone(pkg, targetZone, "glisser-déposer");
 
-      if (!targetZone || previousZone === targetZone) return;
-
-      pkg.zoneId = targetZone;
-
-      const fromLabel =
-        previousZone === "hangar"
-          ? "HANGAR"
-          : state.columns.find((c) => c.id === previousZone)?.title || "Colonne";
-
-      const toLabel =
-        targetZone === "hangar"
-          ? "HANGAR"
-          : state.columns.find((c) => c.id === targetZone)?.title || "Colonne";
-
-      addLog(`${pkg.name} déplacé de ${fromLabel} vers ${toLabel}`);
+      if (!moved) return;
       renderAll();
     });
   });
@@ -562,11 +602,15 @@ boardConfigGrid.addEventListener("input", (e) => {
   if (!col) return;
 
   col[field] = t.value;
+  renderAll();
 });
 
 document.addEventListener("click", (e) => {
   const alertToggle = e.target.closest("[data-alert-toggle]");
   if (alertToggle) return;
+
+  const zoneSelect = e.target.closest("[data-package-zone]");
+  if (zoneSelect) return;
 
   const collapseBtn = e.target.closest("[data-toggle-collapse]");
   if (collapseBtn) {
@@ -599,6 +643,22 @@ document.addEventListener("change", (e) => {
 
     pkg.alert = !!t.checked;
     addLog(`${pkg.name} ${pkg.alert ? "passé en ALERTE" : "retiré de l'ALERTE"}`);
+    renderAll();
+    return;
+  }
+
+  if (t.dataset.packageZone) {
+    const pkg = state.packages.find((p) => p.id === t.dataset.packageZone);
+    if (!pkg) return;
+
+    const targetZone = t.value;
+    const moved = movePackageToZone(pkg, targetZone, "sélecteur");
+
+    if (!moved) {
+      renderAll();
+      return;
+    }
+
     renderAll();
     return;
   }
