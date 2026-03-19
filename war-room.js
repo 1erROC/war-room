@@ -1,5 +1,5 @@
-const BASE_URL = "https://1erroc.github.io/war-room/";
-const BRIEFINGS_JSON_URL = `${BASE_URL}briefings.json`;
+const BASE_URL = new URL("./", window.location.href).href;
+const BRIEFINGS_JSON_URL = new URL("./briefings.json", window.location.href).href;
 
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v ?? "")
@@ -1316,9 +1316,24 @@ function randomShortToken() {
 }
 
 async function fetchBriefingsIndex() {
-  const res = await fetch(BRIEFINGS_JSON_URL, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Impossible de charger briefings.json (${res.status})`);
-  return res.json();
+  const res = await fetch(BRIEFINGS_JSON_URL, {
+    cache: "no-store",
+    headers: {
+      "Accept": "application/json"
+    }
+  });
+
+  if (!res.ok) {
+    throw new Error(`Impossible de charger briefings.json (${res.status})`);
+  }
+
+  const data = await res.json();
+
+  if (!data || typeof data !== "object" || typeof data.briefings !== "object") {
+    throw new Error("briefings.json invalide");
+  }
+
+  return data;
 }
 
 async function getPublishedBriefIds() {
@@ -1355,7 +1370,10 @@ function getBriefIdFromUrl() {
 }
 
 function buildShareUrl(briefId) {
-  return briefId ? `${BASE_URL}?b=${briefId}` : BASE_URL;
+  const url = new URL(window.location.href);
+  url.searchParams.delete("b");
+  if (briefId) url.searchParams.set("b", briefId);
+  return url.toString();
 }
 
 function syncUrlWithBriefId(briefId) {
@@ -1895,22 +1913,39 @@ bindCoreFields();
 bindEditors();
 
 async function boot() {
-  try {
-    const briefIdFromUrl = getBriefIdFromUrl();
+  const briefIdFromUrl = getBriefIdFromUrl();
 
-    if (briefIdFromUrl) {
+  if (briefIdFromUrl) {
+    try {
       currentBriefId = briefIdFromUrl;
       const longToken = await resolveLongTokenFromBriefId(briefIdFromUrl);
       const decoded = decodeToken(longToken);
-      applyState(decoded || getEmptyState());
+
+      if (!decoded) {
+        throw new Error("Token long invalide dans briefings.json");
+      }
+
+      applyState(decoded);
       syncUrlWithBriefId(currentBriefId);
       setMode("briefing");
       return;
-    }
+    } catch (err) {
+      console.error("Erreur de chargement du brief via petit token :", err);
 
+      currentBriefId = briefIdFromUrl;
+      applyState(getEmptyState());
+      syncUrlWithBriefId(currentBriefId);
+      setMode("edit");
+      return;
+    }
+  }
+
+  try {
     await createNewBrief();
     setMode("briefing");
-  } catch {
+  } catch (err) {
+    console.error("Erreur de création d'un nouveau brief :", err);
+
     currentBriefId = randomShortToken();
     applyState(getEmptyState());
     syncUrlWithBriefId(currentBriefId);
