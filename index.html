@@ -104,17 +104,27 @@
         </article>
 
         <article class="card package-card">
-          <div class="card-header"><h2 class="card-title">Package</h2></div>
-          <div class="card-body"><div class="package-grid" id="packagesView"></div></div>
+          <div class="card-header">
+            <h2 class="card-title">Package</h2>
+          </div>
+          <div class="card-body">
+            <div class="package-grid" id="packagesView"></div>
+          </div>
         </article>
 
         <article class="card ato-card-shell">
-          <div class="card-header"><h2 class="card-title">Air Tasking Order</h2></div>
-          <div class="card-body"><div class="ato-grid" id="atoView"></div></div>
+          <div class="card-header">
+            <h2 class="card-title">Air Tasking Order</h2>
+          </div>
+          <div class="card-body">
+            <div class="ato-grid" id="atoView"></div>
+          </div>
         </article>
 
         <article class="card aco-card-shell">
-          <div class="card-header"><h2 class="card-title">Airspace Control Order</h2></div>
+          <div class="card-header">
+            <h2 class="card-title">Airspace Control Order</h2>
+          </div>
           <div class="card-body">
             <div class="aco-layout aco-layout-stacked">
               <div class="aco-graph-card aco-graph-card-full">
@@ -160,7 +170,9 @@
 
       <section class="layout-stack editor-panel">
         <article class="card">
-          <div class="card-header"><h2 class="card-title">Overview</h2></div>
+          <div class="card-header">
+            <h2 class="card-title">Overview</h2>
+          </div>
           <div class="card-body">
             <div class="overview-grid">
               <div class="mini-card"><div class="mini-label">Nom de l'opération</div><input id="opNameInput" type="text" /></div>
@@ -183,7 +195,9 @@
         </article>
 
         <article class="card">
-          <div class="card-header"><h2 class="card-title">Weather</h2></div>
+          <div class="card-header">
+            <h2 class="card-title">Weather</h2>
+          </div>
           <div class="card-body">
             <div class="weather-editor-grid">
               <div class="mini-card"><div class="mini-label">Température °C</div><input id="tempInput" type="number" placeholder="15" /></div>
@@ -229,7 +243,9 @@
             <h2 class="card-title">Package</h2>
             <button id="addPackageBtn" class="action-btn" type="button">Ajouter package</button>
           </div>
-          <div class="card-body"><div class="package-editor-stack" id="packagesEditor"></div></div>
+          <div class="card-body">
+            <div class="package-editor-stack" id="packagesEditor"></div>
+          </div>
         </article>
 
         <article class="card">
@@ -237,7 +253,9 @@
             <h2 class="card-title">Air Tasking Order</h2>
             <button id="loadAtoBtn" class="action-btn" type="button">Load Air Tasking Order</button>
           </div>
-          <div class="card-body"><div class="ato-editor-stack" id="atoEditor"></div></div>
+          <div class="card-body">
+            <div class="ato-editor-stack" id="atoEditor"></div>
+          </div>
         </article>
 
         <article class="card">
@@ -245,7 +263,9 @@
             <h2 class="card-title">Airspace Control Order</h2>
             <button id="loadAcoBtn" class="action-btn" type="button">Load Airspace Control Order</button>
           </div>
-          <div class="card-body"><div class="aco-editor-stack" id="acoEditor"></div></div>
+          <div class="card-body">
+            <div class="aco-editor-stack" id="acoEditor"></div>
+          </div>
         </article>
 
         <article class="card">
@@ -281,18 +301,24 @@
 
       <section class="token-strip">
         <article class="card token-card">
-          <div class="card-header">
+          <div class="card-header card-header-split">
             <h2 class="card-title">Publication</h2>
+            <button id="publishBriefBtn" class="action-btn" type="button">Publier</button>
           </div>
           <div class="card-body">
             <div class="token-publish-grid">
               <div class="token-box">
-                <strong>Brief ID :</strong>
+                <strong>Brief ID</strong>
                 <span id="shortTokenPreview">--</span>
               </div>
 
               <div class="token-box">
-                <strong>Token long :</strong>
+                <strong>Fichier à déposer dans /briefs/</strong>
+                <span id="briefFilePreview">--.json</span>
+              </div>
+
+              <div class="token-box token-box-full">
+                <strong>Token</strong>
                 <span id="longTokenPreview">--</span>
               </div>
             </div>
