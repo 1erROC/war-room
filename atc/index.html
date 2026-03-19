@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WAR ROOM · ATC</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <header class="topbar">
+      <div class="title-wrap">
+        <p class="subtitle">Mission Planning Interface</p>
+        <h1 class="title">WAR ROOM · ATC</h1>
+      </div>
+
+      <div class="topbar-actions">
+        <a class="action-btn" href="../index.html">Menu</a>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="layout-stack">
+        <article class="card">
+          <div class="card-header card-header-split">
+            <h2 class="card-title">Chargement Briefing</h2>
+            <button id="loadBriefBtn" class="action-btn" type="button">Charger packages</button>
+          </div>
+
+          <div class="card-body">
+            <div class="toolbar-grid">
+              <div class="mini-card">
+                <div class="mini-label">Brief ID</div>
+                <input id="briefIdInput" type="text" maxlength="12" placeholder="AB12CD34EF56" />
+              </div>
+
+              <div class="mini-card">
+                <div class="mini-label">Statut</div>
+                <div class="mini-value" id="briefLoadStatus">Aucun brief chargé</div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header card-header-split">
+            <h2 class="card-title">Création package</h2>
+            <button id="createPackageBtn" class="action-btn" type="button">Créer package</button>
+          </div>
+
+          <div class="card-body">
+            <div class="toolbar-grid toolbar-grid-three">
+              <div class="mini-card">
+                <div class="mini-label">Nom</div>
+                <input id="newPkgName" type="text" placeholder="JOKER" />
+              </div>
+              <div class="mini-card">
+                <div class="mini-label">Task</div>
+                <input id="newPkgTask" type="text" placeholder="CAP / STRIKE / CAS" />
+              </div>
+              <div class="mini-card">
+                <div class="mini-label">Aircraft</div>
+                <input id="newPkgAircraft" type="text" placeholder="F/A-18C" />
+              </div>
+              <div class="mini-card">
+                <div class="mini-label">Nombre</div>
+                <input id="newPkgCount" type="number" min="1" placeholder="2" />
+              </div>
+              <div class="mini-card">
+                <div class="mini-label">Armement</div>
+                <input id="newPkgLoadout" type="text" placeholder="AIM-120 / GBU-38 / TGP" />
+              </div>
+              <div class="mini-card">
+                <div class="mini-label">Fréquence</div>
+                <input id="newPkgFreq" type="text" placeholder="305.000" />
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header card-header-split">
+            <h2 class="card-title">Configuration tableau ATC</h2>
+            <button id="applyBoardConfigBtn" class="action-btn" type="button">Appliquer</button>
+          </div>
+
+          <div class="card-body">
+            <div class="board-config-head">
+              <div class="mini-card">
+                <div class="mini-label">Colonnes</div>
+                <input id="columnCountInput" type="number" min="1" max="8" value="4" />
+              </div>
+            </div>
+
+            <div class="board-config-grid" id="boardConfigGrid"></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title">STBY</h2>
+          </div>
+          <div class="card-body">
+            <div class="stby-zone dropzone" id="stbyZone" data-zone-id="stby"></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title">Tableau ATC</h2>
+          </div>
+          <div class="card-body">
+            <div class="board-grid" id="boardGrid"></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title">Journal des actions</h2>
+          </div>
+          <div class="card-body">
+            <div class="log-list" id="logList"></div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
