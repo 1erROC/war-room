@@ -1,5 +1,4 @@
-const BASE_URL = new URL("./", window.location.href).href;
-const BRIEFINGS_JSON_URL = new URL("./briefings.json", window.location.href).href;
+const BRIEFS_DIR = "./briefs/";
 
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v ?? "")
@@ -16,8 +15,10 @@ const newBriefBtn = $("newBriefBtn");
 const copyUrlBtn = $("copyUrlBtn");
 const copyTokenBtn = $("copyTokenBtn");
 const pasteTokenBtn = $("pasteTokenBtn");
+const publishBriefBtn = $("publishBriefBtn");
 const shortTokenPreview = $("shortTokenPreview");
 const longTokenPreview = $("longTokenPreview");
+const briefFilePreview = $("briefFilePreview");
 const addPackageBtn = $("addPackageBtn");
 const loadAtoBtn = $("loadAtoBtn");
 const loadAcoBtn = $("loadAcoBtn");
@@ -111,7 +112,6 @@ const SHORT_TOKEN_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 let currentMode = "briefing";
 let packageState = [];
 let currentBriefId = "";
-let publishedBriefIdsCache = null;
 
 const clamp = (v, min, max) => Math.min(Math.max(v, min), max);
 const nOrEmpty = (v) => (v === "" || v == null ? "" : (Number.isFinite(+v) ? +v : ""));
@@ -1315,47 +1315,26 @@ function randomShortToken() {
   return out;
 }
 
-async function fetchBriefingsIndex() {
-  const res = await fetch(BRIEFINGS_JSON_URL, {
-    cache: "no-store",
-    headers: {
-      "Accept": "application/json"
-    }
-  });
-
-  if (!res.ok) {
-    throw new Error(`Impossible de charger briefings.json (${res.status})`);
-  }
-
-  const data = await res.json();
-
-  if (!data || typeof data !== "object" || typeof data.briefings !== "object") {
-    throw new Error("briefings.json invalide");
-  }
-
-  return data;
-}
-
-async function getPublishedBriefIds() {
-  if (publishedBriefIdsCache) return publishedBriefIdsCache;
+async function briefFileExists(briefId) {
+  const cleanId = sanitizeShortToken(briefId);
+  if (!cleanId || cleanId.length !== SHORT_TOKEN_LENGTH) return false;
 
   try {
-    const data = await fetchBriefingsIndex();
-    const source = data?.briefings && typeof data.briefings === "object" ? data.briefings : {};
-    publishedBriefIdsCache = new Set(Object.keys(source).map(sanitizeShortToken).filter(Boolean));
-    return publishedBriefIdsCache;
+    const res = await fetch(`${BRIEFS_DIR}${cleanId}.json?ts=${Date.now()}`, {
+      method: "GET",
+      cache: "no-store"
+    });
+    return res.ok;
   } catch {
-    publishedBriefIdsCache = new Set();
-    return publishedBriefIdsCache;
+    return false;
   }
 }
 
 async function generateUniqueBriefId() {
-  const existing = await getPublishedBriefIds();
-
   for (let i = 0; i < 200; i++) {
     const candidate = randomShortToken();
-    if (!existing.has(candidate) && candidate !== currentBriefId) {
+    const exists = await briefFileExists(candidate);
+    if (!exists && candidate !== currentBriefId) {
       return candidate;
     }
   }
@@ -1371,7 +1350,8 @@ function getBriefIdFromUrl() {
 
 function buildShareUrl(briefId) {
   const url = new URL(window.location.href);
-  url.searchParams.delete("b");
+  url.hash = "";
+  url.search = "";
   if (briefId) url.searchParams.set("b", briefId);
   return url.toString();
 }
@@ -1385,13 +1365,25 @@ function syncUrlWithBriefId(briefId) {
 
 async function resolveLongTokenFromBriefId(briefId) {
   const cleanId = sanitizeShortToken(briefId);
-  if (!cleanId || cleanId.length !== SHORT_TOKEN_LENGTH) throw new Error("Brief ID invalide");
+  if (!cleanId || cleanId.length !== SHORT_TOKEN_LENGTH) {
+    throw new Error("Brief ID invalide");
+  }
 
-  const data = await fetchBriefingsIndex();
-  const entry = data?.briefings?.[cleanId];
-  const token = entry?.token || entry?.t || "";
+  const res = await fetch(`${BRIEFS_DIR}${cleanId}.json?ts=${Date.now()}`, {
+    cache: "no-store"
+  });
 
-  if (!token) throw new Error("Brief introuvable dans le JSON");
+  if (!res.ok) {
+    throw new Error(`Brief introuvable (${res.status})`);
+  }
+
+  const data = await res.json();
+  const token = String(data?.token || "").trim();
+
+  if (!token) {
+    throw new Error("Token absent dans le fichier brief");
+  }
+
   return token;
 }
 
@@ -1580,6 +1572,7 @@ function updatePublicationUi() {
   const longToken = encodeToken(getState());
   shortTokenPreview.textContent = currentBriefId || "--";
   longTokenPreview.textContent = longToken || "--";
+  briefFilePreview.textContent = currentBriefId ? `${currentBriefId}.json` : "--.json";
 }
 
 async function pasteTokenFromClipboard() {
@@ -1590,11 +1583,45 @@ async function pasteTokenFromClipboard() {
     const decoded = decodeToken(raw);
     if (!decoded) return flash(pasteTokenBtn, "Token invalide", "error");
 
+    if (!currentBriefId) {
+      currentBriefId = await generateUniqueBriefId();
+      syncUrlWithBriefId(currentBriefId);
+    }
+
     applyState(decoded);
+    setMode("edit");
     flash(pasteTokenBtn, "Brief chargé", "success");
   } catch {
     flash(pasteTokenBtn, "Accès refusé", "error");
   }
+}
+
+function downloadTextFile(filename, content, mime = "application/json;charset=utf-8") {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function publishCurrentBrief() {
+  const token = encodeToken(getState());
+  if (!currentBriefId || currentBriefId.length !== SHORT_TOKEN_LENGTH) {
+    flash(publishBriefBtn, "Brief ID invalide", "error");
+    return;
+  }
+  if (!token) {
+    flash(publishBriefBtn, "Token vide", "error");
+    return;
+  }
+
+  const payload = JSON.stringify({ token }, null, 2);
+  downloadTextFile(`${currentBriefId}.json`, payload);
+  flash(publishBriefBtn, "Fichier généré", "success");
 }
 
 function bindCoreFields() {
@@ -1881,6 +1908,7 @@ newBriefBtn?.addEventListener("click", async () => {
 copyUrlBtn.addEventListener("click", copyCurrentUrl);
 copyTokenBtn.addEventListener("click", copyCurrentLongToken);
 pasteTokenBtn.addEventListener("click", pasteTokenFromClipboard);
+publishBriefBtn?.addEventListener("click", publishCurrentBrief);
 
 addPackageBtn?.addEventListener("click", () => {
   packageState.push(createDefaultPackage());
@@ -1916,13 +1944,14 @@ async function boot() {
   const briefIdFromUrl = getBriefIdFromUrl();
 
   if (briefIdFromUrl) {
+    currentBriefId = briefIdFromUrl;
+
     try {
-      currentBriefId = briefIdFromUrl;
       const longToken = await resolveLongTokenFromBriefId(briefIdFromUrl);
       const decoded = decodeToken(longToken);
 
       if (!decoded) {
-        throw new Error("Token long invalide dans briefings.json");
+        throw new Error("Token long invalide");
       }
 
       applyState(decoded);
@@ -1930,9 +1959,7 @@ async function boot() {
       setMode("briefing");
       return;
     } catch (err) {
-      console.error("Erreur de chargement du brief via petit token :", err);
-
-      currentBriefId = briefIdFromUrl;
+      console.error("Erreur chargement brief publié :", err);
       applyState(getEmptyState());
       syncUrlWithBriefId(currentBriefId);
       setMode("edit");
@@ -1944,8 +1971,7 @@ async function boot() {
     await createNewBrief();
     setMode("briefing");
   } catch (err) {
-    console.error("Erreur de création d'un nouveau brief :", err);
-
+    console.error("Erreur createNewBrief :", err);
     currentBriefId = randomShortToken();
     applyState(getEmptyState());
     syncUrlWithBriefId(currentBriefId);
