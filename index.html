@@ -305,21 +305,26 @@
             <h2 class="card-title">Publication</h2>
             <button id="publishBriefBtn" class="action-btn" type="button">Publier</button>
           </div>
+      
           <div class="card-body">
-            <div class="token-publish-grid">
-              <div class="token-box">
-                <strong>Brief ID</strong>
-                <span id="shortTokenPreview">--</span>
+            <div class="token-publish-layout">
+              <div class="token-publish-top">
+                <div class="token-box">
+                  <strong>Brief ID</strong>
+                  <span id="shortTokenPreview">--</span>
+                </div>
+      
+                <div class="token-box">
+                  <strong>Fichier à déposer dans /briefs/</strong>
+                  <span id="briefFilePreview">--.json</span>
+                </div>
               </div>
-
-              <div class="token-box">
-                <strong>Fichier à déposer dans /briefs/</strong>
-                <span id="briefFilePreview">--.json</span>
-              </div>
-
-              <div class="token-box token-box-full">
-                <strong>Token</strong>
-                <span id="longTokenPreview">--</span>
+      
+              <div class="token-publish-bottom">
+                <div class="token-box token-box-token">
+                  <strong>Token</strong>
+                  <span id="longTokenPreview">--</span>
+                </div>
               </div>
             </div>
           </div>
