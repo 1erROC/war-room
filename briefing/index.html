@@ -1,1 +1,339 @@
---
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WAR ROOM</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="app-shell mode-briefing" id="appShell">
+    <header class="topbar">
+      <div class="title-wrap">
+        <p class="subtitle">Mission Planning Interface</p>
+        <h1 class="title">WAR ROOM</h1>
+      </div>
+
+      <div class="mode-panel-wrap">
+        <div class="mode-panel">
+          <div class="mode-text">
+            <span class="mode-label">Mode actif</span>
+            <span class="mode-value" id="modeValue">Briefing</span>
+          </div>
+
+          <button
+            id="modeSwitch"
+            class="switch"
+            type="button"
+            aria-label="Basculer entre le mode briefing et le mode édition"
+            aria-pressed="false"
+          ></button>
+
+          <div class="mode-actions">
+            <button id="newBriefBtn" class="action-btn" type="button">Nouveau</button>
+            <button id="copyUrlBtn" class="action-btn" type="button">Copier URL</button>
+            <button id="copyTokenBtn" class="action-btn" type="button">Copier Token</button>
+            <button id="pasteTokenBtn" class="action-btn" type="button">Coller Token</button>
+            <a href="../index.html" class="action-btn">Menu</a>
+          </div>
+        </div>
+        <div class="mode-credit">By [1eROC] Seluj</div>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="layout-stack">
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title">Overview</h2>
+          </div>
+          <div class="card-body">
+            <div class="overview-grid">
+              <div class="mini-card"><div class="mini-label">Nom de l'opération</div><div class="mini-value" id="opNameView">--</div></div>
+              <div class="mini-card"><div class="mini-label">Carte</div><div class="mini-value" id="mapView">--</div></div>
+              <div class="mini-card"><div class="mini-label">Date In-game</div><div class="mini-value" id="dateGameView">--/--/----</div></div>
+              <div class="mini-card"><div class="mini-label">Date IRL</div><div class="mini-value" id="dateIrlView">--/--/----</div></div>
+              <div class="mini-card"><div class="mini-label">Heure début</div><div class="mini-value" id="startView">--:--L</div></div>
+              <div class="mini-card"><div class="mini-label">TOT</div><div class="mini-value" id="totView">--:--L</div></div>
+              <div class="mini-card"><div class="mini-label">Heure de fin</div><div class="mini-value" id="endView">--:--L</div></div>
+              <div class="mini-card"><div class="mini-label">Statut</div><div class="mini-value" id="statusView">Draft</div></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card weather-card">
+          <div class="card-header">
+            <h2 class="card-title">Weather</h2>
+          </div>
+          <div class="card-body weather-card-body">
+            <div class="weather-layout">
+              <div class="weather-graph-card">
+                <div class="weather-graph-wrap">
+                  <div class="wind-badge">
+                    <div class="wind-arrow-wrap"><div class="wind-arrow" id="windArrowView">↑</div></div>
+                    <div class="wind-data">
+                      <div class="wind-main"><span id="windDirView">000</span>° / <span id="windSpeedView">00</span> kts</div>
+                      <div class="wind-gust">Gust <span id="windGustView">00</span> kts</div>
+                      <div class="wind-sub">Origine du vent</div>
+                    </div>
+                  </div>
+
+                  <div class="weather-graph">
+                    <div class="altitude-axis" id="altitudeAxis"></div>
+                    <div class="cloud-layer few" id="cloudLayer1"></div>
+                    <div class="cloud-layer sct" id="cloudLayer2"></div>
+                    <div class="cloud-layer bkn" id="cloudLayer3"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="weather-stats-grid">
+                <div class="mini-card"><div class="mini-label">Température</div><div class="mini-value"><span id="tempView">--</span>°C</div></div>
+                <div class="mini-card">
+                  <div class="mini-label">QNH</div>
+                  <div class="mini-value qnh-stack">
+                    <span><span id="qnhInHgView">29.92</span> inHg</span>
+                    <span class="mini-subvalue"><span id="qnhHpaView">1013</span> hPa</span>
+                  </div>
+                </div>
+                <div class="mini-card"><div class="mini-label">Couche 1</div><div class="mini-value weather-layer-read" id="layer1Summary">--</div></div>
+                <div class="mini-card"><div class="mini-label">Couche 2</div><div class="mini-value weather-layer-read" id="layer2Summary">--</div></div>
+                <div class="mini-card"><div class="mini-label">Couche 3</div><div class="mini-value weather-layer-read" id="layer3Summary">--</div></div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card package-card">
+          <div class="card-header">
+            <h2 class="card-title">Package</h2>
+          </div>
+          <div class="card-body">
+            <div class="package-grid" id="packagesView"></div>
+          </div>
+        </article>
+
+        <article class="card ato-card-shell">
+          <div class="card-header">
+            <h2 class="card-title">Air Tasking Order</h2>
+          </div>
+          <div class="card-body">
+            <div class="ato-grid" id="atoView"></div>
+          </div>
+        </article>
+
+        <article class="card aco-card-shell">
+          <div class="card-header">
+            <h2 class="card-title">Airspace Control Order</h2>
+          </div>
+          <div class="card-body">
+            <div class="aco-layout aco-layout-stacked">
+              <div class="aco-graph-card aco-graph-card-full">
+                <div class="aco-graph-wrap">
+                  <div class="aco-graph">
+                    <div class="altitude-axis" id="acoAltitudeAxis"></div>
+                    <div class="aco-lanes" id="acoLanes"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="aco-cards-grid" id="acoCardsView"></div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card timeline-card-shell">
+          <div class="card-header">
+            <h2 class="card-title">Timeline</h2>
+          </div>
+          <div class="card-body">
+            <div class="timeline-view-stack">
+              <div class="timeline-view-topbar">
+                <div class="timeline-view-title-wrap">
+                  <div class="timeline-view-subtitle" id="timelineViewWindow">Fenêtre : --:--L → --:--L</div>
+                  <div class="timeline-view-ref" id="timelineRefView">Référence : aucune</div>
+                </div>
+              </div>
+
+              <div class="timeline-shell" id="timelineShell">
+                <div class="timeline-canvas" id="timelineCanvas"></div>
+              </div>
+
+              <div class="timeline-list-card">
+                <div class="timeline-list-header">
+                  <h3 class="timeline-list-title">Chronologie</h3>
+                </div>
+                <div class="timeline-list" id="timelineListView"></div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="layout-stack editor-panel">
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title">Overview</h2>
+          </div>
+          <div class="card-body">
+            <div class="overview-grid">
+              <div class="mini-card"><div class="mini-label">Nom de l'opération</div><input id="opNameInput" type="text" /></div>
+              <div class="mini-card"><div class="mini-label">Carte</div><input id="mapInput" type="text" /></div>
+              <div class="mini-card"><div class="mini-label">Date In-game</div><input id="dateGameInput" type="date" /></div>
+              <div class="mini-card"><div class="mini-label">Date IRL</div><input id="dateIrlInput" type="date" /></div>
+              <div class="mini-card"><div class="mini-label">Heure début</div><input id="startInput" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /></div>
+              <div class="mini-card"><div class="mini-label">TOT</div><input id="totInput" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /></div>
+              <div class="mini-card"><div class="mini-label">Heure de fin</div><input id="endInput" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /></div>
+              <div class="mini-card">
+                <div class="mini-label">Statut</div>
+                <select id="statusInput">
+                  <option value="Draft">Draft</option>
+                  <option value="Ready">Ready</option>
+                  <option value="Review">Review</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title">Weather</h2>
+          </div>
+          <div class="card-body">
+            <div class="weather-editor-grid">
+              <div class="mini-card"><div class="mini-label">Température °C</div><input id="tempInput" type="number" placeholder="15" /></div>
+              <div class="mini-card"><div class="mini-label">QNH inHg</div><input id="qnhInput" type="number" step="0.01" placeholder="29.92" /></div>
+              <div class="mini-card"><div class="mini-label">Vent origine °</div><input id="windDirInput" type="number" min="0" max="360" placeholder="270" /></div>
+              <div class="mini-card"><div class="mini-label">Vent kts</div><input id="windSpeedInput" type="number" min="0" placeholder="12" /></div>
+              <div class="mini-card"><div class="mini-label">Rafales kts</div><input id="windGustInput" type="number" min="0" placeholder="18" /></div>
+            </div>
+
+            <div class="weather-layers-editor">
+              <div class="weather-layer-block">
+                <div class="weather-layer-title">Couche 1</div>
+                <div class="weather-layer-grid">
+                  <div class="mini-card"><div class="mini-label">Type</div><select id="layer1TypeInput"><option value="">--</option><option value="FEW">FEW</option><option value="SCT">SCT</option><option value="BKN">BKN</option><option value="OVC">OVC</option></select></div>
+                  <div class="mini-card"><div class="mini-label">Plancher ft</div><input id="layer1BaseInput" type="number" min="0" step="100" placeholder="3000" /></div>
+                  <div class="mini-card"><div class="mini-label">Plafond ft</div><input id="layer1TopInput" type="number" min="0" step="100" placeholder="5000" /></div>
+                </div>
+              </div>
+
+              <div class="weather-layer-block">
+                <div class="weather-layer-title">Couche 2</div>
+                <div class="weather-layer-grid">
+                  <div class="mini-card"><div class="mini-label">Type</div><select id="layer2TypeInput"><option value="">--</option><option value="FEW">FEW</option><option value="SCT">SCT</option><option value="BKN">BKN</option><option value="OVC">OVC</option></select></div>
+                  <div class="mini-card"><div class="mini-label">Plancher ft</div><input id="layer2BaseInput" type="number" min="0" step="100" placeholder="8000" /></div>
+                  <div class="mini-card"><div class="mini-label">Plafond ft</div><input id="layer2TopInput" type="number" min="0" step="100" placeholder="15000" /></div>
+                </div>
+              </div>
+
+              <div class="weather-layer-block">
+                <div class="weather-layer-title">Couche 3</div>
+                <div class="weather-layer-grid">
+                  <div class="mini-card"><div class="mini-label">Type</div><select id="layer3TypeInput"><option value="">--</option><option value="FEW">FEW</option><option value="SCT">SCT</option><option value="BKN">BKN</option><option value="OVC">OVC</option></select></div>
+                  <div class="mini-card"><div class="mini-label">Plancher ft</div><input id="layer3BaseInput" type="number" min="0" step="100" placeholder="17000" /></div>
+                  <div class="mini-card"><div class="mini-label">Plafond ft</div><input id="layer3TopInput" type="number" min="0" step="100" placeholder="19000" /></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header card-header-split">
+            <h2 class="card-title">Package</h2>
+            <button id="addPackageBtn" class="action-btn" type="button">Ajouter package</button>
+          </div>
+          <div class="card-body">
+            <div class="package-editor-stack" id="packagesEditor"></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header card-header-split">
+            <h2 class="card-title">Air Tasking Order</h2>
+            <button id="loadAtoBtn" class="action-btn" type="button">Load Air Tasking Order</button>
+          </div>
+          <div class="card-body">
+            <div class="ato-editor-stack" id="atoEditor"></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header card-header-split">
+            <h2 class="card-title">Airspace Control Order</h2>
+            <button id="loadAcoBtn" class="action-btn" type="button">Load Airspace Control Order</button>
+          </div>
+          <div class="card-body">
+            <div class="aco-editor-stack" id="acoEditor"></div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-header">
+            <h2 class="card-title">Timeline</h2>
+          </div>
+          <div class="card-body">
+            <div class="timeline-editor-stack">
+              <div class="timeline-editor-settings">
+                <div class="mini-card">
+                  <div class="mini-label">Heure début frise</div>
+                  <input id="timelineStartInput" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" />
+                </div>
+                <div class="mini-card">
+                  <div class="mini-label">Heure fin frise</div>
+                  <input id="timelineEndInput" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" />
+                </div>
+                <div class="mini-card">
+                  <div class="mini-label">Zoom %</div>
+                  <input id="timelineZoomInput" type="number" min="60" max="220" step="10" placeholder="100" />
+                </div>
+              </div>
+
+              <div class="timeline-editor-help">
+                Les packages sont récupérés automatiquement depuis la section <strong>Package</strong>. Ici tu ne renseignes que les actions, leur horaire, et l’action de référence <strong>T-0</strong>.
+              </div>
+
+              <div class="timeline-editor-packages" id="timelineEditor"></div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section class="token-strip">
+        <article class="card token-card">
+          <div class="card-header card-header-split">
+            <h2 class="card-title">Publication</h2>
+            <button id="publishBriefBtn" class="action-btn" type="button">Publier</button>
+          </div>
+
+          <div class="card-body">
+            <div class="token-publish-layout">
+              <div class="token-publish-top">
+                <div class="token-box">
+                  <strong>Brief ID</strong>
+                  <span id="shortTokenPreview">--</span>
+                </div>
+
+                <div class="token-box">
+                  <strong>Fichier à déposer dans /briefs/</strong>
+                  <span id="briefFilePreview">--.json</span>
+                </div>
+              </div>
+
+              <div class="token-publish-bottom">
+                <div class="token-box token-box-token">
+                  <strong>Token</strong>
+                  <span id="longTokenPreview">--</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
