@@ -20,6 +20,7 @@ const columnCountInput = $("columnCountInput");
 const stbyZone = $("stbyZone");
 const boardGrid = $("boardGrid");
 const logList = $("logList");
+const globalNotesInput = $("globalNotesInput");
 
 const newPkgName = $("newPkgName");
 const newPkgTask = $("newPkgTask");
@@ -29,11 +30,14 @@ const newPkgLoadout = $("newPkgLoadout");
 const newPkgFreq = $("newPkgFreq");
 
 const STATUS_OPTIONS = ["START", "TAXI", "HOLD", "T/O", "EN VOL", "CHECK-IN", "ON STATION", "RTB", "LANDED"];
+const CLEARANCE_OPTIONS = ["NON", "EN ATTENTE", "DONNÉE"];
 
 let draggedPackageId = null;
+let globalNotesDebounce = null;
 
 const state = {
   briefId: "",
+  globalNotes: "",
   packages: [],
   columns: [
     { id: "col_1", title: "GROUND", freq: "121.800" },
@@ -71,6 +75,16 @@ function randomColor() {
   return `#${[0, 0, 0].map(() => Math.floor(100 + Math.random() * 156).toString(16).padStart(2, "0")).join("")}`;
 }
 
+function normalizeClearance(value) {
+  const clean = String(value || "").trim().toUpperCase();
+  return CLEARANCE_OPTIONS.includes(clean) ? clean : "NON";
+}
+
+function clearanceClass(clearance) {
+  if (clearance === "DONNÉE") return "is-clearance-yes";
+  return "is-clearance-no";
+}
+
 function createPackage(data = {}) {
   return {
     id: data.id || uid("pkg"),
@@ -81,10 +95,12 @@ function createPackage(data = {}) {
     loadout: String(data.loadout || "").trim() || "--",
     freq: String(data.freq || "").trim() || "--",
     status: String(data.status || "").trim() || "START",
+    clearance: normalizeClearance(data.clearance),
     leader: String(data.leader || "").trim() || "--",
     base: String(data.base || "").trim() || "--",
     destination: String(data.destination || "").trim() || "--",
     intra: String(data.intra || "").trim() || "--",
+    notes: String(data.notes || "").trim(),
     color: data.color || randomColor(),
     alert: !!data.alert,
     zoneId: data.zoneId || "stby",
@@ -119,6 +135,8 @@ function decodeBriefToken(token) {
       destination: p.d || "--",
       intra: p.f || "--",
       status: "START",
+      clearance: "NON",
+      notes: "",
       color: p.c || randomColor(),
       zoneId: "stby"
     }));
@@ -166,6 +184,7 @@ function renderBoardConfigInputs() {
   if (state.columns.length > count) {
     const removed = state.columns.splice(count);
     const fallbackZone = "stby";
+
     state.packages.forEach((pkg) => {
       if (removed.some((c) => c.id === pkg.zoneId)) {
         pkg.zoneId = fallbackZone;
@@ -183,11 +202,16 @@ function renderBoardConfigInputs() {
 }
 
 function packageCardHtml(pkg) {
+  const notesValue = pkg.notes
+    ? esc(pkg.notes)
+    : `<span class="empty-inline">Aucune note</span>`;
+
   return `
     <article class="package-card ${pkg.alert ? "is-alert" : ""} ${pkg.editing ? "is-editing" : ""} ${pkg.collapsed ? "is-collapsed" : ""}" draggable="true" data-package-id="${pkg.id}" style="--package-color:${esc(pkg.color)}">
       <div class="package-head">
         <div class="package-title-wrap">
           <h3 class="package-name">${esc(pkg.name)}</h3>
+          <div class="package-task">${esc(pkg.task)}</div>
         </div>
 
         <div class="package-head-actions">
@@ -212,26 +236,46 @@ function packageCardHtml(pkg) {
             <div class="package-data-label">Aircraft</div>
             <div class="package-data-value">${esc(pkg.aircraft)}</div>
           </div>
+
           <div class="package-data">
             <div class="package-data-label">Nombre</div>
             <div class="package-data-value">${esc(pkg.count)}</div>
           </div>
+
           <div class="package-data">
             <div class="package-data-label">Armement</div>
             <div class="package-data-value">${esc(pkg.loadout)}</div>
           </div>
+
           <div class="package-data">
             <div class="package-data-label">Fréquence</div>
             <div class="package-data-value">${esc(pkg.freq)}</div>
           </div>
+
           <div class="package-data">
             <div class="package-data-label">Statut</div>
             <div class="package-data-value">${esc(pkg.status)}</div>
           </div>
+
+          <div class="package-data">
+            <div class="package-data-label">Clearance</div>
+            <div class="package-data-value ${clearanceClass(pkg.clearance)}">${esc(pkg.clearance)}</div>
+          </div>
+
           <div class="package-data">
             <div class="package-data-label">Base</div>
             <div class="package-data-value">${esc(pkg.base)}</div>
           </div>
+
+          <div class="package-data">
+            <div class="package-data-label">Destination</div>
+            <div class="package-data-value">${esc(pkg.destination)}</div>
+          </div>
+        </div>
+
+        <div class="package-notes-block">
+          <div class="package-notes-label">Notes</div>
+          <div class="package-notes-value">${notesValue}</div>
         </div>
 
         <div class="package-footer">
@@ -244,10 +288,19 @@ function packageCardHtml(pkg) {
             <input type="number" min="1" value="${esc(pkg.count)}" data-package-field="${pkg.id}:count" placeholder="Nombre" />
             <input type="text" value="${esc(pkg.loadout)}" data-package-field="${pkg.id}:loadout" placeholder="Armement" />
             <input type="text" value="${esc(pkg.freq)}" data-package-field="${pkg.id}:freq" placeholder="Fréquence" />
+
             <select data-package-field="${pkg.id}:status">
               ${STATUS_OPTIONS.map((status) => `<option value="${esc(status)}"${status === pkg.status ? " selected" : ""}>${esc(status)}</option>`).join("")}
             </select>
+
+            <select data-package-field="${pkg.id}:clearance">
+              ${CLEARANCE_OPTIONS.map((clearance) => `<option value="${esc(clearance)}"${clearance === pkg.clearance ? " selected" : ""}>${esc(clearance)}</option>`).join("")}
+            </select>
+
             <input type="text" value="${esc(pkg.destination)}" data-package-field="${pkg.id}:destination" placeholder="Destination" />
+            <input type="text" value="${esc(pkg.base)}" data-package-field="${pkg.id}:base" placeholder="Base" />
+
+            <textarea class="package-edit-span-2" data-package-field="${pkg.id}:notes" placeholder="Notes package...">${esc(pkg.notes)}</textarea>
           </div>
         </div>
       </div>
@@ -294,8 +347,16 @@ function renderLogs() {
     : `<div class="empty-state">Aucune action enregistrée.</div>`;
 }
 
+function renderGlobalNotes() {
+  if (!globalNotesInput) return;
+  if (globalNotesInput.value !== state.globalNotes) {
+    globalNotesInput.value = state.globalNotes;
+  }
+}
+
 function renderAll() {
   renderBoardConfigInputs();
+  renderGlobalNotes();
   renderStby();
   renderBoard();
   renderLogs();
@@ -342,6 +403,7 @@ function bindDragAndDrop() {
       const fromLabel = previousZone === "stby"
         ? "STBY"
         : state.columns.find((c) => c.id === previousZone)?.title || "Colonne";
+
       const toLabel = targetZone === "stby"
         ? "STBY"
         : state.columns.find((c) => c.id === targetZone)?.title || "Colonne";
@@ -361,6 +423,8 @@ function createManualPackage() {
     loadout: newPkgLoadout.value || "--",
     freq: newPkgFreq.value || "--",
     status: "START",
+    clearance: "NON",
+    notes: "",
     zoneId: "stby"
   });
 
@@ -386,7 +450,13 @@ async function loadBriefPackages() {
     const packages = await resolvePackagesFromBriefId(briefId);
 
     state.briefId = briefId;
-    state.packages = packages.map((pkg) => ({ ...pkg, zoneId: "stby" }));
+    state.packages = packages.map((pkg) => ({
+      ...pkg,
+      zoneId: "stby",
+      clearance: normalizeClearance(pkg.clearance),
+      notes: String(pkg.notes || "")
+    }));
+
     briefLoadStatus.textContent = `${packages.length} package(s) chargé(s)`;
 
     addLog(`Brief ${briefId} chargé : ${packages.length} package(s) importé(s)`);
@@ -401,6 +471,21 @@ function applyBoardConfig() {
   renderBoardConfigInputs();
   addLog(`Configuration tableau mise à jour (${state.columns.length} colonne(s))`);
   renderAll();
+}
+
+function labelForField(field) {
+  switch (field) {
+    case "aircraft": return "aircraft";
+    case "count": return "nombre";
+    case "loadout": return "armement";
+    case "freq": return "fréquence";
+    case "status": return "statut";
+    case "clearance": return "clearance";
+    case "destination": return "destination";
+    case "base": return "base";
+    case "notes": return "notes";
+    default: return field;
+  }
 }
 
 boardConfigGrid.addEventListener("input", (e) => {
@@ -433,6 +518,7 @@ document.addEventListener("click", (e) => {
   if (editBtn) {
     const pkg = state.packages.find((p) => p.id === editBtn.dataset.editPackage);
     if (!pkg) return;
+
     pkg.editing = !pkg.editing;
     addLog(`${pkg.name} ${pkg.editing ? "ouvert en édition" : "fermé en édition"}`);
     renderAll();
@@ -458,15 +544,53 @@ document.addEventListener("change", (e) => {
     if (!pkg) return;
 
     let value = t.value;
-    if (field === "count") value = Math.max(1, +value || 1);
+
+    if (field === "count") {
+      value = Math.max(1, +value || 1);
+    }
+
+    if (field === "clearance") {
+      value = normalizeClearance(value);
+    }
 
     const oldValue = pkg[field];
     pkg[field] = value;
 
-    addLog(`${pkg.name} : ${field} modifié (${oldValue} → ${value})`);
+    addLog(`${pkg.name} : ${labelForField(field)} modifié (${oldValue || "--"} → ${value || "--"})`);
     renderAll();
   }
 });
+
+document.addEventListener("input", (e) => {
+  const t = e.target;
+
+  if (t.dataset.packageField) {
+    const [pkgId, field] = t.dataset.packageField.split(":");
+    if (field !== "notes") return;
+
+    const pkg = state.packages.find((p) => p.id === pkgId);
+    if (!pkg) return;
+
+    pkg.notes = t.value;
+    return;
+  }
+
+  if (t === globalNotesInput) {
+    state.globalNotes = t.value;
+
+    clearTimeout(globalNotesDebounce);
+    globalNotesDebounce = setTimeout(() => {
+      addLog("Notes globales mises à jour");
+    }, 500);
+  }
+});
+
+if (globalNotesInput) {
+  globalNotesInput.addEventListener("change", () => {
+    state.globalNotes = globalNotesInput.value;
+    addLog("Notes globales validées");
+  });
+}
 
 loadBriefBtn.addEventListener("click", loadBriefPackages);
 createPackageBtn.addEventListener("click", createManualPackage);
