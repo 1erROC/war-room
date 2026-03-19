@@ -217,6 +217,30 @@ body::before{
   box-shadow:0 0 0 4px rgba(87,199,255,.12);
 }
 
+.global-notes-wrap{
+  display:grid;
+  gap:10px;
+}
+
+.global-notes-input{
+  width:100%;
+  min-height:140px;
+  resize:vertical;
+  padding:14px 16px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  background:rgba(6,12,20,.82);
+  color:var(--text);
+  font:inherit;
+  line-height:1.5;
+  outline:none;
+}
+
+.global-notes-input:focus{
+  border-color:rgba(87,199,255,.45);
+  box-shadow:0 0 0 4px rgba(87,199,255,.12);
+}
+
 .stby-zone,
 .board-column-drop{
   min-height:140px;
@@ -398,6 +422,11 @@ body::before{
   background:#ffd1d1;
 }
 
+.package-main-content{
+  display:grid;
+  gap:12px;
+}
+
 .package-grid{
   display:grid;
   grid-template-columns:repeat(2,minmax(0,1fr));
@@ -424,6 +453,39 @@ body::before{
   font-size:.84rem;
   font-weight:800;
   line-height:1.25;
+  overflow-wrap:anywhere;
+}
+
+.package-data-value.is-clearance-no{
+  color:#ffd36a;
+}
+
+.package-data-value.is-clearance-yes{
+  color:#7df0b7;
+}
+
+.package-notes-block{
+  margin-top:-2px;
+  padding:10px 12px;
+  border-radius:12px;
+  background:rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.05);
+}
+
+.package-notes-label{
+  color:var(--muted);
+  font-size:.62rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  margin-bottom:6px;
+}
+
+.package-notes-value{
+  font-size:.82rem;
+  font-weight:700;
+  line-height:1.45;
+  color:rgba(236,243,255,.92);
+  white-space:pre-wrap;
   overflow-wrap:anywhere;
 }
 
@@ -478,11 +540,6 @@ body::before{
   min-width:78px;
 }
 
-.package-main-content{
-  display:grid;
-  gap:12px;
-}
-
 .package-edit-panel{
   display:none;
   margin-top:12px;
@@ -502,7 +559,8 @@ body::before{
 }
 
 .package-edit-grid input,
-.package-edit-grid select{
+.package-edit-grid select,
+.package-edit-grid textarea{
   width:100%;
   padding:10px 12px;
   border:1px solid rgba(255,255,255,.08);
@@ -513,10 +571,21 @@ body::before{
   outline:none;
 }
 
+.package-edit-grid textarea{
+  min-height:96px;
+  resize:vertical;
+  line-height:1.45;
+}
+
 .package-edit-grid input:focus,
-.package-edit-grid select:focus{
+.package-edit-grid select:focus,
+.package-edit-grid textarea:focus{
   border-color:rgba(87,199,255,.45);
   box-shadow:0 0 0 4px rgba(87,199,255,.12);
+}
+
+.package-edit-grid .package-edit-span-2{
+  grid-column:span 2;
 }
 
 .package-card.is-collapsed{
@@ -617,6 +686,10 @@ body::before{
   .package-grid,
   .package-edit-grid{
     grid-template-columns:1fr;
+  }
+
+  .package-edit-grid .package-edit-span-2{
+    grid-column:auto;
   }
 
   .package-head{
