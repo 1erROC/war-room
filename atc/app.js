@@ -1,6 +1,5 @@
 const BRIEFS_DIR = "../briefs/";
 const SHORT_TOKEN_LENGTH = 12;
-const SHORT_TOKEN_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 const $ = (id) => document.getElementById(id);
 const esc = (v) => String(v ?? "")
@@ -29,7 +28,18 @@ const newPkgCount = $("newPkgCount");
 const newPkgLoadout = $("newPkgLoadout");
 const newPkgFreq = $("newPkgFreq");
 
-const STATUS_OPTIONS = ["START", "TAXI", "HOLD", "T/O", "EN VOL", "CHECK-IN", "ON STATION", "RTB", "LANDED"];
+const STATUS_OPTIONS = [
+  "START",
+  "TAXI",
+  "HOLD",
+  "T/O",
+  "EN VOL",
+  "CHECK-IN",
+  "ON STATION",
+  "RTB",
+  "LANDED"
+];
+
 const CLEARANCE_OPTIONS = ["NON", "EN ATTENTE", "DONNÉE"];
 
 let draggedPackageId = null;
@@ -53,12 +63,20 @@ function uid(prefix = "id") {
 }
 
 function sanitizeShortToken(v) {
-  return String(v || "").trim().toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, SHORT_TOKEN_LENGTH);
+  return String(v || "")
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, "")
+    .slice(0, SHORT_TOKEN_LENGTH);
 }
 
 function nowLabel() {
   const d = new Date();
-  return d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  return d.toLocaleTimeString("fr-FR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  });
 }
 
 function addLog(text) {
@@ -72,7 +90,9 @@ function addLog(text) {
 }
 
 function randomColor() {
-  return `#${[0, 0, 0].map(() => Math.floor(100 + Math.random() * 156).toString(16).padStart(2, "0")).join("")}`;
+  return `#${[0, 0, 0]
+    .map(() => Math.floor(100 + Math.random() * 156).toString(16).padStart(2, "0"))
+    .join("")}`;
 }
 
 function normalizeClearance(value) {
@@ -81,8 +101,7 @@ function normalizeClearance(value) {
 }
 
 function clearanceClass(clearance) {
-  if (clearance === "DONNÉE") return "is-clearance-yes";
-  return "is-clearance-no";
+  return clearance === "DONNÉE" ? "is-clearance-yes" : "is-clearance-no";
 }
 
 function createPackage(data = {}) {
@@ -103,17 +122,19 @@ function createPackage(data = {}) {
     notes: String(data.notes || "").trim(),
     color: data.color || randomColor(),
     alert: !!data.alert,
-    zoneId: data.zoneId || "stby",
+    zoneId: data.zoneId || "hangar",
     editing: false,
     collapsed: data.collapsed !== undefined ? !!data.collapsed : true
   };
 }
 
 function toBase64UrlBytes(v) {
-  const base64 = String(v || "").trim()
+  const base64 = String(v || "")
+    .trim()
     .replace(/-/g, "+")
     .replace(/_/g, "/")
     .padEnd(Math.ceil(String(v || "").trim().length / 4) * 4, "=");
+
   return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
 }
 
@@ -122,24 +143,27 @@ function decodeBriefToken(token) {
     const decoded = JSON.parse(new TextDecoder().decode(toBase64UrlBytes(token)));
     const pkgs = Array.isArray(decoded?.pk) ? decoded.pk : [];
 
-    return pkgs.map((p) => createPackage({
-      id: p.i || uid("pkg"),
-      name: p.n || "PACKAGE",
-      task: p.tk || "--",
-      aircraft: p.a || "--",
-      count: (Array.isArray(p.pl) ? p.pl.filter(Boolean).length : 0) + (p.ld ? 1 : 0) || 1,
-      loadout: p.ato?.wp || "--",
-      freq: p.f || "--",
-      leader: p.ld || "--",
-      base: p.b || "--",
-      destination: p.d || "--",
-      intra: p.f || "--",
-      status: "START",
-      clearance: "NON",
-      notes: "",
-      color: p.c || randomColor(),
-      zoneId: "stby"
-    }));
+    return pkgs.map((p) =>
+      createPackage({
+        id: p.i || uid("pkg"),
+        name: p.n || "PACKAGE",
+        task: p.tk || "--",
+        aircraft: p.a || "--",
+        count:
+          (Array.isArray(p.pl) ? p.pl.filter(Boolean).length : 0) + (p.ld ? 1 : 0) || 1,
+        loadout: p.ato?.wp || "--",
+        freq: p.f || "--",
+        leader: p.ld || "--",
+        base: p.b || "--",
+        destination: p.d || "--",
+        intra: p.f || "--",
+        status: "START",
+        clearance: "NON",
+        notes: "",
+        color: p.c || randomColor(),
+        zoneId: "hangar"
+      })
+    );
   } catch {
     return null;
   }
@@ -147,17 +171,22 @@ function decodeBriefToken(token) {
 
 async function resolvePackagesFromBriefId(briefId) {
   const clean = sanitizeShortToken(briefId);
+
   if (!clean || clean.length !== SHORT_TOKEN_LENGTH) {
     throw new Error("Brief ID invalide");
   }
 
-  const res = await fetch(`${BRIEFS_DIR}${clean}.json?ts=${Date.now()}`, { cache: "no-store" });
+  const res = await fetch(`${BRIEFS_DIR}${clean}.json?ts=${Date.now()}`, {
+    cache: "no-store"
+  });
+
   if (!res.ok) {
     throw new Error(`Brief introuvable (${res.status})`);
   }
 
   const data = await res.json();
   const token = String(data?.token || "").trim();
+
   if (!token) {
     throw new Error("Token absent");
   }
@@ -183,7 +212,7 @@ function renderBoardConfigInputs() {
 
   if (state.columns.length > count) {
     const removed = state.columns.splice(count);
-    const fallbackZone = "stby";
+    const fallbackZone = "hangar";
 
     state.packages.forEach((pkg) => {
       if (removed.some((c) => c.id === pkg.zoneId)) {
@@ -192,13 +221,17 @@ function renderBoardConfigInputs() {
     });
   }
 
-  boardConfigGrid.innerHTML = state.columns.map((col, index) => `
-    <div class="mini-card">
-      <div class="mini-label">Colonne ${index + 1}</div>
-      <input type="text" value="${esc(col.title)}" data-column-field="${col.id}:title" placeholder="Titre colonne" />
-      <input type="text" value="${esc(col.freq)}" data-column-field="${col.id}:freq" placeholder="Fréquence radio" />
-    </div>
-  `).join("");
+  boardConfigGrid.innerHTML = state.columns
+    .map(
+      (col, index) => `
+        <div class="mini-card">
+          <div class="mini-label">Colonne ${index + 1}</div>
+          <input type="text" value="${esc(col.title)}" data-column-field="${col.id}:title" placeholder="Titre colonne" />
+          <input type="text" value="${esc(col.freq)}" data-column-field="${col.id}:freq" placeholder="Fréquence radio" />
+        </div>
+      `
+    )
+    .join("");
 }
 
 function packageCardHtml(pkg) {
@@ -207,7 +240,12 @@ function packageCardHtml(pkg) {
     : `<span class="empty-inline">Aucune note</span>`;
 
   return `
-    <article class="package-card ${pkg.alert ? "is-alert" : ""} ${pkg.editing ? "is-editing" : ""} ${pkg.collapsed ? "is-collapsed" : ""}" draggable="true" data-package-id="${pkg.id}" style="--package-color:${esc(pkg.color)}">
+    <article
+      class="package-card ${pkg.alert ? "is-alert" : ""} ${pkg.editing ? "is-editing" : ""} ${pkg.collapsed ? "is-collapsed" : ""}"
+      draggable="true"
+      data-package-id="${pkg.id}"
+      style="--package-color:${esc(pkg.color)}"
+    >
       <div class="package-head">
         <div class="package-title-wrap">
           <h3 class="package-name">${esc(pkg.name)}</h3>
@@ -290,11 +328,19 @@ function packageCardHtml(pkg) {
             <input type="text" value="${esc(pkg.freq)}" data-package-field="${pkg.id}:freq" placeholder="Fréquence" />
 
             <select data-package-field="${pkg.id}:status">
-              ${STATUS_OPTIONS.map((status) => `<option value="${esc(status)}"${status === pkg.status ? " selected" : ""}>${esc(status)}</option>`).join("")}
+              ${STATUS_OPTIONS.map(
+                (status) =>
+                  `<option value="${esc(status)}"${status === pkg.status ? " selected" : ""}>${esc(status)}</option>`
+              ).join("")}
             </select>
 
             <select data-package-field="${pkg.id}:clearance">
-              ${CLEARANCE_OPTIONS.map((clearance) => `<option value="${esc(clearance)}"${clearance === pkg.clearance ? " selected" : ""}>${esc(clearance)}</option>`).join("")}
+              ${CLEARANCE_OPTIONS.map(
+                (clearance) =>
+                  `<option value="${esc(clearance)}"${
+                    clearance === pkg.clearance ? " selected" : ""
+                  }>${esc(clearance)}</option>`
+              ).join("")}
             </select>
 
             <input type="text" value="${esc(pkg.destination)}" data-package-field="${pkg.id}:destination" placeholder="Destination" />
@@ -309,46 +355,53 @@ function packageCardHtml(pkg) {
 }
 
 function renderStby() {
-  const stbyPackages = state.packages.filter((pkg) => pkg.zoneId === "stby");
+  const hangarPackages = state.packages.filter((pkg) => pkg.zoneId === "hangar");
 
-  stbyZone.innerHTML = stbyPackages.length
-    ? stbyPackages.map(packageCardHtml).join("")
+  stbyZone.innerHTML = hangarPackages.length
+    ? hangarPackages.map(packageCardHtml).join("")
     : `<div class="empty-state">Aucun package en attente.</div>`;
 }
 
 function renderBoard() {
   boardGrid.style.gridTemplateColumns = `repeat(${Math.max(1, state.columns.length)}, minmax(0,1fr))`;
 
-  boardGrid.innerHTML = state.columns.map((col) => {
-    const packages = state.packages.filter((pkg) => pkg.zoneId === col.id);
+  boardGrid.innerHTML = state.columns
+    .map((col) => {
+      const packages = state.packages.filter((pkg) => pkg.zoneId === col.id);
 
-    return `
-      <section class="board-column">
-        <div class="board-column-head">
-          <h3 class="board-column-title">${esc(col.title || "--")}</h3>
-          <div class="board-column-freq">${esc(col.freq || "--")}</div>
-        </div>
-        <div class="board-column-drop dropzone" data-zone-id="${col.id}">
-          ${packages.length ? packages.map(packageCardHtml).join("") : `<div class="empty-state">Aucun package dans cette colonne.</div>`}
-        </div>
-      </section>
-    `;
-  }).join("");
+      return `
+        <section class="board-column">
+          <div class="board-column-head">
+            <h3 class="board-column-title">${esc(col.title || "--")}</h3>
+            <div class="board-column-freq">${esc(col.freq || "--")}</div>
+          </div>
+          <div class="board-column-drop dropzone" data-zone-id="${col.id}">
+            ${packages.length ? packages.map(packageCardHtml).join("") : `<div class="empty-state">Aucun package dans cette colonne.</div>`}
+          </div>
+        </section>
+      `;
+    })
+    .join("");
 }
 
 function renderLogs() {
   logList.innerHTML = state.logs.length
-    ? state.logs.map((log) => `
-      <article class="log-item">
-        <div class="log-time">${esc(log.time)}</div>
-        <div class="log-text">${esc(log.text)}</div>
-      </article>
-    `).join("")
+    ? state.logs
+        .map(
+          (log) => `
+            <article class="log-item">
+              <div class="log-time">${esc(log.time)}</div>
+              <div class="log-text">${esc(log.text)}</div>
+            </article>
+          `
+        )
+        .join("")
     : `<div class="empty-state">Aucune action enregistrée.</div>`;
 }
 
 function renderGlobalNotes() {
   if (!globalNotesInput) return;
+
   if (globalNotesInput.value !== state.globalNotes) {
     globalNotesInput.value = state.globalNotes;
   }
@@ -396,17 +449,20 @@ function bindDragAndDrop() {
 
       const previousZone = pkg.zoneId;
       const targetZone = zone.dataset.zoneId;
+
       if (!targetZone || previousZone === targetZone) return;
 
       pkg.zoneId = targetZone;
 
-      const fromLabel = previousZone === "stby"
-        ? "STBY"
-        : state.columns.find((c) => c.id === previousZone)?.title || "Colonne";
+      const fromLabel =
+        previousZone === "hangar"
+          ? "HANGAR"
+          : state.columns.find((c) => c.id === previousZone)?.title || "Colonne";
 
-      const toLabel = targetZone === "stby"
-        ? "STBY"
-        : state.columns.find((c) => c.id === targetZone)?.title || "Colonne";
+      const toLabel =
+        targetZone === "hangar"
+          ? "HANGAR"
+          : state.columns.find((c) => c.id === targetZone)?.title || "Colonne";
 
       addLog(`${pkg.name} déplacé de ${fromLabel} vers ${toLabel}`);
       renderAll();
@@ -425,11 +481,11 @@ function createManualPackage() {
     status: "START",
     clearance: "NON",
     notes: "",
-    zoneId: "stby"
+    zoneId: "hangar"
   });
 
   state.packages.unshift(pkg);
-  addLog(`${pkg.name} créé manuellement en STBY`);
+  addLog(`${pkg.name} créé manuellement en HANGAR`);
 
   newPkgName.value = "";
   newPkgTask.value = "";
@@ -452,13 +508,12 @@ async function loadBriefPackages() {
     state.briefId = briefId;
     state.packages = packages.map((pkg) => ({
       ...pkg,
-      zoneId: "stby",
+      zoneId: "hangar",
       clearance: normalizeClearance(pkg.clearance),
       notes: String(pkg.notes || "")
     }));
 
     briefLoadStatus.textContent = `${packages.length} package(s) chargé(s)`;
-
     addLog(`Brief ${briefId} chargé : ${packages.length} package(s) importé(s)`);
     renderAll();
   } catch (err) {
@@ -475,16 +530,26 @@ function applyBoardConfig() {
 
 function labelForField(field) {
   switch (field) {
-    case "aircraft": return "aircraft";
-    case "count": return "nombre";
-    case "loadout": return "armement";
-    case "freq": return "fréquence";
-    case "status": return "statut";
-    case "clearance": return "clearance";
-    case "destination": return "destination";
-    case "base": return "base";
-    case "notes": return "notes";
-    default: return field;
+    case "aircraft":
+      return "aircraft";
+    case "count":
+      return "nombre";
+    case "loadout":
+      return "armement";
+    case "freq":
+      return "fréquence";
+    case "status":
+      return "statut";
+    case "clearance":
+      return "clearance";
+    case "destination":
+      return "destination";
+    case "base":
+      return "base";
+    case "notes":
+      return "notes";
+    default:
+      return field;
   }
 }
 
