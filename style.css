@@ -451,6 +451,7 @@ body::before{
 .token-box-full{
   grid-column:1 / -1;
   min-height:110px
+  width:100%;
 }
 .token-box{
   padding:14px 16px;
@@ -463,6 +464,7 @@ body::before{
   overflow-wrap:anywhere;
   word-break:break-word;
   min-height:72px;
+width:100%;
   display:flex;
   flex-direction:column;
   gap:8px;
@@ -480,10 +482,15 @@ body::before{
 
 #longTokenPreview{
   display:block;
+  width:100%;
+  white-space:pre-wrap;
+  word-break:break-all;
   line-height:1.45;
   max-height:220px;
   overflow:auto;
-  padding-right:4px
+  font-family:monospace;
+  font-size:0.75rem;
+  opacity:0.9;
 }
 
 /* weather */
