@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WAR ROOM · Mission Briefing</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div class="page-shell">
+    <article class="mission-briefing-card">
+      <header class="brief-header">
+        <div class="brief-header-top">
+          <div class="brief-title-block">
+            <p class="brief-eyebrow">Mission Briefing · War Room</p>
+
+            <div class="brief-title-row">
+              <h1 id="missionCallsign" class="brief-title">JOKER 1</h1>
+
+              <div class="brief-badges">
+                <span id="missionRole" class="badge badge-primary">Strike</span>
+                <span id="missionTotBadge" class="badge badge-warning">TOT 03:00Z</span>
+                <span id="missionStatus" class="badge badge-success">Fragged</span>
+              </div>
+            </div>
+
+            <p class="brief-subtitle">
+              Package <strong id="missionPackage">BRONZE</strong>
+              <span class="separator">·</span>
+              Mission <strong id="missionName">SCUD HUNT / OCA Strike</strong>
+            </p>
+
+            <p class="brief-meta">
+              ATO Day <strong id="missionAtoDay">12</strong>
+              <span class="separator">·</span>
+              OPORD <strong id="missionOpord">TRIDENT SPEAR</strong>
+            </p>
+          </div>
+
+          <div class="brief-hero-side">
+            <div class="hero-chip">
+              <span class="hero-chip-label">Package Color</span>
+              <span id="packageColorName" class="hero-chip-value">BRONZE</span>
+            </div>
+
+            <div class="hero-chip">
+              <span class="hero-chip-label">Theater</span>
+              <span id="missionTheater" class="hero-chip-value">Persian Gulf</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="brief-header-grid">
+          <section class="header-info-box">
+            <span class="info-label">Aircraft</span>
+            <strong id="missionAircraft" class="info-value">2 × F/A-18C</strong>
+            <span id="missionLead" class="info-subvalue">Lead: JOKER 1-1</span>
+          </section>
+
+          <section class="header-info-box">
+            <span class="info-label">Launch / Recovery</span>
+            <strong id="missionLaunchRecovery" class="info-value">T/O 02:18Z · RTB 03:47Z</strong>
+            <span id="missionRecoveryDetail" class="info-subvalue">CVN-71 · Marshal 4</span>
+          </section>
+
+          <section class="header-info-box">
+            <span class="info-label">Package Frequency</span>
+            <strong id="missionFrequency" class="info-value">305.000</strong>
+            <span id="missionFrequencyDetail" class="info-subvalue">Primary package common · UHF</span>
+          </section>
+
+          <section class="header-info-box">
+            <span class="info-label">Target</span>
+            <strong id="missionTarget" class="info-value">OBJ IRON PIT</strong>
+            <span id="missionTargetDetail" class="info-subvalue">Grid 42S XD 214 887 · Elev 4,820 ft</span>
+          </section>
+        </div>
+      </header>
+    </article>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
