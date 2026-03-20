@@ -1,0 +1,1222 @@
+{
+  "missionId": "X9JE8F62N0Y1",
+  "updatedAt": "2026-03-20T19:27:27.014Z",
+  "briefing": {
+    "operationName": "TOTAL RESOLVE",
+    "mapName": "SYRIA",
+    "dateInGame": "2026-03-06",
+    "dateIRL": "2026-03-20",
+    "startTime": "0150",
+    "totTime": "0300",
+    "endTime": "0400",
+    "status": "Active",
+    "weatherArea": "LCRA",
+    "weatherValidTime": "0130",
+    "weather": {
+      "temperatureC": "15",
+      "qnhInHg": "29.97",
+      "qnhHpa": "1015",
+      "windDirection": "270",
+      "windSpeed": "08",
+      "windGust": "04",
+      "fogEnabled": "NO",
+      "fogBase": "",
+      "fogTop": "",
+      "layers": [
+        {
+          "cover": "SCT",
+          "base": "40000",
+          "top": "42000"
+        },
+        {
+          "cover": "SCT",
+          "base": "21000",
+          "top": "23000"
+        },
+        {
+          "cover": "BKN",
+          "base": "7500",
+          "top": "12000"
+        }
+      ]
+    },
+    "packages": [
+      {
+        "id": "pkg_7bu62crd",
+        "color": "#feda48",
+        "callsign": "STALKER",
+        "packageName": "BRONZE",
+        "mission": "SOF INFIL/EXFIL",
+        "aircraftCount": "4",
+        "aircraftType": "HELO",
+        "departure": "LHA",
+        "leader": "Seluj",
+        "wingmen": "2. Dread\n3. Fredy\n4. Coyote\n5. Murphy\n6. Rouletabille\n7. Such\n8. Rognard",
+        "intra": "45.000",
+        "destination": "LHA"
+      },
+      {
+        "id": "pkg_44qvxsx4",
+        "color": "#3dabff",
+        "callsign": "JOKER",
+        "packageName": "AZURE",
+        "mission": "SEAD",
+        "aircraftCount": "3",
+        "aircraftType": "F/A-18C",
+        "departure": "CVN-75",
+        "leader": "Spartan",
+        "wingmen": "2. Sioul\n3. Hoche",
+        "intra": "305.000",
+        "destination": "CVN-75"
+      },
+      {
+        "id": "pkg_zygy24tj",
+        "color": "#f566ff",
+        "callsign": "CIGOGNE",
+        "packageName": "SALMON",
+        "mission": "DCA",
+        "aircraftCount": "3",
+        "aircraftType": "M-2000",
+        "departure": "LCRA",
+        "leader": "Happy",
+        "wingmen": "2. Kara\n3. Boris",
+        "intra": "311.000",
+        "destination": "LCRA"
+      },
+      {
+        "id": "pkg_68xrsbq7",
+        "color": "#f06f9b",
+        "callsign": "DRAGON",
+        "packageName": "CORAL",
+        "mission": "DCA",
+        "aircraftCount": "1",
+        "aircraftType": "JF-17",
+        "departure": "LCRA",
+        "leader": "Nano",
+        "wingmen": "",
+        "intra": "311.000",
+        "destination": "LCRA"
+      },
+      {
+        "id": "pkg_0vfafdai",
+        "color": "#ff0059",
+        "callsign": "BIGCAT",
+        "packageName": "CRIMSON",
+        "mission": "",
+        "aircraftCount": "2",
+        "aircraftType": "F-14B",
+        "departure": "CVN-75",
+        "leader": "Seb",
+        "wingmen": "2. Earil\n3. Direlot",
+        "intra": "305.000",
+        "destination": "CVN-75"
+      },
+      {
+        "id": "pkg_poku4h8u",
+        "color": "#b3b3b3",
+        "callsign": "MAGIC",
+        "packageName": "COBALT",
+        "mission": "AWACS",
+        "aircraftCount": "1",
+        "aircraftType": "E-3A",
+        "departure": "LCRA",
+        "leader": "IA",
+        "wingmen": "",
+        "intra": "124.000",
+        "destination": "LCRA"
+      },
+      {
+        "id": "pkg_9pk1lurl",
+        "color": "#39d544",
+        "callsign": "POSEIDON",
+        "packageName": "EMERALD",
+        "mission": "AWACS",
+        "aircraftCount": "1",
+        "aircraftType": "AN-28",
+        "departure": "LCRA",
+        "leader": "IA",
+        "wingmen": "",
+        "intra": "124.00",
+        "destination": "LCRA"
+      },
+      {
+        "id": "pkg_tcbs3vfe",
+        "color": "#0033ff",
+        "callsign": "SSN-801",
+        "packageName": "NAVY",
+        "mission": "PRECISION STRIKE",
+        "aircraftCount": "1",
+        "aircraftType": "SUBMARINE",
+        "departure": "SEA",
+        "leader": "IA",
+        "wingmen": "",
+        "intra": "--",
+        "destination": "SEA"
+      }
+    ],
+    "atos": [
+      {
+        "id": "ato_zx0bu59i",
+        "packageId": "pkg_7bu62crd",
+        "collapsed": true,
+        "inherited": {
+          "color": "#feda48",
+          "callsign": "STALKER",
+          "packageName": "BRONZE",
+          "mission": "SOF INFIL/EXFIL",
+          "aircraftCount": "4",
+          "aircraftType": "HELO",
+          "leader": "Seluj",
+          "wingmen": "2. Dread\n3. Fredy\n4. Coyote\n5. Murphy\n6. Rouletabille\n7. Such\n8. Rognard",
+          "intra": "45.000",
+          "departure": "LHA",
+          "destination": "LHA",
+          "operationName": "TOTAL RESOLVE",
+          "startTime": "0150",
+          "totTime": "0300",
+          "weatherSummary": "SCT 40 000 ft · 270/08 kts · QNH 29.97"
+        },
+        "atoDay": "",
+        "opord": "",
+        "primaryTask": "SOF INFIL/EXFIL",
+        "primaryTaskNote": "LOW ALT FLIGHT",
+        "secondaryTask": "-",
+        "secondaryTaskNote": "-",
+        "packageSupport": "JOKER",
+        "targetName": "CITADEL",
+        "targetDetails": "LZ PLACE",
+        "launchTime": "0220",
+        "totTime": "0300",
+        "recoveryTime": "0400",
+        "launchDetails": "",
+        "recoveryDetails": "LHA",
+        "packageFrequencyNote": "124.000",
+        "configNote": "-",
+        "fuelPlan": "-",
+        "fuelNote": "-",
+        "loadout": "-",
+        "loadoutNote": "-",
+        "divert": "-",
+        "divertNote": "-",
+        "threats": "MANPADS / SA-22/ ZSU-23/ INF",
+        "roe": "ONLY NECESSARY",
+        "emcon": "B : ONLY NECESSARY",
+        "abortCriteria": "CRASH OF STALKE-2",
+        "pushTime": "0247",
+        "pushNote": "GHOST",
+        "totNote": "",
+        "iffModes": "-",
+        "iffNote": "-",
+        "datalink": "-",
+        "datalinkNote": "-",
+        "laser": "1688",
+        "laserNote": "1688",
+        "authentication": "-",
+        "authenticationReply": "-",
+        "supportEscort": "CIGOGNE",
+        "supportEscortNote": "311.00",
+        "supportSead": "JOKER",
+        "supportSeadNote": "305.00",
+        "supportTanker": "",
+        "supportTankerNote": "",
+        "supportC2": "C2 NET",
+        "supportC2Note": "124.00",
+        "totalDistance": "150",
+        "estFlightTime": "0140",
+        "comm": [
+          {
+            "name": "AWACS",
+            "freq": "124.00",
+            "band": "VHF"
+          },
+          {
+            "name": "TANKER",
+            "freq": "N/A",
+            "band": "UHF"
+          },
+          {
+            "name": "DEPARTURE",
+            "freq": "N/A",
+            "band": "UHF"
+          },
+          {
+            "name": "GUARD",
+            "freq": "N/A",
+            "band": "UHF"
+          }
+        ],
+        "route": [
+          {
+            "wp": "GATEWAY",
+            "desc": "ENTRY BRIDGE",
+            "alt": "50",
+            "spd": "80"
+          },
+          {
+            "wp": "SHADOW",
+            "desc": "TURN RIGHT",
+            "alt": "1500",
+            "spd": "80"
+          },
+          {
+            "wp": "RIDGE",
+            "desc": "ELECTRIC LINE",
+            "alt": "4500",
+            "spd": "80"
+          },
+          {
+            "wp": "CORRIDOR",
+            "desc": "MAIN ROAD",
+            "alt": "3000",
+            "spd": "80"
+          },
+          {
+            "wp": "GHOST",
+            "desc": "SILENCE MODE",
+            "alt": "3500",
+            "spd": "80"
+          },
+          {
+            "wp": "RAVEN",
+            "desc": "",
+            "alt": "4500",
+            "spd": "80"
+          },
+          {
+            "wp": "DAGGER",
+            "desc": "OBS POINT",
+            "alt": "3300",
+            "spd": "80"
+          },
+          {
+            "wp": "CITADEL",
+            "desc": "TGT",
+            "alt": "2953",
+            "spd": "80"
+          }
+        ],
+        "pilotNotes": "",
+        "commanderNotes": ""
+      },
+      {
+        "id": "ato_e47gpsfk",
+        "packageId": "pkg_44qvxsx4",
+        "collapsed": false,
+        "inherited": {
+          "color": "#3dabff",
+          "callsign": "JOKER",
+          "packageName": "AZURE",
+          "mission": "SEAD",
+          "aircraftCount": "3",
+          "aircraftType": "F/A-18C",
+          "leader": "Spartan",
+          "wingmen": "2. Sioul\n3. Hoche",
+          "intra": "305.000",
+          "departure": "CVN-75",
+          "destination": "CVN-75",
+          "operationName": "TOTAL RESOLVE",
+          "startTime": "0150",
+          "totTime": "0300",
+          "weatherSummary": "SCT 40 000 ft · 270/08 kts · QNH 29.97"
+        },
+        "atoDay": "",
+        "opord": "",
+        "primaryTask": "EW",
+        "primaryTaskNote": "",
+        "secondaryTask": "SEAD/DEAD",
+        "secondaryTaskNote": "",
+        "packageSupport": "CIGOGNE",
+        "targetName": "SYADF",
+        "targetDetails": "SA-5 / SA-10",
+        "launchTime": "0220",
+        "totTime": "0300",
+        "recoveryTime": "",
+        "launchDetails": "",
+        "recoveryDetails": "",
+        "packageFrequencyNote": "124.000",
+        "configNote": "",
+        "fuelPlan": "-",
+        "fuelNote": "-",
+        "loadout": "AGM88C / AIM120C",
+        "loadoutNote": "-",
+        "divert": "-",
+        "divertNote": "-",
+        "threats": "SA-5 / SA-10 / SA-22",
+        "roe": "NET 0250",
+        "emcon": "B : ONLY NECESSARY",
+        "abortCriteria": "SyAAF QRF",
+        "pushTime": "",
+        "pushNote": "",
+        "totNote": "",
+        "iffModes": "-",
+        "iffNote": "-",
+        "datalink": "-",
+        "datalinkNote": "-",
+        "laser": "-",
+        "laserNote": "-",
+        "authentication": "-",
+        "authenticationReply": "-",
+        "supportEscort": "",
+        "supportEscortNote": "",
+        "supportSead": "",
+        "supportSeadNote": "",
+        "supportTanker": "",
+        "supportTankerNote": "",
+        "supportC2": "",
+        "supportC2Note": "",
+        "totalDistance": "",
+        "estFlightTime": "",
+        "comm": [
+          {
+            "name": "AWACS",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "TANKER",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "DEPARTURE",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "GUARD",
+            "freq": "243.000",
+            "band": "UHF"
+          }
+        ],
+        "route": [
+          {
+            "wp": "WP1",
+            "desc": "HOLD",
+            "alt": "",
+            "spd": "M0.75"
+          },
+          {
+            "wp": "WP2",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "IP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "TGT",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "EP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "WP6",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          }
+        ],
+        "pilotNotes": "",
+        "commanderNotes": ""
+      },
+      {
+        "id": "ato_j1c5rgmi",
+        "packageId": "pkg_zygy24tj",
+        "collapsed": true,
+        "inherited": {
+          "color": "#f566ff",
+          "callsign": "CIGOGNE",
+          "packageName": "SALMON",
+          "mission": "DCA",
+          "aircraftCount": "3",
+          "aircraftType": "M-2000",
+          "leader": "Happy",
+          "wingmen": "2. Kara\n3. Boris",
+          "intra": "311.000",
+          "departure": "LCRA",
+          "destination": "LCRA",
+          "operationName": "TOTAL RESOLVE",
+          "startTime": "0150",
+          "totTime": "0300",
+          "weatherSummary": "SCT 40 000 ft · 270/08 kts · QNH 29.97"
+        },
+        "atoDay": "",
+        "opord": "",
+        "primaryTask": "",
+        "primaryTaskNote": "",
+        "secondaryTask": "",
+        "secondaryTaskNote": "",
+        "packageSupport": "",
+        "targetName": "",
+        "targetDetails": "",
+        "launchTime": "",
+        "totTime": "0300",
+        "recoveryTime": "",
+        "launchDetails": "",
+        "recoveryDetails": "",
+        "packageFrequencyNote": "",
+        "configNote": "",
+        "fuelPlan": "",
+        "fuelNote": "",
+        "loadout": "",
+        "loadoutNote": "",
+        "divert": "",
+        "divertNote": "",
+        "threats": "",
+        "roe": "",
+        "emcon": "",
+        "abortCriteria": "",
+        "pushTime": "",
+        "pushNote": "",
+        "totNote": "",
+        "iffModes": "",
+        "iffNote": "",
+        "datalink": "",
+        "datalinkNote": "",
+        "laser": "",
+        "laserNote": "",
+        "authentication": "",
+        "authenticationReply": "",
+        "supportEscort": "",
+        "supportEscortNote": "",
+        "supportSead": "",
+        "supportSeadNote": "",
+        "supportTanker": "",
+        "supportTankerNote": "",
+        "supportC2": "",
+        "supportC2Note": "",
+        "totalDistance": "",
+        "estFlightTime": "",
+        "comm": [
+          {
+            "name": "AWACS",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "TANKER",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "DEPARTURE",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "GUARD",
+            "freq": "243.000",
+            "band": "UHF"
+          }
+        ],
+        "route": [
+          {
+            "wp": "WP1",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "WP2",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "IP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "TGT",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "EP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "WP6",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          }
+        ],
+        "pilotNotes": "",
+        "commanderNotes": ""
+      },
+      {
+        "id": "ato_naark97q",
+        "packageId": "pkg_68xrsbq7",
+        "collapsed": true,
+        "inherited": {
+          "color": "#f06f9b",
+          "callsign": "DRAGON",
+          "packageName": "CORAL",
+          "mission": "DCA",
+          "aircraftCount": "1",
+          "aircraftType": "JF-17",
+          "leader": "Nano",
+          "wingmen": "",
+          "intra": "311.000",
+          "departure": "LCRA",
+          "destination": "LCRA",
+          "operationName": "TOTAL RESOLVE",
+          "startTime": "0150",
+          "totTime": "0300",
+          "weatherSummary": "SCT 40 000 ft · 270/08 kts · QNH 29.97"
+        },
+        "atoDay": "",
+        "opord": "",
+        "primaryTask": "",
+        "primaryTaskNote": "",
+        "secondaryTask": "",
+        "secondaryTaskNote": "",
+        "packageSupport": "",
+        "targetName": "",
+        "targetDetails": "",
+        "launchTime": "",
+        "totTime": "0300",
+        "recoveryTime": "",
+        "launchDetails": "",
+        "recoveryDetails": "",
+        "packageFrequencyNote": "",
+        "configNote": "",
+        "fuelPlan": "",
+        "fuelNote": "",
+        "loadout": "",
+        "loadoutNote": "",
+        "divert": "",
+        "divertNote": "",
+        "threats": "",
+        "roe": "",
+        "emcon": "",
+        "abortCriteria": "",
+        "pushTime": "",
+        "pushNote": "",
+        "totNote": "",
+        "iffModes": "",
+        "iffNote": "",
+        "datalink": "",
+        "datalinkNote": "",
+        "laser": "",
+        "laserNote": "",
+        "authentication": "",
+        "authenticationReply": "",
+        "supportEscort": "",
+        "supportEscortNote": "",
+        "supportSead": "",
+        "supportSeadNote": "",
+        "supportTanker": "",
+        "supportTankerNote": "",
+        "supportC2": "",
+        "supportC2Note": "",
+        "totalDistance": "",
+        "estFlightTime": "",
+        "comm": [
+          {
+            "name": "AWACS",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "TANKER",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "DEPARTURE",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "GUARD",
+            "freq": "243.000",
+            "band": "UHF"
+          }
+        ],
+        "route": [
+          {
+            "wp": "WP1",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "WP2",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "IP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "TGT",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "EP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "WP6",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          }
+        ],
+        "pilotNotes": "",
+        "commanderNotes": ""
+      },
+      {
+        "id": "ato_lahjjzas",
+        "packageId": "pkg_0vfafdai",
+        "collapsed": true,
+        "inherited": {
+          "color": "#ff0059",
+          "callsign": "BIGCAT",
+          "packageName": "CRIMSON",
+          "mission": "",
+          "aircraftCount": "2",
+          "aircraftType": "F-14B",
+          "leader": "Seb",
+          "wingmen": "2. Earil\n3. Direlot",
+          "intra": "305.000",
+          "departure": "CVN-75",
+          "destination": "CVN-75",
+          "operationName": "TOTAL RESOLVE",
+          "startTime": "0150",
+          "totTime": "0300",
+          "weatherSummary": "SCT 40 000 ft · 270/08 kts · QNH 29.97"
+        },
+        "atoDay": "",
+        "opord": "",
+        "primaryTask": "",
+        "primaryTaskNote": "",
+        "secondaryTask": "",
+        "secondaryTaskNote": "",
+        "packageSupport": "",
+        "targetName": "",
+        "targetDetails": "",
+        "launchTime": "",
+        "totTime": "0300",
+        "recoveryTime": "",
+        "launchDetails": "",
+        "recoveryDetails": "",
+        "packageFrequencyNote": "",
+        "configNote": "",
+        "fuelPlan": "",
+        "fuelNote": "",
+        "loadout": "",
+        "loadoutNote": "",
+        "divert": "",
+        "divertNote": "",
+        "threats": "",
+        "roe": "",
+        "emcon": "",
+        "abortCriteria": "",
+        "pushTime": "",
+        "pushNote": "",
+        "totNote": "",
+        "iffModes": "",
+        "iffNote": "",
+        "datalink": "",
+        "datalinkNote": "",
+        "laser": "",
+        "laserNote": "",
+        "authentication": "",
+        "authenticationReply": "",
+        "supportEscort": "",
+        "supportEscortNote": "",
+        "supportSead": "",
+        "supportSeadNote": "",
+        "supportTanker": "",
+        "supportTankerNote": "",
+        "supportC2": "",
+        "supportC2Note": "",
+        "totalDistance": "",
+        "estFlightTime": "",
+        "comm": [
+          {
+            "name": "AWACS",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "TANKER",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "DEPARTURE",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "GUARD",
+            "freq": "243.000",
+            "band": "UHF"
+          }
+        ],
+        "route": [
+          {
+            "wp": "WP1",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "WP2",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "IP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "TGT",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "EP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "WP6",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          }
+        ],
+        "pilotNotes": "",
+        "commanderNotes": ""
+      },
+      {
+        "id": "ato_jb5egeb7",
+        "packageId": "pkg_poku4h8u",
+        "collapsed": true,
+        "inherited": {
+          "color": "#b3b3b3",
+          "callsign": "MAGIC",
+          "packageName": "COBALT",
+          "mission": "AWACS",
+          "aircraftCount": "1",
+          "aircraftType": "E-3A",
+          "leader": "IA",
+          "wingmen": "",
+          "intra": "124.000",
+          "departure": "LCRA",
+          "destination": "LCRA",
+          "operationName": "TOTAL RESOLVE",
+          "startTime": "0150",
+          "totTime": "0300",
+          "weatherSummary": "SCT 40 000 ft · 270/08 kts · QNH 29.97"
+        },
+        "atoDay": "",
+        "opord": "",
+        "primaryTask": "",
+        "primaryTaskNote": "",
+        "secondaryTask": "",
+        "secondaryTaskNote": "",
+        "packageSupport": "",
+        "targetName": "",
+        "targetDetails": "",
+        "launchTime": "",
+        "totTime": "0300",
+        "recoveryTime": "",
+        "launchDetails": "",
+        "recoveryDetails": "",
+        "packageFrequencyNote": "",
+        "configNote": "",
+        "fuelPlan": "",
+        "fuelNote": "",
+        "loadout": "",
+        "loadoutNote": "",
+        "divert": "",
+        "divertNote": "",
+        "threats": "",
+        "roe": "",
+        "emcon": "",
+        "abortCriteria": "",
+        "pushTime": "",
+        "pushNote": "",
+        "totNote": "",
+        "iffModes": "",
+        "iffNote": "",
+        "datalink": "",
+        "datalinkNote": "",
+        "laser": "",
+        "laserNote": "",
+        "authentication": "",
+        "authenticationReply": "",
+        "supportEscort": "",
+        "supportEscortNote": "",
+        "supportSead": "",
+        "supportSeadNote": "",
+        "supportTanker": "",
+        "supportTankerNote": "",
+        "supportC2": "",
+        "supportC2Note": "",
+        "totalDistance": "",
+        "estFlightTime": "",
+        "comm": [
+          {
+            "name": "AWACS",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "TANKER",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "DEPARTURE",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "GUARD",
+            "freq": "243.000",
+            "band": "UHF"
+          }
+        ],
+        "route": [
+          {
+            "wp": "WP1",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "WP2",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "IP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "TGT",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "EP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "WP6",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          }
+        ],
+        "pilotNotes": "",
+        "commanderNotes": ""
+      },
+      {
+        "id": "ato_unshdv5x",
+        "packageId": "pkg_9pk1lurl",
+        "collapsed": true,
+        "inherited": {
+          "color": "#39d544",
+          "callsign": "POSEIDON",
+          "packageName": "EMERALD",
+          "mission": "AWACS",
+          "aircraftCount": "1",
+          "aircraftType": "AN-28",
+          "leader": "IA",
+          "wingmen": "",
+          "intra": "124.00",
+          "departure": "LCRA",
+          "destination": "LCRA",
+          "operationName": "TOTAL RESOLVE",
+          "startTime": "0150",
+          "totTime": "0300",
+          "weatherSummary": "SCT 40 000 ft · 270/08 kts · QNH 29.97"
+        },
+        "atoDay": "",
+        "opord": "",
+        "primaryTask": "",
+        "primaryTaskNote": "",
+        "secondaryTask": "",
+        "secondaryTaskNote": "",
+        "packageSupport": "",
+        "targetName": "",
+        "targetDetails": "",
+        "launchTime": "",
+        "totTime": "0300",
+        "recoveryTime": "",
+        "launchDetails": "",
+        "recoveryDetails": "",
+        "packageFrequencyNote": "",
+        "configNote": "",
+        "fuelPlan": "",
+        "fuelNote": "",
+        "loadout": "",
+        "loadoutNote": "",
+        "divert": "",
+        "divertNote": "",
+        "threats": "",
+        "roe": "",
+        "emcon": "",
+        "abortCriteria": "",
+        "pushTime": "",
+        "pushNote": "",
+        "totNote": "",
+        "iffModes": "",
+        "iffNote": "",
+        "datalink": "",
+        "datalinkNote": "",
+        "laser": "",
+        "laserNote": "",
+        "authentication": "",
+        "authenticationReply": "",
+        "supportEscort": "",
+        "supportEscortNote": "",
+        "supportSead": "",
+        "supportSeadNote": "",
+        "supportTanker": "",
+        "supportTankerNote": "",
+        "supportC2": "",
+        "supportC2Note": "",
+        "totalDistance": "",
+        "estFlightTime": "",
+        "comm": [
+          {
+            "name": "AWACS",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "TANKER",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "DEPARTURE",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "GUARD",
+            "freq": "243.000",
+            "band": "UHF"
+          }
+        ],
+        "route": [
+          {
+            "wp": "WP1",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "WP2",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "IP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "TGT",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "EP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "WP6",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          }
+        ],
+        "pilotNotes": "",
+        "commanderNotes": ""
+      },
+      {
+        "id": "ato_pw20leuu",
+        "packageId": "pkg_tcbs3vfe",
+        "collapsed": true,
+        "inherited": {
+          "color": "#0033ff",
+          "callsign": "SSN-801",
+          "packageName": "NAVY",
+          "mission": "PRECISION STRIKE",
+          "aircraftCount": "1",
+          "aircraftType": "SUBMARINE",
+          "leader": "IA",
+          "wingmen": "",
+          "intra": "--",
+          "departure": "SEA",
+          "destination": "SEA",
+          "operationName": "TOTAL RESOLVE",
+          "startTime": "0150",
+          "totTime": "0300",
+          "weatherSummary": "SCT 40 000 ft · 270/08 kts · QNH 29.97"
+        },
+        "atoDay": "",
+        "opord": "",
+        "primaryTask": "",
+        "primaryTaskNote": "",
+        "secondaryTask": "",
+        "secondaryTaskNote": "",
+        "packageSupport": "",
+        "targetName": "",
+        "targetDetails": "",
+        "launchTime": "",
+        "totTime": "0300",
+        "recoveryTime": "",
+        "launchDetails": "",
+        "recoveryDetails": "",
+        "packageFrequencyNote": "",
+        "configNote": "",
+        "fuelPlan": "",
+        "fuelNote": "",
+        "loadout": "",
+        "loadoutNote": "",
+        "divert": "",
+        "divertNote": "",
+        "threats": "",
+        "roe": "",
+        "emcon": "",
+        "abortCriteria": "",
+        "pushTime": "",
+        "pushNote": "",
+        "totNote": "",
+        "iffModes": "",
+        "iffNote": "",
+        "datalink": "",
+        "datalinkNote": "",
+        "laser": "",
+        "laserNote": "",
+        "authentication": "",
+        "authenticationReply": "",
+        "supportEscort": "",
+        "supportEscortNote": "",
+        "supportSead": "",
+        "supportSeadNote": "",
+        "supportTanker": "",
+        "supportTankerNote": "",
+        "supportC2": "",
+        "supportC2Note": "",
+        "totalDistance": "",
+        "estFlightTime": "",
+        "comm": [
+          {
+            "name": "AWACS",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "TANKER",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "DEPARTURE",
+            "freq": "",
+            "band": "UHF"
+          },
+          {
+            "name": "GUARD",
+            "freq": "243.000",
+            "band": "UHF"
+          }
+        ],
+        "route": [
+          {
+            "wp": "WP1",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "WP2",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "IP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "TGT",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "EP",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          },
+          {
+            "wp": "WP6",
+            "desc": "",
+            "alt": "",
+            "spd": ""
+          }
+        ],
+        "pilotNotes": "",
+        "commanderNotes": ""
+      }
+    ],
+    "acos": [],
+    "timelinePackages": []
+  }
+}
