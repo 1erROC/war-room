@@ -7,78 +7,952 @@
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <div class="page-shell">
-    <article class="mission-briefing-card">
-      <header class="brief-header">
-        <div class="brief-header-top">
-          <div class="brief-title-block">
-            <p class="brief-eyebrow">Mission Briefing · War Room</p>
+  <div class="app-shell mode-briefing" id="appShell">
+    <header class="topbar">
+      <div class="title-wrap">
+        <p class="subtitle">Mission Planning Interface</p>
+        <h1 class="title">WAR ROOM</h1>
+      </div>
 
-            <div class="brief-title-row">
-              <h1 id="missionCallsign" class="brief-title">JOKER 1</h1>
+      <div class="topbar-right">
+        <div class="mode-panel">
+          <div class="mode-text">
+            <span class="mode-label">Mode actif</span>
+            <span class="mode-value" id="modeValue">Briefing</span>
+          </div>
 
-              <div class="brief-badges">
-                <span id="missionRole" class="badge badge-primary">Strike</span>
-                <span id="missionTotBadge" class="badge badge-warning">TOT 03:00Z</span>
-                <span id="missionStatus" class="badge badge-success">Fragged</span>
+          <button
+            id="modeSwitch"
+            class="switch"
+            type="button"
+            aria-label="Basculer entre le mode briefing et le mode édition"
+            aria-pressed="false"
+          >
+            <span class="switch-track"></span>
+            <span class="switch-thumb"></span>
+          </button>
+
+          <button id="newMissionBtn" class="topbar-btn" type="button">Nouveau</button>
+          <button id="copyUrlBtn" class="topbar-btn" type="button">Copier URL</button>
+          <button id="copyMissionIdBtn" class="topbar-btn" type="button">Copier Mission ID</button>
+          <button id="pasteMissionIdBtn" class="topbar-btn" type="button">Coller Mission ID</button>
+          <a class="topbar-btn topbar-link" href="../index.html">Menu</a>
+        </div>
+
+        <div class="author-line">By [1eROC] Seluj</div>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <!-- OVERVIEW -->
+      <section class="panel panel--overview">
+        <div class="panel-header panel-header--static panel-header--compact">
+          <div class="panel-header-main">
+            <div class="panel-kicker">Mission Briefing · Overview</div>
+            <div class="panel-title-row">
+              <h2 class="panel-title">Overview</h2>
+            </div>
+            <p class="panel-subtitle">
+              Paramètres généraux de mission, statut, planning et références de base.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel-content">
+          <div class="overview-grid">
+            <article class="data-card">
+              <span class="data-label">Nom de l'opération</span>
+              <div class="view-value" data-field="operationName">--</div>
+              <div class="edit-field">
+                <input
+                  id="operationNameInput"
+                  class="field-input"
+                  type="text"
+                  placeholder="Nom de l'opération"
+                  value=""
+                />
+              </div>
+            </article>
+
+            <article class="data-card">
+              <span class="data-label">Carte</span>
+              <div class="view-value" data-field="mapName">--</div>
+              <div class="edit-field">
+                <input
+                  id="mapNameInput"
+                  class="field-input"
+                  type="text"
+                  placeholder="Carte"
+                  value=""
+                />
+              </div>
+            </article>
+
+            <article class="data-card">
+              <span class="data-label">Date in-game</span>
+              <div class="view-value" data-field="dateInGame">--/--/----</div>
+              <div class="edit-field">
+                <input
+                  id="dateInGameInput"
+                  class="field-input field-input-date"
+                  type="date"
+                  value=""
+                />
+              </div>
+            </article>
+
+            <article class="data-card">
+              <span class="data-label">Date IRL</span>
+              <div class="view-value" data-field="dateIRL">--/--/----</div>
+              <div class="edit-field">
+                <input
+                  id="dateIRLInput"
+                  class="field-input field-input-date"
+                  type="date"
+                  value=""
+                />
+              </div>
+            </article>
+
+            <article class="data-card">
+              <span class="data-label">Heure début</span>
+              <div class="view-value" data-field="startTime">--:--L</div>
+              <div class="edit-field">
+                <input
+                  id="startTimeInput"
+                  class="field-input field-input-time"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="4"
+                  placeholder="HHMM"
+                  value=""
+                />
+              </div>
+            </article>
+
+            <article class="data-card">
+              <span class="data-label">TOT</span>
+              <div class="view-value" data-field="totTime">--:--L</div>
+              <div class="edit-field">
+                <input
+                  id="totTimeInput"
+                  class="field-input field-input-time"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="4"
+                  placeholder="HHMM"
+                  value=""
+                />
+              </div>
+            </article>
+
+            <article class="data-card">
+              <span class="data-label">Heure de fin</span>
+              <div class="view-value" data-field="endTime">--:--L</div>
+              <div class="edit-field">
+                <input
+                  id="endTimeInput"
+                  class="field-input field-input-time"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="4"
+                  placeholder="HHMM"
+                  value=""
+                />
+              </div>
+            </article>
+
+            <article class="data-card">
+              <span class="data-label">Statut</span>
+              <div class="view-value status-value" data-field="status">Draft</div>
+              <div class="edit-field">
+                <select id="statusInput" class="field-input field-select">
+                  <option value="Draft" selected>Draft</option>
+                  <option value="Planned">Planned</option>
+                  <option value="Fragged">Fragged</option>
+                  <option value="Active">Active</option>
+                  <option value="Completed">Completed</option>
+                  <option value="Abort">Abort</option>
+                </select>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <!-- WEATHER -->
+      <section class="panel panel--collapsible is-collapsed" id="weatherPanel">
+        <button
+          id="weatherToggle"
+          class="panel-header panel-header--collapsible"
+          type="button"
+          aria-expanded="false"
+          aria-controls="weatherContent"
+        >
+          <div class="panel-header-main">
+            <div class="panel-kicker">Mission Environment · Weather Overlay</div>
+
+            <div class="panel-title-row">
+              <h2 class="panel-title">Weather</h2>
+
+              <div class="panel-inline-meta weather-badges-wrap">
+                <div class="view-value-inline" data-field="weatherArea">ICAO CODE</div>
+                <div class="view-value-inline" data-field="weatherValidTime">VALID --:--Z</div>
+
+                <div class="edit-field-inline">
+                  <input
+                    id="weatherAreaInput"
+                    class="badge-input badge-input-blue"
+                    type="text"
+                    placeholder="ICAO CODE"
+                    value=""
+                  />
+                  <input
+                    id="weatherValidTimeInput"
+                    class="badge-input badge-input-amber"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="4"
+                    placeholder="HHMM"
+                    value=""
+                  />
+                </div>
               </div>
             </div>
 
-            <p class="brief-subtitle">
-              Package <strong id="missionPackage">BRONZE</strong>
-              <span class="separator">·</span>
-              Mission <strong id="missionName">SCUD HUNT / OCA Strike</strong>
-            </p>
-
-            <p class="brief-meta">
-              ATO Day <strong id="missionAtoDay">12</strong>
-              <span class="separator">·</span>
-              OPORD <strong id="missionOpord">TRIDENT SPEAR</strong>
+            <p class="panel-subtitle">
+              Lecture instantanée des couches, du vent, du brouillard et des paramètres critiques mission.
             </p>
           </div>
 
-          <div class="brief-hero-side">
-            <div class="hero-chip">
-              <span class="hero-chip-label">Package Color</span>
-              <span id="packageColorName" class="hero-chip-value">BRONZE</span>
+          <div class="panel-header-actions">
+            <span id="weatherChevron" class="panel-chevron">+</span>
+          </div>
+        </button>
+
+        <div id="weatherContent" class="panel-content">
+          <div class="weather-layout">
+            <div class="weather-graphic-card">
+              <div class="weather-graphic-topbar">
+                <h3 class="weather-section-title">Vertical Weather Profile</h3>
+                <div class="weather-read-badge">Immediate Read</div>
+              </div>
+
+              <div class="weather-profile">
+                <div class="weather-altitude-scale">
+                  <span class="weather-alt-label weather-alt-0">0</span>
+                  <span class="weather-alt-label weather-alt-10">10000</span>
+                  <span class="weather-alt-label weather-alt-20">20000</span>
+                  <span class="weather-alt-label weather-alt-30">30000</span>
+                  <span class="weather-alt-label weather-alt-40">40000</span>
+                </div>
+
+                <div class="weather-profile-grid">
+                  <div class="weather-grid-line weather-grid-line-0"></div>
+                  <div class="weather-grid-line weather-grid-line-10"></div>
+                  <div class="weather-grid-line weather-grid-line-20"></div>
+                  <div class="weather-grid-line weather-grid-line-30"></div>
+                  <div class="weather-grid-line weather-grid-line-40"></div>
+
+                  <div
+                    class="weather-layer weather-layer-1 is-empty"
+                    id="weatherLayer1Visual"
+                    style="bottom:0%; height:0%;"
+                    aria-hidden="true"
+                  ></div>
+
+                  <div
+                    class="weather-layer weather-layer-2 is-empty"
+                    id="weatherLayer2Visual"
+                    style="bottom:0%; height:0%;"
+                    aria-hidden="true"
+                  ></div>
+
+                  <div
+                    class="weather-layer weather-layer-3 is-empty"
+                    id="weatherLayer3Visual"
+                    style="bottom:0%; height:0%;"
+                    aria-hidden="true"
+                  ></div>
+
+                  <div
+                    class="weather-fog-layer is-empty"
+                    id="weatherFogVisual"
+                    style="display:none; bottom:0%; height:0%;"
+                    aria-hidden="true"
+                  ></div>
+
+                  <div class="weather-wind-card" id="weatherWindCard">
+                    <div class="weather-wind-arrow-wrap">
+                      <div class="weather-wind-arrow" id="weatherWindArrow">↓</div>
+                    </div>
+
+                    <div class="weather-wind-data">
+                      <div class="weather-wind-view">
+                        <div class="weather-wind-main" id="weatherWindMain">---° / -- kts</div>
+                        <div class="weather-wind-sub" id="weatherWindGust">Gust -- kts</div>
+                        <div class="weather-wind-sub" id="weatherWindOrigin">Origine du vent</div>
+                      </div>
+
+                      <div class="edit-field weather-wind-edit">
+                        <input
+                          id="weatherWindDirInput"
+                          class="field-input"
+                          type="text"
+                          inputmode="numeric"
+                          maxlength="3"
+                          placeholder="DIR"
+                          value=""
+                        />
+                        <input
+                          id="weatherWindSpeedInput"
+                          class="field-input"
+                          type="text"
+                          inputmode="numeric"
+                          maxlength="3"
+                          placeholder="SPD"
+                          value=""
+                        />
+                        <input
+                          id="weatherWindGustInput"
+                          class="field-input"
+                          type="text"
+                          inputmode="numeric"
+                          maxlength="3"
+                          placeholder="GST"
+                          value=""
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            <div class="hero-chip">
-              <span class="hero-chip-label">Theater</span>
-              <span id="missionTheater" class="hero-chip-value">Persian Gulf</span>
+            <div class="weather-info-stack">
+              <article class="weather-info-card">
+                <span class="data-label">Température</span>
+                <div class="view-value weather-info-main" id="weatherTempDisplay">--°C</div>
+                <div class="edit-field">
+                  <input
+                    id="weatherTempInput"
+                    class="field-input"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="3"
+                    placeholder="15"
+                    value=""
+                  />
+                </div>
+              </article>
+
+              <article class="weather-info-card">
+                <span class="data-label">QNH</span>
+                <div class="view-value weather-info-main" id="weatherQnhInhgDisplay">--.-- inHg</div>
+                <div class="weather-info-sub" id="weatherQnhHpaDisplay">---- hPa</div>
+                <div class="edit-field">
+                  <input
+                    id="weatherQnhInhgInput"
+                    class="field-input"
+                    type="text"
+                    placeholder="29.92"
+                    value=""
+                  />
+                </div>
+              </article>
+
+              <article class="weather-info-card weather-layer-card">
+                <span class="data-label">Couche 1</span>
+                <div class="view-value weather-info-main" id="weatherLayer1Summary">--</div>
+                <div class="edit-field edit-field-stack">
+                  <select id="weatherLayer1CoverInput" class="field-input field-select">
+                    <option value="">Aucune</option>
+                    <option value="FEW">FEW</option>
+                    <option value="SCT">SCT</option>
+                    <option value="BKN">BKN</option>
+                    <option value="OVC">OVC</option>
+                  </select>
+                  <input
+                    id="weatherLayer1BaseInput"
+                    class="field-input"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="5"
+                    placeholder="Base ft"
+                    value=""
+                  />
+                  <input
+                    id="weatherLayer1TopInput"
+                    class="field-input"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="5"
+                    placeholder="Top ft"
+                    value=""
+                  />
+                </div>
+              </article>
+
+              <article class="weather-info-card weather-layer-card">
+                <span class="data-label">Couche 2</span>
+                <div class="view-value weather-info-main" id="weatherLayer2Summary">--</div>
+                <div class="edit-field edit-field-stack">
+                  <select id="weatherLayer2CoverInput" class="field-input field-select">
+                    <option value="">Aucune</option>
+                    <option value="FEW">FEW</option>
+                    <option value="SCT">SCT</option>
+                    <option value="BKN">BKN</option>
+                    <option value="OVC">OVC</option>
+                  </select>
+                  <input
+                    id="weatherLayer2BaseInput"
+                    class="field-input"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="5"
+                    placeholder="Base ft"
+                    value=""
+                  />
+                  <input
+                    id="weatherLayer2TopInput"
+                    class="field-input"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="5"
+                    placeholder="Top ft"
+                    value=""
+                  />
+                </div>
+              </article>
+
+              <article class="weather-info-card weather-layer-card">
+                <span class="data-label">Couche 3</span>
+                <div class="view-value weather-info-main" id="weatherLayer3Summary">--</div>
+                <div class="edit-field edit-field-stack">
+                  <select id="weatherLayer3CoverInput" class="field-input field-select">
+                    <option value="">Aucune</option>
+                    <option value="FEW">FEW</option>
+                    <option value="SCT">SCT</option>
+                    <option value="BKN">BKN</option>
+                    <option value="OVC">OVC</option>
+                  </select>
+                  <input
+                    id="weatherLayer3BaseInput"
+                    class="field-input"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="5"
+                    placeholder="Base ft"
+                    value=""
+                  />
+                  <input
+                    id="weatherLayer3TopInput"
+                    class="field-input"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="5"
+                    placeholder="Top ft"
+                    value=""
+                  />
+                </div>
+              </article>
+
+              <article class="weather-info-card weather-layer-card">
+                <span class="data-label">Brouillard</span>
+                <div class="view-value weather-info-main" id="weatherFogSummary">No</div>
+                <div class="weather-info-sub" id="weatherFogDescDisplay">--</div>
+                <div class="edit-field edit-field-stack">
+                  <select id="weatherFogEnabledInput" class="field-input field-select">
+                    <option value="NO" selected>Non</option>
+                    <option value="YES">Oui</option>
+                  </select>
+                  <input
+                    id="weatherFogBaseInput"
+                    class="field-input"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="5"
+                    placeholder="Plancher ft"
+                    value=""
+                  />
+                  <input
+                    id="weatherFogTopInput"
+                    class="field-input"
+                    type="text"
+                    inputmode="numeric"
+                    maxlength="5"
+                    placeholder="Plafond ft"
+                    value=""
+                  />
+                </div>
+              </article>
             </div>
           </div>
         </div>
+      </section>
 
-        <div class="brief-header-grid">
-          <section class="header-info-box">
-            <span class="info-label">Aircraft</span>
-            <strong id="missionAircraft" class="info-value">2 × F/A-18C</strong>
-            <span id="missionLead" class="info-subvalue">Lead: JOKER 1-1</span>
-          </section>
+      <!-- PACKAGE -->
+      <section class="panel panel--collapsible is-collapsed" id="packagePanel">
+        <div
+          id="packageToggle"
+          class="panel-header panel-header--collapsible"
+          role="button"
+          tabindex="0"
+          aria-expanded="false"
+          aria-controls="packageContent"
+        >
+          <div class="panel-header-main">
+            <div class="panel-kicker">Mission Tasking · Package Builder</div>
+            <div class="panel-title-row">
+              <h2 class="panel-title">Package</h2>
+            </div>
+            <p class="panel-subtitle">
+              Construction des packages mission, composition des vols, leadership, fréquences intra-flight et destinations.
+            </p>
+          </div>
 
-          <section class="header-info-box">
-            <span class="info-label">Launch / Recovery</span>
-            <strong id="missionLaunchRecovery" class="info-value">T/O 02:18Z · RTB 03:47Z</strong>
-            <span id="missionRecoveryDetail" class="info-subvalue">CVN-71 · Marshal 4</span>
-          </section>
-
-          <section class="header-info-box">
-            <span class="info-label">Package Frequency</span>
-            <strong id="missionFrequency" class="info-value">305.000</strong>
-            <span id="missionFrequencyDetail" class="info-subvalue">Primary package common · UHF</span>
-          </section>
-
-          <section class="header-info-box">
-            <span class="info-label">Target</span>
-            <strong id="missionTarget" class="info-value">OBJ IRON PIT</strong>
-            <span id="missionTargetDetail" class="info-subvalue">Grid 42S XD 214 887 · Elev 4,820 ft</span>
-          </section>
+          <div class="panel-header-actions">
+            <button id="addPackageBtn" class="topbar-btn panel-action-btn" type="button">Ajouter</button>
+            <span id="packageChevron" class="panel-chevron">+</span>
+          </div>
         </div>
-      </header>
-    </article>
+
+        <div id="packageContent" class="panel-content">
+          <div id="packageGrid" class="package-grid"></div>
+        </div>
+      </section>
+
+      <!-- PUBLICATION -->
+      <section class="panel panel--collapsible is-collapsed" id="atoPanel">
+        <div
+          id="atoToggle"
+          class="panel-header panel-header--collapsible"
+          role="button"
+          tabindex="0"
+          aria-expanded="false"
+          aria-controls="atoContent"
+        >
+          <div class="panel-header-main">
+            <div class="panel-kicker">Air Tasking Order · Flight Cards</div>
+            <div class="panel-title-row">
+              <h2 class="panel-title">Air Tasking Order</h2>
+            </div>
+            <p class="panel-subtitle">
+              Génération et enrichissement des flight cards ATO à partir des packages mission.
+            </p>
+          </div>
+
+          <div class="panel-header-actions">
+            <button id="updateAtoBtn" class="topbar-btn panel-action-btn" type="button">Update Package</button>
+            <span id="atoChevron" class="panel-chevron">+</span>
+          </div>
+        </div>
+
+        <div id="atoContent" class="panel-content">
+          <div id="atoEmptyState" class="ato-empty-state">
+            Aucun ATO pour le moment. Passe en mode édition puis clique sur `Update Package` pour générer les flight cards depuis les packages.
+          </div>
+          <div id="atoGrid" class="ato-grid"></div>
+        </div>
+      </section>
+
+      <section class="panel panel--collapsible is-collapsed" id="acoPanel">
+        <div
+          id="acoToggle"
+          class="panel-header panel-header--collapsible"
+          role="button"
+          tabindex="0"
+          aria-expanded="false"
+          aria-controls="acoContent"
+        >
+          <div class="panel-header-main">
+            <div class="panel-kicker">Airspace Control Order · Flight Environment</div>
+            <div class="panel-title-row">
+              <h2 class="panel-title">Airspace Control Order</h2>
+            </div>
+            <p class="panel-subtitle">
+              Définition de l'environnement de vol, des blocs altitude et de la déconfliction par package.
+            </p>
+          </div>
+
+          <div class="panel-header-actions">
+            <button id="updateAcoBtn" class="topbar-btn panel-action-btn" type="button">Update Package</button>
+            <span id="acoChevron" class="panel-chevron">+</span>
+          </div>
+        </div>
+
+        <div id="acoContent" class="panel-content">
+          <div id="acoEmptyState" class="aco-empty-state">
+            Aucun ACO pour le moment. Passe en mode édition puis clique sur `Update Package` pour générer les cartes airspace depuis les packages.
+          </div>
+          <div class="aco-shell">
+            <section class="aco-overview-card">
+              <div class="aco-overview-header">
+                <h3 class="aco-overview-title">Combined Airspace Stack</h3>
+                <div class="aco-overview-subtitle">Vue globale de tous les packages par tranches altitude</div>
+              </div>
+              <div class="aco-overview-chart" id="acoOverviewChart">
+                <div class="aco-overview-scale">
+                  <span class="aco-overview-label aco-overview-label-10">10000</span>
+                  <span class="aco-overview-label aco-overview-label-20">20000</span>
+                  <span class="aco-overview-label aco-overview-label-30">30000</span>
+                  <span class="aco-overview-label aco-overview-label-40">40000</span>
+                </div>
+                <div class="aco-overview-grid">
+                  <div class="aco-overview-line aco-overview-line-10"></div>
+                  <div class="aco-overview-line aco-overview-line-20"></div>
+                  <div class="aco-overview-line aco-overview-line-30"></div>
+                  <div class="aco-overview-line aco-overview-line-40"></div>
+                  <div id="acoOverviewBands" class="aco-overview-bands"></div>
+                </div>
+              </div>
+            </section>
+            <div id="acoGrid" class="aco-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel--collapsible is-collapsed" id="timelinePanel">
+        <div
+          id="timelineToggle"
+          class="panel-header panel-header--collapsible"
+          role="button"
+          tabindex="0"
+          aria-expanded="false"
+          aria-controls="timelineContent"
+        >
+          <div class="panel-header-main">
+            <div class="panel-kicker">Mission Timeline · Execution Flow</div>
+            <div class="panel-title-row">
+              <h2 class="panel-title">Timeline</h2>
+            </div>
+            <p class="panel-subtitle">
+              Synchronisation des temps clés ATO, ajout d'événements manuels par package et lecture chronologique globale.
+            </p>
+          </div>
+
+          <div class="panel-header-actions">
+            <button id="updateTimelineBtn" class="topbar-btn panel-action-btn" type="button">Update Timeline</button>
+            <span id="timelineChevron" class="panel-chevron">+</span>
+          </div>
+        </div>
+
+        <div id="timelineContent" class="panel-content">
+          <div id="timelineEmptyState" class="timeline-empty-state">
+            Aucun événement timeline pour le moment. Passe en mode édition puis clique sur `Update Timeline` pour récupérer les temps depuis les ATO.
+          </div>
+
+          <div class="timeline-shell">
+            <div class="timeline-main">
+              <section class="timeline-visual-card">
+                <div class="timeline-visual-head">
+                  <div>
+                    <h3 class="timeline-section-title">Execution Timeline</h3>
+                    <div class="timeline-summary" id="timelineSummary">Fenêtre : --:--L → --:--L · Référence : TOT --:--L</div>
+                  </div>
+                </div>
+                <div id="timelineVisual" class="timeline-visual"></div>
+              </section>
+
+              <aside id="timelineEditor" class="timeline-editor"></aside>
+
+              <section class="timeline-chrono-card">
+                <div class="timeline-visual-head">
+                  <div>
+                    <h3 class="timeline-section-title">Chronologie</h3>
+                    <div class="timeline-summary">Vue ordonnée de tous les événements consolidés</div>
+                  </div>
+                </div>
+                <div id="timelineChrono" class="timeline-chrono"></div>
+              </section>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel--collapsible is-collapsed" id="publicationPanel">
+        <div
+          id="publicationToggle"
+          class="panel-header panel-header--collapsible"
+          role="button"
+          tabindex="0"
+          aria-expanded="false"
+          aria-controls="publicationContent"
+        >
+          <div class="panel-header-main">
+            <div class="panel-kicker">Mission Archive · Publication Package</div>
+            <div class="panel-title-row">
+              <h2 class="panel-title">Publication</h2>
+            </div>
+            <p class="panel-subtitle">
+              Export mission, identifiant court et token complet de restitution briefing.
+            </p>
+          </div>
+
+          <div class="panel-header-actions">
+            <button id="publishMissionBtn" class="topbar-btn panel-action-btn" type="button">Publier</button>
+            <span id="publicationChevron" class="panel-chevron">+</span>
+          </div>
+        </div>
+
+        <div id="publicationContent" class="panel-content panel-content--publication">
+          <div class="publication-grid">
+            <article class="data-card publication-card">
+              <span class="data-label">Mission ID</span>
+              <div id="missionIdDisplay" class="view-value mission-id-value">------------</div>
+              <div class="publication-actions">
+                <button id="copyMissionIdBtnBottom" class="mini-action-btn" type="button">Copier</button>
+              </div>
+            </article>
+
+            <article class="data-card publication-card publication-card-wide">
+              <span class="data-label">Token</span>
+              <textarea
+                id="tokenOutput"
+                class="token-output"
+                spellcheck="false"
+                readonly
+                placeholder="Le token long encodé apparaîtra ici."
+              ></textarea>
+              <div class="publication-actions">
+                <button id="copyTokenBtn" class="mini-action-btn" type="button">Copier le token</button>
+                <button id="pasteTokenBtnBottom" class="mini-action-btn" type="button">Coller le token</button>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+    </main>
   </div>
 
-  <script src="./app.js"></script>
+  <template id="packageCardTemplate">
+    <article class="package-card" style="--package-accent:#58c7ff;">
+      <div class="package-card-top">
+        <div class="package-head-left">
+          <div class="package-tools-row edit-field-inline package-color-tools">
+            <input
+              class="package-color-input"
+              data-package-input="color"
+              type="color"
+              value="#58c7ff"
+              aria-label="Choisir la couleur du package"
+            />
+            <button
+              class="mini-action-btn package-random-btn"
+              data-package-action="random-color"
+              type="button"
+            >
+              Random
+            </button>
+            <button
+              class="mini-action-btn package-delete-btn"
+              data-package-action="delete"
+              type="button"
+            >
+              Supprimer
+            </button>
+          </div>
+
+          <div class="package-callsign-row">
+            <div
+              class="package-callsign package-editable"
+              data-package-input="callsign"
+              data-placeholder="CALLSIGN"
+              contenteditable="false"
+              spellcheck="false"
+            >CALLSIGN</div>
+          </div>
+
+          <div class="package-name-row">
+            <span class="package-name-label">Package</span>
+            <span
+              class="package-name-value"
+              data-package-view="packageName"
+            >PACKAGE</span>
+            <div class="edit-field package-name-edit">
+              <select class="field-input field-select package-name-select" data-package-input="packageNameSelect">
+                <option value="">PACKAGE</option>
+                <option value="AMBER">AMBER</option>
+                <option value="AQUA">AQUA</option>
+                <option value="AZURE">AZURE</option>
+                <option value="BRONZE">BRONZE</option>
+                <option value="COBALT">COBALT</option>
+                <option value="CORAL">CORAL</option>
+                <option value="CRIMSON">CRIMSON</option>
+                <option value="EMERALD">EMERALD</option>
+                <option value="FUCHSIA">FUCHSIA</option>
+                <option value="GOLD">GOLD</option>
+                <option value="INDIGO">INDIGO</option>
+                <option value="IVORY">IVORY</option>
+                <option value="JADE">JADE</option>
+                <option value="KHAKI">KHAKI</option>
+                <option value="LILAC">LILAC</option>
+                <option value="MAGENTA">MAGENTA</option>
+                <option value="MAROON">MAROON</option>
+                <option value="NAVY">NAVY</option>
+                <option value="OLIVE">OLIVE</option>
+                <option value="ONYX">ONYX</option>
+                <option value="PEARL">PEARL</option>
+                <option value="PLUM">PLUM</option>
+                <option value="SALMON">SALMON</option>
+                <option value="SAPPHIRE">SAPPHIRE</option>
+                <option value="SILVER">SILVER</option>
+                <option value="RUBY">RUBY</option>
+                <option value="SABLE">SABLE</option>
+                <option value="SCARLET">SCARLET</option>
+                <option value="TURQUOISE">TURQUOISE</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="package-task-block">
+          <div
+            class="package-mission-badge view-mode-task"
+            data-package-view="mission"
+          >
+            TASK
+          </div>
+
+          <div class="edit-field package-task-edit">
+            <select class="field-input field-select package-task-select" data-package-input="missionSelect">
+              <option value="">TASK</option>
+              <option value="CAP">CAP</option>
+              <option value="BARCAP">BARCAP</option>
+              <option value="DCA">DCA</option>
+              <option value="OCA">OCA</option>
+              <option value="TARCAP">TARCAP</option>
+              <option value="HAVCAP">HAVCAP</option>
+              <option value="RESCAP">RESCAP</option>
+              <option value="MIGCAP">MIGCAP</option>
+              <option value="SWEEP">SWEEP</option>
+              <option value="CAS">CAS</option>
+              <option value="SCAR">SCAR</option>
+              <option value="AI">AI</option>
+              <option value="BAI">BAI</option>
+              <option value="DEEP">DEEP</option>
+              <option value="STRIKE">STRIKE</option>
+              <option value="PRECISION STRIKE">PRECISION STRIKE</option>
+              <option value="PGSTRIKE">PGSTRIKE</option>
+              <option value="DEAD">DEAD</option>
+              <option value="SEAD">SEAD</option>
+              <option value="XCAS">XCAS</option>
+              <option value="FAC(A)">FAC(A)</option>
+              <option value="JTAC-COORD">JTAC-COORD</option>
+              <option value="RECCE">RECCE</option>
+              <option value="BDA">BDA</option>
+              <option value="SAR">SAR</option>
+              <option value="CSAR">CSAR</option>
+              <option value="PR">PR</option>
+              <option value="SOF INFIL/EXFIL">SOF INFIL/EXFIL</option>
+              <option value="SARD">SARD</option>
+              <option value="SHOW OF FORCE">SHOW OF FORCE</option>
+              <option value="AAR">AAR</option>
+              <option value="TANKER">TANKER</option>
+              <option value="AT">AT</option>
+              <option value="AIRLIFT">AIRLIFT</option>
+              <option value="STRATEGIC AIRLIFT">STRATEGIC AIRLIFT</option>
+              <option value="TACTICAL AIRLIFT">TACTICAL AIRLIFT</option>
+              <option value="CASEVAC">CASEVAC</option>
+              <option value="MEDEVAC">MEDEVAC</option>
+              <option value="RE-SUPPLY">RE-SUPPLY</option>
+              <option value="CARGO DROP">CARGO DROP</option>
+              <option value="CDS">CDS</option>
+              <option value="ESCORT">ESCORT</option>
+              <option value="FTR-ESCORT">FTR-ESCORT</option>
+              <option value="STRIKE-ESCORT">STRIKE-ESCORT</option>
+              <option value="SOF-ESCORT">SOF-ESCORT</option>
+              <option value="AAR-ESCORT">AAR-ESCORT</option>
+              <option value="AWACS">AWACS</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="package-card-body">
+        <div class="package-meta-line">
+          <span
+            class="package-meta-strong package-editable"
+            data-package-input="aircraftCount"
+            data-placeholder="#"
+            contenteditable="false"
+            spellcheck="false"
+          ></span>
+          <span>aircraft</span>
+          <span class="package-meta-dot">•</span>
+          <span
+            class="package-editable"
+            data-package-input="aircraftType"
+            data-placeholder="TYPE"
+            contenteditable="false"
+            spellcheck="false"
+          >TYPE</span>
+          <span class="package-meta-dot">•</span>
+          <span
+            class="package-editable"
+            data-package-input="departure"
+            data-placeholder="LOCATION"
+            contenteditable="false"
+            spellcheck="false"
+          >LOCATION</span>
+        </div>
+
+        <div class="package-leader-line">
+          <span class="package-label-inline">Leader :</span>
+          <span
+            class="package-editable"
+            data-package-input="leader"
+            data-placeholder="LEADER"
+            contenteditable="false"
+            spellcheck="false"
+          >LEADER</span>
+        </div>
+
+        <div class="package-wingmen">
+          <div class="package-wingmen-title">Wingmen</div>
+          <div
+            class="package-wingmen-list"
+            data-package-view="wingmen"
+          ></div>
+          <div class="edit-field package-wingmen-edit">
+            <div class="package-wingmen-builder">
+              <div class="package-wingmen-builder-list" data-package-input="wingmenBuilder"></div>
+              <button class="mini-action-btn" data-package-action="add-wingman" type="button">Ajouter un wingman</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="package-card-footer">
+        <div class="package-footer-line">
+          <span class="package-footer-item">
+            <span class="package-label-inline">Intra :</span>
+            <span
+              class="package-editable"
+              data-package-input="intra"
+              data-placeholder="FREQ"
+              contenteditable="false"
+              spellcheck="false"
+            >FREQ</span>
+          </span>
+
+          <span class="package-meta-dot">•</span>
+
+          <span class="package-footer-item">
+            <span class="package-label-inline">Destination :</span>
+            <span
+              class="package-editable"
+              data-package-input="destination"
+              data-placeholder="DESTINATION"
+              contenteditable="false"
+              spellcheck="false"
+            >DESTINATION</span>
+          </span>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="./app.js" defer></script>
 </body>
 </html>
