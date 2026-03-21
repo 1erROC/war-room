@@ -3,152 +3,97 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WAR ROOM · ATC</title>
+  <title>WAR ROOM · Command Center</title>
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <div class="app-shell" id="appShell">
-    <header class="topbar">
-      <div class="title-wrap">
-        <p class="subtitle">Mission Planning Interface</p>
-        <h1 class="title">WAR ROOM · ATC</h1>
-      </div>
-
-      <div class="topbar-actions">
-        <a class="action-btn" href="../index.html">Menu</a>
-      </div>
+  <div class="app-shell">
+    <header class="hero">
+      <div class="hero-topline">Mission Planning Interface</div>
+      <h1 class="hero-title">WAR ROOM</h1>
+      <p class="hero-subtitle">
+        Centre névralgique de préparation et de conduite des opérations.
+      </p>
     </header>
 
-    <main class="workspace">
-      <section class="layout-stack">
-        <article class="card">
-          <div class="card-header card-header-split">
-            <h2 class="card-title">Chargement Briefing</h2>
-            <button id="loadBriefBtn" class="action-btn" type="button">Charger packages</button>
-          </div>
+    <main class="hub-grid">
+      <a class="hub-card" href="./mission-briefing/index.html" aria-label="Ouvrir le module Mission Briefing">
+        <div class="hub-card-glow"></div>
+        <div class="hub-card-head">
+          <div class="hub-kicker">Module</div>
+          <div class="hub-status status-ready">Disponible</div>
+        </div>
 
-          <div class="card-body">
-            <div class="toolbar-grid">
-              <div class="mini-card">
-                <div class="mini-label">Brief ID</div>
-                <input id="briefIdInput" type="text" maxlength="12" placeholder="AB12CD34EF56" />
-              </div>
+        <div class="hub-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M7 4.5h7l3 3V19a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1Z" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M14 4.5v3h3" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M8.5 10h7M8.5 13h7M8.5 16h4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </div>
 
-              <div class="mini-card">
-                <div class="mini-label">Statut</div>
-                <div class="mini-value" id="briefLoadStatus">Aucun brief chargé</div>
-              </div>
-            </div>
-          </div>
-        </article>
+        <div class="hub-card-body">
+          <h2 class="hub-card-title">Mission Briefing</h2>
+          <p class="hub-card-text">
+            Module dédié à la consultation synthétique des briefs mission, avec lecture rapide, blocs tactiques et visualisation opérationnelle.
+          </p>
+        </div>
 
-        <article class="card">
-          <div class="card-header card-header-split">
-            <h2 class="card-title">Création package</h2>
-            <button id="createPackageBtn" class="action-btn" type="button">Créer package</button>
-          </div>
+        <div class="hub-card-footer">
+          <span class="hub-action">Accéder au module</span>
+          <span class="hub-arrow" aria-hidden="true">→</span>
+        </div>
+      </a>
 
-          <div class="card-body">
-            <div class="toolbar-grid toolbar-grid-three">
-              <div class="mini-card">
-                <div class="mini-label">Nom</div>
-                <input id="newPkgName" type="text" placeholder="JOKER" />
-              </div>
+      <a class="hub-card" href="./atc/index.html" aria-label="Ouvrir le module ATC">
+        <div class="hub-card-glow"></div>
+        <div class="hub-card-head">
+          <div class="hub-kicker">Module</div>
+          <div class="hub-status status-ready">Disponible</div>
+        </div>
 
-              <div class="mini-card">
-                <div class="mini-label">Task</div>
-                <input id="newPkgTask" type="text" placeholder="CAP / STRIKE / CAS" />
-              </div>
+        <div class="hub-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none">
+            <path d="M12 3v18M5 10l7-7 7 7M7 17h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M9.5 13.5 12 11l2.5 2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
 
-              <div class="mini-card">
-                <div class="mini-label">Aircraft</div>
-                <input id="newPkgAircraft" type="text" placeholder="F/A-18C" />
-              </div>
+        <div class="hub-card-body">
+          <h2 class="hub-card-title">ATC</h2>
+          <p class="hub-card-text">
+            Contrôle live, suivi des packages, responsabilités ATC, clearance et monitoring tactique.
+          </p>
+        </div>
 
-              <div class="mini-card">
-                <div class="mini-label">Nombre</div>
-                <input id="newPkgCount" type="number" min="1" placeholder="2" />
-              </div>
-
-              <div class="mini-card">
-                <div class="mini-label">Armement</div>
-                <input id="newPkgLoadout" type="text" placeholder="AIM-120 / GBU-38 / TGP" />
-              </div>
-
-              <div class="mini-card">
-                <div class="mini-label">Fréquence</div>
-                <input id="newPkgFreq" type="text" placeholder="305.000" />
-              </div>
-            </div>
-          </div>
-        </article>
-
-        <article class="card">
-          <div class="card-header card-header-split">
-            <h2 class="card-title">Configuration tableau ATC</h2>
-            <button id="applyBoardConfigBtn" class="action-btn" type="button">Appliquer</button>
-          </div>
-
-          <div class="card-body">
-            <div class="board-config-head">
-              <div class="mini-card">
-                <div class="mini-label">Colonnes</div>
-                <input id="columnCountInput" type="number" min="1" max="8" value="4" />
-              </div>
-            </div>
-
-            <div class="board-config-grid" id="boardConfigGrid"></div>
-          </div>
-        </article>
-
-        <article class="card">
-          <div class="card-header">
-            <h2 class="card-title">Notes globales</h2>
-          </div>
-
-          <div class="card-body">
-            <div class="global-notes-wrap">
-              <label class="mini-label" for="globalNotesInput">Bloc notes opérationnel</label>
-              <textarea
-                id="globalNotesInput"
-                class="global-notes-input"
-                placeholder="Noter ici les informations ATC / clearance / consignes / changements à la volée..."
-              ></textarea>
-            </div>
-          </div>
-        </article>
-
-        <article class="card">
-          <div class="card-header">
-            <h2 class="card-title">HANGAR</h2>
-          </div>
-
-          <div class="card-body">
-            <div class="stby-zone dropzone" id="stbyZone" data-zone-id="hangar"></div>
-          </div>
-        </article>
-
-        <article class="card">
-          <div class="card-header">
-            <h2 class="card-title">Tableau ATC</h2>
-          </div>
-
-          <div class="card-body">
-            <div class="board-grid" id="boardGrid"></div>
-          </div>
-        </article>
-
-        <article class="card">
-          <div class="card-header">
-            <h2 class="card-title">Journal des actions</h2>
-          </div>
-
-          <div class="card-body">
-            <div class="log-list" id="logList"></div>
-          </div>
-        </article>
-      </section>
+        <div class="hub-card-footer">
+          <span class="hub-action">Accéder au module</span>
+          <span class="hub-arrow" aria-hidden="true">→</span>
+        </div>
+      </a>
     </main>
+
+    <section class="overview-panel">
+      <div class="overview-card">
+        <div class="overview-label">Vision</div>
+        <div class="overview-value">Command Center modulaire</div>
+      </div>
+
+      <div class="overview-card">
+        <div class="overview-label">Architecture</div>
+        <div class="overview-value">Hub + modules dédiés</div>
+      </div>
+
+      <div class="overview-card">
+        <div class="overview-label">Modules actuels</div>
+        <div class="overview-value">Mission Briefing / ATC</div>
+      </div>
+    </section>
+
+    <footer class="footer-bar">
+      <span>WAR ROOM Command Center</span>
+      <span>By [1eROC] Seluj</span>
+    </footer>
   </div>
 
   <script src="./app.js" defer></script>
