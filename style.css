@@ -80,6 +80,24 @@ body::before{
   backdrop-filter:blur(12px);
 }
 
+.hero::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto 0;
+  height:4px;
+  background:linear-gradient(
+    90deg,
+    var(--accent) 0%,
+    #69d2ff 18%,
+    var(--accent-2) 52%,
+    var(--warning) 100%
+  );
+  box-shadow:
+    0 0 14px rgba(87,199,255,.18),
+    0 0 18px rgba(255,211,106,.08);
+  z-index:2;
+}
+
 .hero::after{
   content:"";
   position:absolute;
@@ -124,7 +142,7 @@ body::before{
 
 .hub-grid{
   display:grid;
-  grid-template-columns:repeat(3, minmax(0,1fr));
+  grid-template-columns:repeat(2, minmax(0,1fr));
   gap:20px;
 }
 
