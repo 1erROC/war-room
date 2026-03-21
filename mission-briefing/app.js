@@ -2751,8 +2751,8 @@ function renderTimelineVisual(timelinePackages = []) {
   const TIMELINE_SCALE_OFFSET = TIMELINE_LABEL_WIDTH + TIMELINE_LABEL_GAP;
   const TIMELINE_SCALE_HEIGHT = 52;
   const TIMELINE_AXIS_OFFSET = 44;
-  const TIMELINE_LANE_HEIGHT = 172;
-  const TIMELINE_LANES_GAP = 14;
+  const TIMELINE_LANE_HEIGHT = 112;
+  const TIMELINE_LANES_GAP = 6;
   const TIMELINE_TRACK_SIDE_PADDING = TIMELINE_EVENT_HALF_WIDTH + 8;
   const endPadding = 24;
   const pixelsPerMinute = getTimelineRequiredPixelsPerMinute(normalizedPackages);
@@ -3116,7 +3116,18 @@ async function fetchMissionPayloadFromServer(missionId) {
     throw new Error(`HTTP ${response.status}`);
   }
 
-  return response.json();
+  const payload = await response.json();
+  const token = String(payload?.token || "").trim();
+
+  if (token) {
+    const decodedPayload = decodeMissionPayload(token);
+    if (!decodedPayload?.briefing) {
+      throw new Error("Token mission invalide.");
+    }
+    return decodedPayload;
+  }
+
+  return payload;
 }
 
 function applyStoredMissionPayload(payload, missionId) {
@@ -3310,9 +3321,14 @@ function publishMission() {
 
   saveCurrentMission();
 
-  const payload = buildMissionPayload();
+  const token = encodeMissionPayload(buildMissionPayload());
+  if (!token) {
+    alert("Impossible de générer le token de mission.");
+    return;
+  }
+
   const filename = `${currentMissionId}.json`;
-  const jsonContent = JSON.stringify(payload, null, 2);
+  const jsonContent = JSON.stringify({ token }, null, 2);
 
   downloadJsonFile(filename, jsonContent);
 }
