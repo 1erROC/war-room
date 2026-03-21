@@ -326,7 +326,7 @@ function stripHtml(strip) {
           <div class="strip-small strip-code">${esc(strip.squawk)}</div>
         </label>
 
-        <label class="strip-block">
+        <label class="strip-block strip-block-loadout">
           <span class="strip-label">Armement</span>
           <div class="strip-mid">${esc(strip.loadout)}</div>
         </label>
@@ -374,7 +374,20 @@ function columnHtml(column) {
 }
 
 function renderBoard() {
+  const columnCount = state.columns.length;
+  let density = "full";
+
+  if (columnCount >= 8) {
+    density = "hide-altitude";
+  } else if (columnCount >= 7) {
+    density = "hide-radio";
+  } else if (columnCount >= 6) {
+    density = "hide-loadout";
+  }
+
   boardGrid.style.gridTemplateColumns = `repeat(${state.columns.length}, minmax(0, 1fr))`;
+  boardGrid.dataset.columnCount = String(columnCount);
+  boardGrid.dataset.density = density;
   boardGrid.innerHTML = state.columns.map(columnHtml).join("");
   renderSelectedStripBar();
   bindDragAndDrop();
