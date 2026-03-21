@@ -132,6 +132,40 @@ a{
   display:flex;
   align-items:center;
   gap:6px;
+  flex-wrap:wrap;
+}
+
+.load-status{
+  display:inline-flex;
+  align-items:center;
+  min-height:30px;
+  padding:0 12px;
+  border:1px solid rgba(140,190,255,.14);
+  border-radius:var(--radius-pill);
+  background:rgba(255,255,255,.03);
+  color:#c8d9ee;
+  font-size:.6rem;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.load-status.is-success{
+  border-color:rgba(125,240,183,.24);
+  background:rgba(22,94,67,.30);
+  color:#d8fff0;
+}
+
+.load-status.is-error{
+  border-color:rgba(255,122,122,.28);
+  background:rgba(120,16,16,.24);
+  color:#ffe1e1;
+}
+
+.load-status.is-loading{
+  border-color:rgba(88,199,255,.24);
+  background:rgba(16,44,78,.30);
+  color:#d7efff;
 }
 
 .clock-stack{
@@ -418,6 +452,18 @@ a{
   color:#d8fff0;
 }
 
+#clearanceActionBtn{
+  border-color:rgba(255,122,122,.24);
+  background:rgba(92,18,24,.38);
+  color:#ffe1e1;
+}
+
+#clearanceActionBtn.is-active{
+  border-color:rgba(125,240,183,.32);
+  background:rgba(22,94,67,.82);
+  color:#d8fff0;
+}
+
 .board-action-btn.is-active{
   color:#fff1f1;
   border-color:rgba(255,122,122,.34);
@@ -598,7 +644,7 @@ a{
 }
 
 .strip-row-meta{
-  grid-template-columns:minmax(0, 1fr);
+  grid-template-columns:minmax(0, 1fr) 52px;
   align-items:stretch;
   justify-content:start;
   min-height:22px;
@@ -682,7 +728,7 @@ a{
 }
 
 .strip-block-radio .strip-big{
-  font-size:.7rem;
+  font-size:.82rem;
 }
 
 .strip-block-altitude .strip-big{
@@ -802,6 +848,30 @@ a{
   overflow:hidden;
   text-overflow:ellipsis;
   width:100%;
+}
+
+.strip-meta-pill[data-strip-timer]{
+  justify-content:flex-start;
+  padding:0 12px;
+}
+
+.strip-meta-pill-clearance{
+  width:52px;
+  min-width:52px;
+  max-width:52px;
+  justify-content:center;
+}
+
+.strip-meta-pill-clearance.is-pending{
+  border-color:rgba(255,122,122,.22);
+  background:rgba(92,18,24,.34);
+  color:#ffd6d6;
+}
+
+.strip-meta-pill-clearance.is-cleared{
+  border-color:rgba(125,240,183,.24);
+  background:rgba(22,94,67,.72);
+  color:#d8fff0;
 }
 
 .strip-notes{
@@ -1024,7 +1094,7 @@ a{
   }
 
   .strip-row-meta{
-    grid-template-columns:76px 60px minmax(0, 1fr);
+    grid-template-columns:minmax(0, 1fr) 52px;
   }
 
   .board-actions-bar{
