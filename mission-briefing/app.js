@@ -3107,13 +3107,30 @@ function saveCurrentMission() {
 }
 
 async function fetchMissionPayloadFromServer(missionId) {
-  const response = await fetch(`../BRIEFS/${missionId}.json`, {
-    method: "GET",
-    cache: "no-store"
-  });
+  const briefPathCandidates = [
+    `../briefs/${missionId}.json`,
+    `../BRIEFS/${missionId}.json`
+  ];
 
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}`);
+  let response = null;
+  let lastStatus = "";
+
+  for (const candidate of briefPathCandidates) {
+    const currentResponse = await fetch(candidate, {
+      method: "GET",
+      cache: "no-store"
+    });
+
+    if (currentResponse.ok) {
+      response = currentResponse;
+      break;
+    }
+
+    lastStatus = `HTTP ${currentResponse.status}`;
+  }
+
+  if (!response) {
+    throw new Error(lastStatus || "Brief introuvable.");
   }
 
   const payload = await response.json();
