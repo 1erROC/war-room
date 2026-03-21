@@ -524,7 +524,7 @@ a{
 
 .board-column-subhead{
   display:grid;
-  grid-template-columns:1fr auto;
+  grid-template-columns:minmax(0, 1fr) 92px;
   gap:8px;
   align-items:center;
   padding:4px 8px;
@@ -550,7 +550,7 @@ a{
 }
 
 .board-column-freq-input{
-  width:74px;
+  width:92px;
   color:#c5d5ea;
   font-size:.64rem;
   font-weight:800;
