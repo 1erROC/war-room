@@ -9,6 +9,7 @@ const esc = (value) => String(value ?? "")
 const boardGrid = $("boardGrid");
 const missionIdInput = $("missionIdInput");
 const loadMissionBtn = $("loadMissionBtn");
+const loadStatus = $("loadStatus");
 const createPackageBtn = $("createPackageBtn");
 const addSectorBtn = $("addSectorBtn");
 const removeSectorBtn = $("removeSectorBtn");
@@ -23,12 +24,13 @@ const selectedStripNotes = $("selectedStripNotes");
 const notesActionBtn = $("notesActionBtn");
 const editStripActionBtn = $("editStripActionBtn");
 const controlActionBtn = $("controlActionBtn");
+const clearanceActionBtn = $("clearanceActionBtn");
 const emergencyActionBtn = $("emergencyActionBtn");
 const deleteActionBtn = $("deleteActionBtn");
 
 let draggedStripId = null;
 let modalState = null;
-const BRIEFS_DIR = "../briefs/";
+const BRIEF_PATH_CANDIDATES = ["../briefs/", "../BRIEFS/", "./briefs/", "./BRIEFS/"];
 const SHORT_TOKEN_LENGTH = 12;
 
 const state = {
@@ -69,6 +71,7 @@ function makeStrip(data = {}) {
     freq: String(data.freq || "").trim() || "000.000",
     notes: String(data.notes || "").trim(),
     zoneId: data.zoneId || state.columns[0].id,
+    clearance: !!data.clearance,
     emergency: !!data.emergency,
     accent: data.accent || randomAccent(),
     lastActionAt: Number.isFinite(data.lastActionAt) ? data.lastActionAt : Date.now()
@@ -108,6 +111,15 @@ function formatClockSeconds(totalSeconds) {
 function seedStrips() {
   state.strips = [];
   state.selectedStripId = null;
+}
+
+function setLoadStatus(message, tone = "") {
+  if (!loadStatus) return;
+  loadStatus.textContent = message;
+  loadStatus.classList.remove("is-success", "is-error", "is-loading");
+  if (tone) {
+    loadStatus.classList.add(`is-${tone}`);
+  }
 }
 
 function sanitizeShortToken(value) {
@@ -159,27 +171,59 @@ function decodeBriefToken(token) {
 async function loadMissionPackages() {
   const missionId = sanitizeShortToken(missionIdInput?.value || "");
   if (missionIdInput) missionIdInput.value = missionId;
-  if (!missionId || missionId.length !== SHORT_TOKEN_LENGTH) return;
+  if (!missionId || missionId.length !== SHORT_TOKEN_LENGTH) {
+    setLoadStatus("Mission ID invalide", "error");
+    return;
+  }
+
+  setLoadStatus("Chargement...", "loading");
 
   try {
-    const response = await fetch(`${BRIEFS_DIR}${missionId}.json?ts=${Date.now()}`, {
-      cache: "no-store"
-    });
+    let response = null;
 
-    if (!response.ok) return;
+    for (const basePath of BRIEF_PATH_CANDIDATES) {
+      const candidate = `${basePath}${missionId}.json?ts=${Date.now()}`;
+      try {
+        const currentResponse = await fetch(candidate, { cache: "no-store" });
+        if (currentResponse.ok) {
+          response = currentResponse;
+          break;
+        }
+      } catch {
+        // Try next candidate path.
+      }
+    }
+
+    if (!response) {
+      const message = window.location.protocol === "file:"
+        ? "Brief introuvable ou bloque en file://"
+        : "Brief introuvable";
+      setLoadStatus(message, "error");
+      return;
+    }
 
     const data = await response.json();
     const token = String(data?.token || "").trim();
-    if (!token) return;
+    if (!token) {
+      setLoadStatus("Token absent du brief", "error");
+      return;
+    }
 
     const strips = decodeBriefToken(token);
-    if (!strips) return;
+    if (!strips) {
+      setLoadStatus("Token invalide", "error");
+      return;
+    }
 
     state.strips = strips;
     state.selectedStripId = state.strips[0]?.id || null;
     renderBoard();
+    setLoadStatus(`${strips.length} strip${strips.length > 1 ? "s" : ""} charge${strips.length > 1 ? "s" : ""}`, "success");
   } catch {
-    // Silence for now: UI remains unchanged if load fails.
+    const message = window.location.protocol === "file:"
+      ? "Charge via serveur local requis"
+      : "Erreur de chargement";
+    setLoadStatus(message, "error");
   }
 }
 
@@ -227,6 +271,7 @@ function stripHtml(strip) {
 
       <div class="strip-row strip-row-meta">
         <div class="strip-meta-pill" data-strip-timer="${strip.id}">${esc(formatElapsed(Date.now() - strip.lastActionAt))}</div>
+        <div class="strip-meta-pill strip-meta-pill-clearance ${strip.clearance ? "is-cleared" : "is-pending"}">CLR</div>
       </div>
     </article>
   `;
@@ -299,9 +344,11 @@ function renderSelectedStripBar() {
     notesActionBtn?.setAttribute("disabled", "true");
     editStripActionBtn?.setAttribute("disabled", "true");
     controlActionBtn?.setAttribute("disabled", "true");
+    clearanceActionBtn?.setAttribute("disabled", "true");
     emergencyActionBtn?.setAttribute("disabled", "true");
     deleteActionBtn?.setAttribute("disabled", "true");
     if (emergencyActionBtn) emergencyActionBtn.classList.remove("is-active");
+    if (clearanceActionBtn) clearanceActionBtn.classList.remove("is-active");
     return;
   }
 
@@ -326,11 +373,16 @@ function renderSelectedStripBar() {
   notesActionBtn?.removeAttribute("disabled");
   editStripActionBtn?.removeAttribute("disabled");
   controlActionBtn?.removeAttribute("disabled");
+  clearanceActionBtn?.removeAttribute("disabled");
   emergencyActionBtn?.removeAttribute("disabled");
   deleteActionBtn?.removeAttribute("disabled");
 
   if (emergencyActionBtn) {
     emergencyActionBtn.classList.toggle("is-active", strip.emergency);
+  }
+
+  if (clearanceActionBtn) {
+    clearanceActionBtn.classList.toggle("is-active", strip.clearance);
   }
 }
 
@@ -573,6 +625,7 @@ function createStrip() {
     freq: "000.000",
     notes: "",
     zoneId: firstColumnId,
+    clearance: false,
     emergency: false
   }));
   state.selectedStripId = state.strips[0].id;
@@ -788,6 +841,14 @@ controlActionBtn?.addEventListener("click", () => {
   openCtrlModal(strip.id);
 });
 
+clearanceActionBtn?.addEventListener("click", () => {
+  const strip = getSelectedStrip();
+  if (!strip) return;
+  strip.clearance = !strip.clearance;
+  touchStrip(strip);
+  renderBoard();
+});
+
 emergencyActionBtn?.addEventListener("click", () => {
   const strip = getSelectedStrip();
   if (!strip) return;
@@ -811,8 +872,15 @@ syncGameClockBtn?.addEventListener("click", () => {
   updateGameClock();
 });
 loadMissionBtn?.addEventListener("click", loadMissionPackages);
+missionIdInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    loadMissionPackages();
+  }
+});
 
 seedStrips();
+setLoadStatus("Board vide");
 updateClock();
 updateGameClock();
 setInterval(updateClock, 1000);
