@@ -722,6 +722,11 @@ a{
   align-items:flex-start;
 }
 
+.strip-block-loadout{
+  justify-content:space-between;
+  align-items:flex-start;
+}
+
 .strip-block-altitude{
   justify-content:space-between;
   align-items:flex-start;
@@ -872,6 +877,33 @@ a{
   border-color:rgba(125,240,183,.24);
   background:rgba(22,94,67,.72);
   color:#d8fff0;
+}
+
+.board-grid[data-density="hide-loadout"] .strip-row-top{
+  grid-template-columns:24px minmax(128px, 1.9fr) 72px minmax(74px, .95fr);
+}
+
+.board-grid[data-density="hide-loadout"] .strip-block-loadout{
+  display:none;
+}
+
+.board-grid[data-density="hide-radio"] .strip-row-top{
+  grid-template-columns:24px minmax(130px, 2.1fr) minmax(74px, .95fr);
+}
+
+.board-grid[data-density="hide-radio"] .strip-block-loadout,
+.board-grid[data-density="hide-radio"] .strip-block-radio{
+  display:none;
+}
+
+.board-grid[data-density="hide-altitude"] .strip-row-top{
+  grid-template-columns:24px minmax(0, 1fr);
+}
+
+.board-grid[data-density="hide-altitude"] .strip-block-loadout,
+.board-grid[data-density="hide-altitude"] .strip-block-radio,
+.board-grid[data-density="hide-altitude"] .strip-block-altitude{
+  display:none;
 }
 
 .strip-notes{
