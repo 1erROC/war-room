@@ -140,29 +140,97 @@ function toBase64UrlBytes(value) {
   return Uint8Array.from(atob(base64), (char) => char.charCodeAt(0));
 }
 
+function formatBriefAltitude(value) {
+  const text = String(value || "").trim().toUpperCase();
+  if (!text) return "FL000";
+  if (/^(FL|A)\d+/.test(text)) return text;
+  if (/^\d+$/.test(text)) return `FL${text}`;
+  return text;
+}
+
+function buildStripsFromLegacyPayload(decoded) {
+  const packages = Array.isArray(decoded?.pk) ? decoded.pk : [];
+
+  return packages.map((pkg) =>
+    makeStrip({
+      callsign: pkg.n || "PACKAGE",
+      count: String((Array.isArray(pkg.pl) ? pkg.pl.filter(Boolean).length : 0) + (pkg.ld ? 1 : 0) || 1),
+      aircraft: pkg.a || "F16C",
+      mission: pkg.tk || "CAP",
+      squawk: pkg.sq || "0000",
+      altitude: pkg.aco?.ce || pkg.aco?.fl || "FL000",
+      loadout: pkg.ato?.wp || "--",
+      origin: pkg.b || "BASE",
+      destination: pkg.d || "TARGET",
+      freq: pkg.f || "000.000",
+      notes: "",
+      zoneId: "parking",
+      emergency: false,
+      accent: pkg.c || randomAccent()
+    })
+  );
+}
+
+function buildStripsFromMissionBriefingPayload(decoded) {
+  const briefing = decoded?.briefing;
+  const packages = Array.isArray(briefing?.packages) ? briefing.packages : [];
+  const atos = Array.isArray(briefing?.atos) ? briefing.atos : [];
+  const acos = Array.isArray(briefing?.acos) ? briefing.acos : [];
+
+  const atoByPackageId = new Map(
+    atos
+      .filter((ato) => ato?.packageId)
+      .map((ato) => [ato.packageId, ato])
+  );
+
+  const acoByPackageId = new Map(
+    acos
+      .filter((aco) => aco?.packageId)
+      .map((aco) => [aco.packageId, aco])
+  );
+
+  return packages.map((pkg) => {
+    const ato = atoByPackageId.get(pkg.id) || {};
+    const aco = acoByPackageId.get(pkg.id) || {};
+    const notes = [
+      ato.pilotNotes,
+      ato.commanderNotes,
+      aco.notes
+    ].map((value) => String(value || "").trim()).filter(Boolean).join(" | ");
+
+    return makeStrip({
+      callsign: pkg.callsign || "PACKAGE",
+      count: pkg.aircraftCount || "1",
+      aircraft: pkg.aircraftType || "F16C",
+      mission: pkg.mission || pkg.packageName || "CAP",
+      squawk: ato.iffModes || "0000",
+      altitude: formatBriefAltitude(
+        aco.ceilingAltitude || aco.transitAltitude || aco.floorAltitude || ""
+      ),
+      loadout: ato.loadout || "--",
+      origin: pkg.departure || "BASE",
+      destination: pkg.destination || "TARGET",
+      freq: pkg.intra || ato.inherited?.intra || "000.000",
+      notes,
+      zoneId: "parking",
+      emergency: false,
+      accent: pkg.color || ato.inherited?.color || randomAccent()
+    });
+  });
+}
+
 function decodeBriefToken(token) {
   try {
     const decoded = JSON.parse(new TextDecoder().decode(toBase64UrlBytes(token)));
-    const packages = Array.isArray(decoded?.pk) ? decoded.pk : [];
+    if (Array.isArray(decoded?.briefing?.packages)) {
+      return buildStripsFromMissionBriefingPayload(decoded);
+    }
 
-    return packages.map((pkg) =>
-      makeStrip({
-        callsign: pkg.n || "PACKAGE",
-        count: String((Array.isArray(pkg.pl) ? pkg.pl.filter(Boolean).length : 0) + (pkg.ld ? 1 : 0) || 1),
-        aircraft: pkg.a || "F16C",
-        mission: pkg.tk || "CAP",
-        squawk: pkg.sq || "0000",
-        altitude: pkg.aco?.ce || pkg.aco?.fl || "FL000",
-        loadout: pkg.ato?.wp || "--",
-        origin: pkg.b || "BASE",
-        destination: pkg.d || "TARGET",
-        freq: pkg.f || "000.000",
-        notes: "",
-        zoneId: "parking",
-        emergency: false,
-        accent: pkg.c || randomAccent()
-      })
-    );
+    if (Array.isArray(decoded?.pk)) {
+      return buildStripsFromLegacyPayload(decoded);
+    }
+
+    return null;
   } catch {
     return null;
   }
