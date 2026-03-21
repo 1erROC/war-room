@@ -12,13 +12,14 @@
       <div class="title-block">
         <p class="subtitle">Mission Planning Interface</p>
         <h1 class="title">ATC BOARD</h1>
-        <p class="topbar-note">Tableau central de suivi ATC. Les strips se modifient directement et se déplacent par glisser-deposer ou par choix de secteur.</p>
+        <p class="topbar-note">Tableau central de suivi ATC. Les strips se selectionnent a la volee, se transferent entre secteurs et se pilotent depuis la barre de commandes.</p>
       </div>
 
       <div class="toolbar">
         <div class="load-brief-group">
           <input class="tool-input" id="missionIdInput" type="text" placeholder="Mission ID" maxlength="12" />
           <button class="tool-btn tool-btn-blue" id="loadMissionBtn" type="button">Load</button>
+          <div class="load-status" id="loadStatus" aria-live="polite">Board vide</div>
         </div>
         <button class="tool-btn tool-btn-gold" id="createPackageBtn" type="button">New</button>
         <button class="tool-btn tool-btn-green" id="addSectorBtn" type="button">Add</button>
@@ -63,6 +64,7 @@
           <button class="board-action-btn board-action-btn--gold" id="notesActionBtn" type="button">Nts</button>
           <button class="board-action-btn board-action-btn--blue" id="editStripActionBtn" type="button">Mod</button>
           <button class="board-action-btn board-action-btn--green" id="controlActionBtn" type="button">Ctr</button>
+          <button class="board-action-btn" id="clearanceActionBtn" type="button">Clr</button>
           <button class="board-action-btn board-action-btn--danger" id="emergencyActionBtn" type="button">Emy</button>
           <button class="board-action-btn board-action-btn--danger" id="deleteActionBtn" type="button">Trash</button>
         </div>
