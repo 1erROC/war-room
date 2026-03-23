@@ -16,27 +16,58 @@
 
       <div class="topbar-right">
         <div class="mode-panel">
-          <div class="mode-text">
-            <span class="mode-label">Mode actif</span>
-            <span class="mode-value" id="modeValue">Briefing</span>
+          <div class="mode-panel-row mode-panel-row-primary">
+            <div class="mode-control">
+              <div class="mode-text">
+                <span class="mode-label">Mode actif</span>
+                <span class="mode-value" id="modeValue">Briefing</span>
+              </div>
+
+              <button
+                id="modeSwitch"
+                class="switch"
+                type="button"
+                aria-label="Basculer entre le mode briefing et le mode édition"
+                aria-pressed="false"
+              >
+                <span class="switch-track"></span>
+                <span class="switch-thumb"></span>
+              </button>
+            </div>
+
+            <button id="newMissionBtn" class="topbar-btn" type="button">NEW</button>
+            <button id="loadMizBtn" class="topbar-btn" type="button">LOAD</button>
+            <button id="exportKneeboardBtn" class="topbar-btn" type="button">KNBRD</button>
           </div>
 
-          <button
-            id="modeSwitch"
-            class="switch"
-            type="button"
-            aria-label="Basculer entre le mode briefing et le mode édition"
-            aria-pressed="false"
-          >
-            <span class="switch-track"></span>
-            <span class="switch-thumb"></span>
-          </button>
+          <div class="mode-panel-row mode-panel-row-secondary">
+            <button id="copyUrlBtn" class="topbar-btn" type="button">URL</button>
+            <button id="copyMissionIdBtn" class="topbar-btn" type="button">COPIER ID</button>
+            <button id="pasteMissionIdBtn" class="topbar-btn" type="button">COLLER ID</button>
+            <a class="topbar-btn topbar-link" href="../index.html">Menu</a>
+          </div>
 
-          <button id="newMissionBtn" class="topbar-btn" type="button">Nouveau</button>
-          <button id="copyUrlBtn" class="topbar-btn" type="button">Copier URL</button>
-          <button id="copyMissionIdBtn" class="topbar-btn" type="button">Copier Mission ID</button>
-          <button id="pasteMissionIdBtn" class="topbar-btn" type="button">Coller Mission ID</button>
-          <a class="topbar-btn topbar-link" href="../index.html">Menu</a>
+          <div class="topbar-actions-menu">
+            <button
+              id="topbarActionsBtn"
+              class="topbar-btn topbar-actions-trigger"
+              type="button"
+              aria-expanded="false"
+              aria-controls="topbarActionsDropdown"
+            >
+              ACTIONS
+            </button>
+
+            <div id="topbarActionsDropdown" class="topbar-actions-dropdown" hidden>
+              <button class="topbar-actions-item" type="button" data-topbar-action="new">NEW</button>
+              <button class="topbar-actions-item" type="button" data-topbar-action="load">LOAD</button>
+              <button class="topbar-actions-item" type="button" data-topbar-action="kneeboard">KNBRD</button>
+              <button class="topbar-actions-item" type="button" data-topbar-action="url">URL</button>
+              <button class="topbar-actions-item" type="button" data-topbar-action="copy-id">COPIER ID</button>
+              <button class="topbar-actions-item" type="button" data-topbar-action="paste-id">COLLER ID</button>
+              <button class="topbar-actions-item" type="button" data-topbar-action="menu">MENU</button>
+            </div>
+          </div>
         </div>
 
         <div class="author-line">By [1eROC] Seluj</div>
@@ -725,6 +756,150 @@
     </main>
   </div>
 
+  <div id="mizImportModal" class="miz-modal" aria-hidden="true">
+    <div id="mizImportBackdrop" class="miz-modal-backdrop"></div>
+
+    <div
+      class="miz-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="mizImportTitle"
+      aria-describedby="mizImportSubtitle"
+    >
+      <div class="miz-modal-header">
+        <div>
+          <div class="miz-modal-kicker">Mission Import · DCS</div>
+          <h2 id="mizImportTitle" class="miz-modal-title">LOAD MISSION</h2>
+          <p id="mizImportSubtitle" class="miz-modal-subtitle">
+            Collez le contenu brut du fichier `mission`, puis choisissez une coalition et les groupes a injecter dans le briefing.
+          </p>
+        </div>
+
+        <button id="mizImportCloseBtn" class="mini-action-btn" type="button">Fermer</button>
+      </div>
+
+      <div class="miz-modal-steps">
+        <div class="miz-step-pill is-active" data-miz-step-pill="1">1. Texte</div>
+        <div class="miz-step-pill" data-miz-step-pill="2">2. Coalition</div>
+        <div class="miz-step-pill" data-miz-step-pill="3">3. Groupes</div>
+      </div>
+
+      <section class="miz-step-panel is-active" data-miz-step-panel="1">
+        <div class="miz-text-import">
+          <label class="data-label" for="mizMissionTextInput">Collez le contenu brut du fichier `mission`</label>
+          <textarea
+            id="mizMissionTextInput"
+            class="token-output miz-textarea"
+            spellcheck="false"
+            placeholder="Collez ici le texte complet qui commence par `mission = { ... }`"
+          ></textarea>
+        </div>
+
+        <div id="mizImportStatus" class="miz-import-status">En attente du texte `mission = { ... }`.</div>
+
+        <div class="miz-modal-actions">
+          <button id="mizValidateFileBtn" class="topbar-btn" type="button">Valider</button>
+        </div>
+      </section>
+
+      <section class="miz-step-panel" data-miz-step-panel="2">
+        <div class="miz-coalition-grid">
+          <button id="mizCoalitionRedBtn" class="miz-coalition-card miz-coalition-card-red" type="button">
+            <span class="miz-coalition-label">ROUGE</span>
+            <span class="miz-coalition-count" data-miz-coalition-count="red">0 groupes</span>
+          </button>
+
+          <div class="miz-coalition-divider" aria-hidden="true"></div>
+
+          <button id="mizCoalitionBlueBtn" class="miz-coalition-card miz-coalition-card-blue" type="button">
+            <span class="miz-coalition-label">BLEU</span>
+            <span class="miz-coalition-count" data-miz-coalition-count="blue">0 groupes</span>
+          </button>
+        </div>
+
+        <div class="miz-modal-actions">
+          <button id="mizBackToFileBtn" class="mini-action-btn" type="button">Retour</button>
+        </div>
+      </section>
+
+      <section class="miz-step-panel" data-miz-step-panel="3">
+        <div class="miz-group-toolbar">
+          <div id="mizGroupHeading" class="miz-group-heading">Coalition sélectionnée : --</div>
+          <div class="miz-group-toolbar-actions">
+            <button id="mizSelectAllGroupsBtn" class="mini-action-btn" type="button">Tout cocher</button>
+            <button id="mizClearGroupsBtn" class="mini-action-btn" type="button">Tout décocher</button>
+          </div>
+        </div>
+
+        <div id="mizGroupList" class="miz-group-list"></div>
+
+        <div class="miz-modal-actions">
+          <button id="mizBackToCoalitionBtn" class="mini-action-btn" type="button">Retour</button>
+          <button id="mizImportGroupsBtn" class="topbar-btn" type="button">Importer</button>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <div id="kneeboardExportModal" class="miz-modal" aria-hidden="true">
+    <div id="kneeboardExportBackdrop" class="miz-modal-backdrop"></div>
+
+    <div
+      class="miz-modal-dialog export-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="kneeboardExportTitle"
+      aria-describedby="kneeboardExportSubtitle"
+    >
+      <div class="miz-modal-header">
+        <div>
+          <div class="miz-modal-kicker">Export · Kneeboard PNG</div>
+          <h2 id="kneeboardExportTitle" class="miz-modal-title">EXPORT KNEEBOARD</h2>
+          <p id="kneeboardExportSubtitle" class="miz-modal-subtitle">
+            Sélectionne un package puis exporte un kneeboard portrait `1536 × 2048` construit à partir de sa fiche ATO.
+          </p>
+        </div>
+
+        <button id="kneeboardExportCloseBtn" class="mini-action-btn" type="button">Fermer</button>
+      </div>
+
+      <div class="export-modal-body">
+        <div class="export-modal-grid">
+          <label class="export-field">
+            <span class="export-field-label">Package</span>
+            <select id="kneeboardPackageSelect" class="field-input field-select export-package-select"></select>
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Coordonnées route</span>
+            <select id="kneeboardCoordsFormatSelect" class="field-input field-select export-package-select">
+              <option value="lldm">LL DM</option>
+              <option value="dd">DD</option>
+              <option value="mgrs">MGRS</option>
+            </select>
+          </label>
+
+          <div class="export-package-preview">
+            <div class="export-package-preview-kicker">Contenu exporté</div>
+            <div id="kneeboardPackageMeta" class="export-package-meta">
+              Aucun package disponible.
+            </div>
+          </div>
+        </div>
+
+        <div class="export-format-card">
+          <div class="export-format-title">Format image</div>
+          <div class="export-format-copy">PNG · 1536 × 2048 · Portrait · Résumé ATO du package sélectionné</div>
+        </div>
+
+        <div class="miz-modal-actions export-modal-actions">
+          <button id="kneeboardExportCancelBtn" class="mini-action-btn" type="button">Annuler</button>
+          <button id="kneeboardExportConfirmBtn" class="topbar-btn" type="button">Exporter Kneeboard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <template id="packageCardTemplate">
     <article class="package-card" style="--package-accent:#58c7ff;">
       <div class="package-card-top">
@@ -953,6 +1128,7 @@
     </article>
   </template>
 
+  <script src="https://cdn.jsdelivr.net/npm/luaparse@0.3.1/luaparse.min.js" defer></script>
   <script src="./app.js" defer></script>
 </body>
 </html>
