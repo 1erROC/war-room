@@ -129,19 +129,20 @@ const PACKAGE_NAME_OPTIONS = [
 ];
 
 const ATO_ROUTE_DEFAULTS = [
-  { wp: "WP1", desc: "", coords: "", alt: "", spd: "" },
-  { wp: "WP2", desc: "", coords: "", alt: "", spd: "" },
-  { wp: "IP", desc: "", coords: "", alt: "", spd: "" },
-  { wp: "TGT", desc: "", coords: "", alt: "", spd: "" },
-  { wp: "EP", desc: "", coords: "", alt: "", spd: "" },
-  { wp: "WP6", desc: "", coords: "", alt: "", spd: "" }
+  { wp: "WP1", desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" },
+  { wp: "WP2", desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" },
+  { wp: "IP", desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" },
+  { wp: "TGT", desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" },
+  { wp: "EP", desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" },
+  { wp: "WP6", desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" }
 ];
 
 const ATO_COMM_DEFAULTS = [
-  { name: "AWACS", freq: "", band: "UHF" },
-  { name: "TANKER", freq: "", band: "UHF" },
-  { name: "DEPARTURE", freq: "", band: "UHF" },
-  { name: "GUARD", freq: "243.000", band: "UHF" }
+  { name: "AWACS", description: "Radar / C2", freq: "" },
+  { name: "TANKER", description: "AAR", freq: "" },
+  { name: "DEPART", description: "Departure", freq: "" },
+  { name: "ARRIVAL", description: "Arrival", freq: "" },
+  { name: "DIVERT", description: "Divert", freq: "" }
 ];
 
 const defaultMissionData = {
@@ -357,6 +358,10 @@ function sanitizeDecimalInput(value, maxLength = 5) {
 
 function sanitizeUpperText(value, maxLength = 80) {
   return String(value || "").replace(/\s+/g, " ").trim().toUpperCase().slice(0, maxLength);
+}
+
+function sanitizeUpperTextLive(value, maxLength = 80) {
+  return String(value || "").replace(/\s+/g, " ").toUpperCase().slice(0, maxLength);
 }
 
 function sanitizeFreeText(value, maxLength = 120) {
@@ -2862,6 +2867,16 @@ function getDefaultAtoComm() {
   return ATO_COMM_DEFAULTS.map((row) => ({ ...row }));
 }
 
+function getDefaultAtoSupportTiles() {
+  return [
+    { title: "C2", description: "", freq: "" },
+    { title: "ESCORT", description: "", freq: "" },
+    { title: "SEAD", description: "", freq: "" },
+    { title: "TANKER", description: "", freq: "" },
+    { title: "PACKAGE", description: "", freq: "" }
+  ];
+}
+
 function createDefaultAto(packageData = {}) {
   const pkg = normalizePackageData(packageData);
 
@@ -2915,6 +2930,8 @@ function createDefaultAto(packageData = {}) {
     pushTime: "",
     pushNote: "",
     totNote: "",
+    totNet: "",
+    totNlt: "",
     iffModes: "",
     iffNote: "",
     datalink: "",
@@ -2934,6 +2951,7 @@ function createDefaultAto(packageData = {}) {
     totalDistance: "",
     estFlightTime: "",
     comm: getDefaultAtoComm(),
+    supportTiles: getDefaultAtoSupportTiles(),
     route: getDefaultAtoRoute(),
     pilotNotes: "",
     commanderNotes: ""
@@ -2950,6 +2968,12 @@ function formatZuluTime(value) {
   return `${digits.slice(0, 2)}:${digits.slice(2, 4)}Z`;
 }
 
+function formatShortTime(value) {
+  const digits = sanitizeTimeInput(value);
+  if (digits.length < 4) return "--:--";
+  return `${digits.slice(0, 2)}:${digits.slice(2, 4)}`;
+}
+
 function sanitizeAtoValue(fieldName, value) {
   const text = String(value || "");
 
@@ -2957,7 +2981,7 @@ function sanitizeAtoValue(fieldName, value) {
     return sanitizeDigits(text, 3);
   }
 
-  if (["launchTime", "totTime", "recoveryTime", "pushTime"].includes(fieldName)) {
+  if (["launchTime", "totTime", "recoveryTime", "pushTime", "totNet", "totNlt"].includes(fieldName)) {
     return sanitizeAtoTime(text);
   }
 
@@ -2993,6 +3017,8 @@ function sanitizeAtoValue(fieldName, value) {
     "divertNote",
     "pushNote",
     "totNote",
+    "totNet",
+    "totNlt",
     "iffNote",
     "datalinkNote",
     "laserNote",
@@ -3029,10 +3055,14 @@ function sanitizeAtoValue(fieldName, value) {
 function sanitizeAtoRouteRow(row = {}, fallback = {}) {
   return {
     wp: sanitizeUpperText(row.wp || fallback.wp || "", 24),
+    time: sanitizeTimeInput(row.time || fallback.time || ""),
+    dist: sanitizeFreeText(row.dist || fallback.dist || "", 20),
     desc: sanitizeFreeText(row.desc || fallback.desc || "", 120),
     coords: sanitizeMultilineText(row.coords || fallback.coords || "", 180),
     alt: sanitizeFreeText(row.alt || fallback.alt || "", 20),
     spd: sanitizeFreeText(row.spd || fallback.spd || "", 20),
+    hdg: sanitizeDigits(String(row.hdg || fallback.hdg || ""), 3),
+    beacon: sanitizeUpperText(row.beacon || fallback.beacon || "", 24),
     etaSeconds: Number.isFinite(Number(row.etaSeconds)) ? Number(row.etaSeconds) : null
   };
 }
@@ -3050,12 +3080,204 @@ function parseAtoRouteCoordinatesDisplay(value) {
   };
 }
 
+function parseDecimalCoordinatePair(value = "") {
+  const text = String(value || "").trim();
+  if (!text) return null;
+
+  const normalized = text
+    .replace(/,/g, " ")
+    .replace(/;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  const matches = normalized.match(/[-+]?\d+(?:\.\d+)?/g);
+  if (!matches || matches.length < 2) return null;
+
+  const lat = Number(matches[0]);
+  const lon = Number(matches[1]);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+
+  return { lat, lon };
+}
+
+function parseDegreeMinuteCoordinatePair(value = "") {
+  const text = String(value || "").toUpperCase().trim();
+  if (!text) return null;
+
+  const regex = /([NS])\s*(\d{1,2})[^0-9]+(\d{1,2}(?:\.\d+)?)\D+([EW])\s*(\d{1,3})[^0-9]+(\d{1,2}(?:\.\d+)?)/;
+  const match = text.match(regex);
+  if (!match) return null;
+
+  const [, latHem, latDegRaw, latMinRaw, lonHem, lonDegRaw, lonMinRaw] = match;
+  const latDeg = Number(latDegRaw);
+  const latMin = Number(latMinRaw);
+  const lonDeg = Number(lonDegRaw);
+  const lonMin = Number(lonMinRaw);
+  if (![latDeg, latMin, lonDeg, lonMin].every(Number.isFinite)) return null;
+
+  const lat = (latDeg + (latMin / 60)) * (latHem === "S" ? -1 : 1);
+  const lon = (lonDeg + (lonMin / 60)) * (lonHem === "W" ? -1 : 1);
+  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
+
+  return { lat, lon };
+}
+
+function getAtoRouteLatLon(row = {}) {
+  const coords = parseAtoRouteCoordinatesDisplay(row.coords || "");
+  return (
+    parseDecimalCoordinatePair(coords.dd) ||
+    parseDegreeMinuteCoordinatePair(coords.lldm) ||
+    parseDecimalCoordinatePair(coords.lldm) ||
+    null
+  );
+}
+
+function getDistanceNmBetweenLatLon(start, end) {
+  if (!start || !end) return null;
+
+  const earthRadiusNm = 3440.065;
+  const toRadians = (degrees) => (degrees * Math.PI) / 180;
+  const dLat = toRadians(end.lat - start.lat);
+  const dLon = toRadians(end.lon - start.lon);
+  const lat1 = toRadians(start.lat);
+  const lat2 = toRadians(end.lat);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return earthRadiusNm * c;
+}
+
+function getAtoLegDistanceNm(route = [], index = 0) {
+  if (!Array.isArray(route) || index <= 0) return null;
+  const previous = getAtoRouteLatLon(route[index - 1]);
+  const current = getAtoRouteLatLon(route[index]);
+  return getDistanceNmBetweenLatLon(previous, current);
+}
+
+function parseDistanceNmNumber(value) {
+  const text = String(value || "").trim();
+  if (!text) return null;
+
+  const match = text.match(/[-+]?\d+(?:[.,]\d+)?/);
+  if (!match) return null;
+
+  const numeric = Number(match[0].replace(",", "."));
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function formatDistanceNmCompact(value) {
+  if (!Number.isFinite(value)) return "--";
+  return String(Math.round(value));
+}
+
+function getAtoTotalRouteDistanceNm(route = []) {
+  if (!Array.isArray(route) || route.length < 2) return null;
+
+  let total = 0;
+  let hasLeg = false;
+
+  for (let index = 1; index < route.length; index += 1) {
+    const legDistance = getAtoLegDistanceNm(route, index);
+    if (!Number.isFinite(legDistance)) continue;
+    total += legDistance;
+    hasLeg = true;
+  }
+
+  return hasLeg ? total : null;
+}
+
+function getAtoLastLegDistanceNm(route = []) {
+  if (!Array.isArray(route) || route.length < 2) return null;
+
+  for (let index = route.length - 1; index > 0; index -= 1) {
+    const legDistance = getAtoLegDistanceNm(route, index);
+    if (Number.isFinite(legDistance)) {
+      return legDistance;
+    }
+  }
+
+  return null;
+}
+
+function getAtoRouteLegDistanceNm(route = [], index = 0, row = null) {
+  const manualDistance = parseDistanceNmNumber(row?.dist || "");
+  if (Number.isFinite(manualDistance)) {
+    return manualDistance;
+  }
+
+  return getAtoLegDistanceNm(route, index);
+}
+
+function getAtoRouteCumulativeDistanceNm(route = [], index = 0) {
+  if (!Array.isArray(route) || index < 0) return null;
+
+  let total = 0;
+  let hasDistance = false;
+
+  for (let currentIndex = 0; currentIndex <= index; currentIndex += 1) {
+    const legDistance = getAtoRouteLegDistanceNm(route, currentIndex, route[currentIndex]);
+    if (!Number.isFinite(legDistance)) continue;
+    total += legDistance;
+    hasDistance = true;
+  }
+
+  return hasDistance ? total : null;
+}
+
+function getAtoTotalDistanceNm(data = {}) {
+  const route = Array.isArray(data.route) ? data.route : [];
+  const manualTotalDistance = parseDistanceNmNumber(data.totalDistance);
+  if (Number.isFinite(manualTotalDistance)) {
+    return manualTotalDistance;
+  }
+
+  const cumulativeDistance = getAtoRouteCumulativeDistanceNm(route, route.length - 1);
+  return Number.isFinite(cumulativeDistance) ? cumulativeDistance : null;
+}
+
+function getAtoDistancePair(data = {}) {
+  const route = Array.isArray(data.route) ? data.route : [];
+  const lastLegDistance = getAtoLastLegDistanceNm(route);
+
+  return {
+    lastLegDistance,
+    totalDistance: getAtoTotalDistanceNm(data)
+  };
+}
+
+function formatAtoDistancePair(data = {}, includeUnit = false) {
+  const { lastLegDistance, totalDistance } = getAtoDistancePair(data);
+  const formatted = `${formatDistanceNmCompact(lastLegDistance)}/${formatDistanceNmCompact(totalDistance)}`;
+  return includeUnit ? `${formatted} nm` : formatted;
+}
+
 function sanitizeAtoCommRow(row = {}, fallback = {}) {
   return {
     name: sanitizeUpperText(row.name || fallback.name || "", 24),
-    freq: sanitizeFreeText(row.freq || fallback.freq || "", 16),
-    band: sanitizeUpperText(row.band || fallback.band || "", 8)
+    description: sanitizeFreeText(row.description || fallback.description || "", 60),
+    freq: sanitizeFreeText(row.freq || fallback.freq || "", 16)
   };
+}
+
+function sanitizeAtoSupportTile(tile = {}, fallback = {}) {
+  return {
+    title: sanitizeUpperText(tile.title || fallback.title || "", 24),
+    description: sanitizeFreeText(tile.description || fallback.description || "", 120),
+    freq: sanitizeFreeText(tile.freq || fallback.freq || "", 16)
+  };
+}
+
+function getLegacyAtoSupportTiles(ato = {}) {
+  return [
+    ato.supportC2 || ato.supportC2Note ? { title: "C2", description: ato.supportC2Note || "", freq: ato.supportC2 || "" } : null,
+    ato.supportEscort || ato.supportEscortNote ? { title: "ESCORT", description: ato.supportEscortNote || "", freq: ato.supportEscort || "" } : null,
+    ato.supportSead || ato.supportSeadNote ? { title: "SEAD", description: ato.supportSeadNote || "", freq: ato.supportSead || "" } : null,
+    ato.supportTanker || ato.supportTankerNote ? { title: "TANKER", description: ato.supportTankerNote || "", freq: ato.supportTanker || "" } : null,
+    ato.packageSupport ? { title: "PACKAGE", description: ato.packageSupport, freq: "" } : null
+  ]
+    .filter(Boolean)
+    .map((tile) => sanitizeAtoSupportTile(tile));
 }
 
 function getInheritedWeatherSummary() {
@@ -3157,6 +3379,8 @@ function normalizeAtoData(ato = {}) {
     pushTime: sanitizeAtoValue("pushTime", ato.pushTime),
     pushNote: sanitizeAtoValue("pushNote", ato.pushNote),
     totNote: sanitizeAtoValue("totNote", ato.totNote),
+    totNet: sanitizeAtoValue("totNet", ato.totNet),
+    totNlt: sanitizeAtoValue("totNlt", ato.totNlt),
     iffModes: sanitizeAtoValue("iffModes", ato.iffModes),
     iffNote: sanitizeAtoValue("iffNote", ato.iffNote),
     datalink: sanitizeAtoValue("datalink", ato.datalink),
@@ -3175,8 +3399,19 @@ function normalizeAtoData(ato = {}) {
     supportC2Note: sanitizeAtoValue("supportC2Note", ato.supportC2Note),
     totalDistance: sanitizeAtoValue("totalDistance", ato.totalDistance),
     estFlightTime: sanitizeAtoValue("estFlightTime", ato.estFlightTime),
-    comm: getDefaultAtoComm().map((row, index) => sanitizeAtoCommRow(ato.comm?.[index], row)),
-    route: routeSource.map((row, index) => sanitizeAtoRouteRow(row, { wp: `WP${index + 1}`, desc: "", coords: "", alt: "", spd: "" })),
+    comm: (
+      Array.isArray(ato.comm) && ato.comm.length
+        ? ato.comm
+        : defaults.comm
+    ).map((row, index) => sanitizeAtoCommRow(row, defaults.comm[index] || { name: `NET ${index + 1}`, description: "", freq: "" })),
+    supportTiles: (
+      Array.isArray(ato.supportTiles) && ato.supportTiles.length
+        ? ato.supportTiles
+        : getLegacyAtoSupportTiles(ato).length
+          ? getLegacyAtoSupportTiles(ato)
+          : defaults.supportTiles
+    ).map((tile) => sanitizeAtoSupportTile(tile)),
+    route: routeSource.map((row, index) => sanitizeAtoRouteRow(row, { wp: `WP${index + 1}`, desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" })),
     pilotNotes: sanitizeAtoValue("pilotNotes", ato.pilotNotes),
     commanderNotes: sanitizeAtoValue("commanderNotes", ato.commanderNotes)
   };
@@ -3209,17 +3444,6 @@ function buildAtoCardsFromPackages(existingAtos = []) {
 
 function createAtoCardTemplate() {
   const template = document.createElement("template");
-  const commMarkup = ATO_COMM_DEFAULTS.map((row, index) => `
-    <div class="ato-comm-row">
-      <div class="ato-comm-name">${row.name}</div>
-      <div class="ato-editable-view ato-comm-freq" data-ato-view="commFreq${index}">--</div>
-      <div class="ato-editable-view ato-comm-band" data-ato-view="commBand${index}">--</div>
-      <div class="ato-edit-field ato-edit-field-stack ato-section-full">
-        <input class="field-input" data-ato-input="commFreq${index}" type="text" placeholder="Frequency" />
-        <input class="field-input" data-ato-input="commBand${index}" type="text" placeholder="Band" />
-      </div>
-    </div>
-  `).join("");
 
   template.innerHTML = `
     <article class="ato-card is-collapsed">
@@ -3255,7 +3479,7 @@ function createAtoCardTemplate() {
             <div class="ato-head-value" data-ato-static="packageFreq"></div>
             <div class="ato-head-sub" data-ato-static="packageFreqSub"></div>
             <div class="ato-edit-field">
-              <input class="field-input" data-ato-input="packageFrequencyNote" type="text" placeholder="Frequency note" />
+              <input class="field-input" data-ato-input="packageFrequencyNote" type="text" placeholder="Secondary Freq" />
             </div>
           </div>
         </div>
@@ -3287,33 +3511,23 @@ function createAtoCardTemplate() {
           </section>
 
           <section class="ato-section">
-            <div class="ato-section-header"><h4 class="ato-section-title">Threat / ROE / WX</h4><span class="ato-mini-tag">Survivability</span></div>
-            <ul class="ato-list ato-editable-view">
-              <li><strong>Threats:</strong> <span class="ato-static-text" data-ato-view="threats">--</span></li>
-              <li><strong>ROE:</strong> <span class="ato-static-text" data-ato-view="roe">--</span></li>
-              <li><strong>EMCON:</strong> <span class="ato-static-text" data-ato-view="emcon">--</span></li>
-              <li><strong>Abort Criteria:</strong> <span class="ato-static-text" data-ato-view="abortCriteria">--</span></li>
-            </ul>
-            <div class="ato-edit-field ato-edit-field-stack"><textarea class="ato-textarea" data-ato-input="threats" placeholder="Threats"></textarea><textarea class="ato-textarea" data-ato-input="roe" placeholder="ROE"></textarea><textarea class="ato-textarea" data-ato-input="emcon" placeholder="EMCON"></textarea><textarea class="ato-textarea" data-ato-input="abortCriteria" placeholder="Abort criteria"></textarea></div>
-          </section>
-
-          <section class="ato-section">
             <div class="ato-section-header"><h4 class="ato-section-title">Timeline</h4><span class="ato-mini-tag">Critical Times</span></div>
-            <div class="ato-kv-grid ato-kv-grid-4">
-              <div class="ato-kv"><div class="ato-k">Start</div><div class="ato-v" data-ato-static="startTime"></div><div class="ato-s">Inherited from briefing</div></div>
+            <div class="ato-kv-grid ato-kv-grid-5">
+              <div class="ato-kv"><div class="ato-k">Start</div><div class="ato-v" data-ato-static="startTime"></div><div class="ato-s" data-ato-static="startIcao">--</div></div>
+              <div class="ato-kv"><div class="ato-k">T/O</div><div class="ato-v" data-ato-static="takeoffTime"></div><div class="ato-s" data-ato-static="takeoffIcao">--</div></div>
               <div class="ato-kv"><div class="ato-k">Push</div><div class="ato-v ato-editable-view" data-ato-view="pushTime">--</div><div class="ato-s ato-editable-view" data-ato-view="pushNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input field-input-time" data-ato-input="pushTime" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /><input class="field-input" data-ato-input="pushNote" type="text" placeholder="Push note" /></div></div>
-              <div class="ato-kv"><div class="ato-k">TOT</div><div class="ato-v ato-editable-view" data-ato-view="totTime">--</div><div class="ato-s ato-editable-view" data-ato-view="totNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input field-input-time" data-ato-input="totTime" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /><input class="field-input" data-ato-input="totNote" type="text" placeholder="TOT note" /></div></div>
-              <div class="ato-kv"><div class="ato-k">Recovery</div><div class="ato-v ato-editable-view" data-ato-view="recoveryTime">--</div><div class="ato-s ato-editable-view" data-ato-view="recoveryDetails">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input field-input-time" data-ato-input="recoveryTime" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /><input class="field-input" data-ato-input="recoveryDetails" type="text" placeholder="Recovery detail" /></div></div>
+              <div class="ato-kv ato-kv-tot"><div class="ato-k">TOT</div><div class="ato-s ato-s-micro ato-editable-view" data-ato-view="totNet">--</div><div class="ato-v ato-editable-view" data-ato-view="totTime">--</div><div class="ato-s ato-s-muted ato-editable-view" data-ato-view="totNlt">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input field-input-time" data-ato-input="totTime" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /><input class="field-input" data-ato-input="totNet" type="text" placeholder="NET" /><input class="field-input" data-ato-input="totNlt" type="text" placeholder="NLT" /></div></div>
+              <div class="ato-kv"><div class="ato-k">LAND</div><div class="ato-v ato-editable-view" data-ato-view="recoveryTime">--</div><div class="ato-s" data-ato-static="arrivalIcao">ARR --</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input field-input-time" data-ato-input="recoveryTime" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /><input class="field-input" data-ato-input="recoveryDetails" type="text" placeholder="Arrival ICAO" /></div></div>
             </div>
           </section>
 
           <section class="ato-section">
             <div class="ato-section-header"><h4 class="ato-section-title">Mission Data</h4><span class="ato-mini-tag">Codes / IDs</span></div>
-            <div class="ato-kv-grid">
-              <div class="ato-kv"><div class="ato-k">IFF / Mode 1-3</div><div class="ato-v ato-editable-view" data-ato-view="iffModes">--</div><div class="ato-s ato-editable-view" data-ato-view="iffNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="iffModes" type="text" placeholder="IFF" /><input class="field-input" data-ato-input="iffNote" type="text" placeholder="IFF note" /></div></div>
-              <div class="ato-kv"><div class="ato-k">Datalink</div><div class="ato-v ato-editable-view" data-ato-view="datalink">--</div><div class="ato-s ato-editable-view" data-ato-view="datalinkNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="datalink" type="text" placeholder="Datalink" /><input class="field-input" data-ato-input="datalinkNote" type="text" placeholder="Datalink note" /></div></div>
-              <div class="ato-kv"><div class="ato-k">Laser</div><div class="ato-v ato-editable-view" data-ato-view="laser">--</div><div class="ato-s ato-editable-view" data-ato-view="laserNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="laser" type="text" placeholder="Laser" /><input class="field-input" data-ato-input="laserNote" type="text" placeholder="Laser note" /></div></div>
-              <div class="ato-kv"><div class="ato-k">Authentication</div><div class="ato-v ato-editable-view" data-ato-view="authentication">--</div><div class="ato-s ato-editable-view" data-ato-view="authenticationReply">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="authentication" type="text" placeholder="Challenge" /><input class="field-input" data-ato-input="authenticationReply" type="text" placeholder="Reply" /></div></div>
+            <div class="ato-mission-data-grid">
+              <div class="ato-mission-tile"><div class="ato-k">IFF / Mode 1-3</div><div class="ato-v ato-editable-view" data-ato-view="iffModes">--</div><div class="ato-s ato-editable-view" data-ato-view="iffNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="iffModes" type="text" placeholder="IFF" /><input class="field-input" data-ato-input="iffNote" type="text" placeholder="IFF note" /></div></div>
+              <div class="ato-mission-tile"><div class="ato-k">Datalink</div><div class="ato-v ato-editable-view" data-ato-view="datalink">--</div><div class="ato-s ato-editable-view" data-ato-view="datalinkNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="datalink" type="text" placeholder="Datalink" /><input class="field-input" data-ato-input="datalinkNote" type="text" placeholder="Datalink note" /></div></div>
+              <div class="ato-mission-tile"><div class="ato-k">Laser</div><div class="ato-v ato-editable-view" data-ato-view="laser">--</div><div class="ato-s ato-editable-view" data-ato-view="laserNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="laser" type="text" placeholder="Laser" /><input class="field-input" data-ato-input="laserNote" type="text" placeholder="Laser note" /></div></div>
+              <div class="ato-mission-tile"><div class="ato-k">AUTH</div><div class="ato-v ato-editable-view" data-ato-view="authentication">--</div><div class="ato-s ato-editable-view" data-ato-view="authenticationReply">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="authentication" type="text" placeholder="Challenge" /><input class="field-input" data-ato-input="authenticationReply" type="text" placeholder="Reply" /></div></div>
             </div>
           </section>
 
@@ -3322,9 +3536,26 @@ function createAtoCardTemplate() {
             <div class="ato-crew-list" data-ato-static="crewList"></div>
           </section>
 
+          <section class="ato-section">
+            <div class="ato-section-header"><h4 class="ato-section-title">Pilot Notes</h4><span class="ato-mini-tag">Focus Items</span></div>
+            <div class="ato-notes-body ato-editable-view" data-ato-view="pilotNotes">--</div>
+            <div class="ato-edit-field"><textarea class="ato-textarea" data-ato-input="pilotNotes" placeholder="Pilot notes"></textarea></div>
+          </section>
+
           <section class="ato-section ato-section-full">
             <div class="ato-section-header"><h4 class="ato-section-title">Route / Profile</h4><span class="ato-mini-tag">Ingress / Egress</span></div>
             <div class="ato-route-main">
+              <div class="ato-route-header">
+                <div class="ato-route-header-cell">WP</div>
+                <div class="ato-route-header-cell ato-route-header-cell-right">TIME</div>
+                <div class="ato-route-header-cell ato-route-header-cell-right">DIST</div>
+                <div class="ato-route-header-cell ato-route-header-cell-right">SPEED</div>
+                <div class="ato-route-header-cell ato-route-header-cell-right">HDG</div>
+                <div class="ato-route-header-cell ato-route-header-cell-right">BEACON</div>
+                <div class="ato-route-header-cell ato-route-header-cell-right">ALT</div>
+                <div class="ato-route-header-cell">DESC</div>
+                <div class="ato-route-header-cell">COORD</div>
+              </div>
               <div class="ato-route" data-ato-static="routeList"></div>
               <div class="ato-route-toolbar">
                 <button class="mini-action-btn" data-ato-action="add-route" type="button">Add Waypoint</button>
@@ -3332,7 +3563,7 @@ function createAtoCardTemplate() {
             </div>
             <div class="ato-kv-grid" style="margin-top:14px;">
               <div class="ato-kv">
-                <div class="ato-k">Total Distance</div>
+                <div class="ato-k">Distance</div>
                 <div class="ato-v ato-editable-view" data-ato-view="totalDistanceDetail">--</div>
                 <div class="ato-edit-field"><input class="field-input" data-ato-input="totalDistance" type="text" placeholder="Total distance" /></div>
               </div>
@@ -3344,36 +3575,28 @@ function createAtoCardTemplate() {
             </div>
           </section>
 
-          <section class="ato-section">
-            <div class="ato-section-header"><h4 class="ato-section-title">Support Matrix</h4><span class="ato-mini-tag">Dependencies</span></div>
-            <div class="ato-kv-grid">
-              <div class="ato-kv"><div class="ato-k">Escort</div><div class="ato-v ato-editable-view" data-ato-view="supportEscort">--</div><div class="ato-s ato-editable-view" data-ato-view="supportEscortNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="supportEscort" type="text" placeholder="Escort" /><input class="field-input" data-ato-input="supportEscortNote" type="text" placeholder="Escort note" /></div></div>
-              <div class="ato-kv"><div class="ato-k">SEAD</div><div class="ato-v ato-editable-view" data-ato-view="supportSead">--</div><div class="ato-s ato-editable-view" data-ato-view="supportSeadNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="supportSead" type="text" placeholder="SEAD" /><input class="field-input" data-ato-input="supportSeadNote" type="text" placeholder="SEAD note" /></div></div>
-              <div class="ato-kv"><div class="ato-k">Tanker</div><div class="ato-v ato-editable-view" data-ato-view="supportTanker">--</div><div class="ato-s ato-editable-view" data-ato-view="supportTankerNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="supportTanker" type="text" placeholder="Tanker" /><input class="field-input" data-ato-input="supportTankerNote" type="text" placeholder="Tanker note" /></div></div>
-              <div class="ato-kv"><div class="ato-k">C2</div><div class="ato-v ato-editable-view" data-ato-view="supportC2">--</div><div class="ato-s ato-editable-view" data-ato-view="supportC2Note">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="supportC2" type="text" placeholder="C2" /><input class="field-input" data-ato-input="supportC2Note" type="text" placeholder="C2 note" /></div></div>
-            </div>
-          </section>
-
-          <section class="ato-section">
+          <section class="ato-section ato-section-full">
             <div class="ato-section-header"><h4 class="ato-section-title">Comm Plan</h4><span class="ato-mini-tag">C2 / Radios</span></div>
-            <div class="ato-comm-table">
-              <div class="ato-comm-row"><div class="ato-comm-name">Package Common</div><div class="ato-comm-freq" data-ato-static="packageCommonFreq"></div><div class="ato-comm-band">UHF</div></div>
-              <div class="ato-comm-row"><div class="ato-comm-name">Intra-flight</div><div class="ato-comm-freq" data-ato-static="intraFreq"></div><div class="ato-comm-band">UHF</div></div>
-              ${commMarkup}
+            <div class="ato-comm-grid">
+              <div class="ato-comm-card ato-comm-card-primary">
+                <div>
+                  <div class="ato-comm-name">INTRA-FLIGHT</div>
+                  <div class="ato-comm-desc" data-ato-static="intraFreqSub">PRI -- · SEC --</div>
+                </div>
+                <div class="ato-comm-freq" data-ato-static="intraFreq"></div>
+              </div>
+              <div class="ato-comm-grid-host" data-ato-static="commList"></div>
+            </div>
+            <div class="ato-route-toolbar">
+              <button class="mini-action-btn" data-ato-action="add-comm" type="button">Add Comm Tile</button>
+            </div>
+            <div class="ato-section-header" style="margin-top:18px;"><h4 class="ato-section-title">Support Nets</h4><span class="ato-mini-tag">Tiles</span></div>
+            <div class="ato-support-grid" data-ato-static="supportList"></div>
+            <div class="ato-route-toolbar">
+              <button class="mini-action-btn" data-ato-action="add-support" type="button">Add Tile</button>
             </div>
           </section>
 
-          <section class="ato-section ato-section-full">
-            <div class="ato-section-header"><h4 class="ato-section-title">Pilot Notes</h4><span class="ato-mini-tag">Focus Items</span></div>
-            <div class="ato-notes-body ato-editable-view" data-ato-view="pilotNotes">--</div>
-            <div class="ato-edit-field"><textarea class="ato-textarea" data-ato-input="pilotNotes" placeholder="Pilot notes"></textarea></div>
-          </section>
-
-          <section class="ato-section ato-section-full">
-            <div class="ato-section-header"><h4 class="ato-section-title">Commander Notes</h4><span class="ato-mini-tag">Free Text</span></div>
-            <div class="ato-notes-body ato-editable-view" data-ato-view="commanderNotes">--</div>
-            <div class="ato-edit-field"><textarea class="ato-textarea" data-ato-input="commanderNotes" placeholder="Commander notes"></textarea></div>
-          </section>
         </div>
       </div>
     </article>
@@ -3415,28 +3638,72 @@ function getAtoCrewMembers(inherited) {
   return members;
 }
 
-function createAtoRouteRowElement(routeRow, index, onChange, onRemove) {
-  const row = sanitizeAtoRouteRow(routeRow, { wp: `WP${index + 1}`, desc: "", coords: "", alt: "", spd: "" });
+function getAtoTakeoffTime(data) {
+  return data.launchTime || data.inherited.startTime || "";
+}
+
+function getAtoRouteDisplayZuluTime(startTime, row = {}) {
+  const manualTime = sanitizeTimeInput(row?.time || "");
+  if (manualTime) {
+    return formatZuluTime(manualTime);
+  }
+
+  const missionStartMinutes = timeDigitsToMinutes(startTime);
+  if (missionStartMinutes === null || !Number.isFinite(row?.etaSeconds)) {
+    return "--:--Z";
+  }
+
+  return formatZuluTime(secondsToTimeDigits((missionStartMinutes * 60) + row.etaSeconds));
+}
+
+function getAtoRouteEditableTimeValue(startTime, row = {}) {
+  const manualTime = sanitizeTimeInput(row?.time || "");
+  if (manualTime) return manualTime;
+
+  const missionStartMinutes = timeDigitsToMinutes(startTime);
+  if (missionStartMinutes === null || !Number.isFinite(row?.etaSeconds)) {
+    return "";
+  }
+
+  return secondsToTimeDigits((missionStartMinutes * 60) + row.etaSeconds);
+}
+
+function getAtoRouteDisplayDistance(route = [], index = 0, row = {}) {
+  const legDistance = getAtoRouteLegDistanceNm(route, index, row);
+  const cumulativeDistance = getAtoRouteCumulativeDistanceNm(route, index);
+  return `${formatDistanceNmCompact(legDistance)}/${formatDistanceNmCompact(cumulativeDistance)}`;
+}
+
+function createAtoRouteRowElement(routeRow, index, route, startTime, onChange, onRemove) {
+  const row = sanitizeAtoRouteRow(routeRow, { wp: `WP${index + 1}`, time: "", dist: "", desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" });
   const coordsDisplay = parseAtoRouteCoordinatesDisplay(row.coords);
   const wrapper = document.createElement("div");
   wrapper.className = "ato-route-row";
   wrapper.dataset.etaSeconds = Number.isFinite(row.etaSeconds) ? String(row.etaSeconds) : "";
   wrapper.innerHTML = `
     <div class="ato-editable-view ato-route-wp" data-role="wp-view">${row.wp || "--"}</div>
-    <div class="ato-editable-view" data-role="desc-view">${row.desc || "--"}</div>
+    <div class="ato-editable-view ato-route-time" data-role="time-view">${getAtoRouteDisplayZuluTime(startTime, row)}</div>
+    <div class="ato-editable-view ato-route-dist" data-role="dist-view">${getAtoRouteDisplayDistance(route, index, row)}</div>
+    <div class="ato-editable-view ato-route-spd" data-role="spd-view">${row.spd || "--"}</div>
+    <div class="ato-editable-view ato-route-hdg" data-role="hdg-view">${row.hdg || "--"}</div>
+    <div class="ato-editable-view ato-route-beacon" data-role="beacon-view">${row.beacon || "--"}</div>
+    <div class="ato-editable-view ato-route-alt" data-role="alt-view">${row.alt || "--"}</div>
+    <div class="ato-editable-view ato-route-desc" data-role="desc-view">${row.desc || "--"}</div>
     <div class="ato-editable-view ato-route-coords" data-role="coords-view">
       <div class="ato-route-coords-ddm">${coordsDisplay.lldm || "--"}</div>
       <div class="ato-route-coords-dd">${coordsDisplay.dd || "--"}</div>
       <div class="ato-route-coords-mgrs">${coordsDisplay.mgrs || "--"}</div>
     </div>
-    <div class="ato-editable-view ato-route-alt" data-role="alt-view">${row.alt || "--"}</div>
-    <div class="ato-editable-view ato-route-spd" data-role="spd-view">${row.spd || "--"}</div>
     <div class="ato-edit-field ato-edit-field-stack ato-section-full">
       <input class="field-input" data-role="wp-input" type="text" placeholder="WP" value="${row.wp}" />
+      <input class="field-input field-input-time" data-role="time-input" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" value="${getAtoRouteEditableTimeValue(startTime, row)}" />
+      <input class="field-input" data-role="dist-input" type="text" placeholder="Distance" value="${row.dist || ""}" />
+      <input class="field-input" data-role="spd-input" type="text" placeholder="Speed" value="${row.spd}" />
+      <input class="field-input" data-role="hdg-input" type="text" placeholder="Heading" value="${row.hdg}" />
+      <input class="field-input" data-role="beacon-input" type="text" placeholder="Beacon" value="${row.beacon}" />
+      <input class="field-input" data-role="alt-input" type="text" placeholder="Altitude" value="${row.alt}" />
       <input class="field-input" data-role="desc-input" type="text" placeholder="Description" value="${row.desc}" />
       <textarea class="ato-textarea" data-role="coords-input" placeholder="LL DM&#10;DD&#10;MGRS">${row.coords}</textarea>
-      <input class="field-input" data-role="alt-input" type="text" placeholder="Altitude" value="${row.alt}" />
-      <input class="field-input" data-role="spd-input" type="text" placeholder="Speed" value="${row.spd}" />
       <button class="mini-action-btn package-delete-btn" data-role="remove-route" type="button">Remove Waypoint</button>
     </div>
   `;
@@ -3446,13 +3713,25 @@ function createAtoRouteRowElement(routeRow, index, onChange, onRemove) {
   const coordsInput = wrapper.querySelector('[data-role="coords-input"]');
   const altInput = wrapper.querySelector('[data-role="alt-input"]');
   const spdInput = wrapper.querySelector('[data-role="spd-input"]');
+  const hdgInput = wrapper.querySelector('[data-role="hdg-input"]');
+  const beaconInput = wrapper.querySelector('[data-role="beacon-input"]');
+  const timeInput = wrapper.querySelector('[data-role="time-input"]');
+  const distInput = wrapper.querySelector('[data-role="dist-input"]');
   const removeBtn = wrapper.querySelector('[data-role="remove-route"]');
 
-  [wpInput, descInput, coordsInput, altInput, spdInput].forEach((input) => {
+  [wpInput, timeInput, distInput, descInput, coordsInput, altInput, spdInput, hdgInput, beaconInput].forEach((input) => {
     if (!input) return;
     input.addEventListener("input", () => {
       if (input === wpInput) {
-        input.value = sanitizeUpperText(input.value, 24);
+        input.value = sanitizeUpperTextLive(input.value, 24);
+      } else if (input === timeInput) {
+        input.value = sanitizeTimeInput(input.value);
+      } else if (input === distInput) {
+        input.value = sanitizeFreeText(input.value, 20);
+      } else if (input === hdgInput) {
+        input.value = sanitizeDigits(input.value, 3);
+      } else if (input === beaconInput) {
+        input.value = sanitizeUpperTextLive(input.value, 24);
       }
     });
     input.addEventListener("change", onChange);
@@ -3481,6 +3760,8 @@ function renderAtoRouteRows(card) {
     const element = createAtoRouteRowElement(
       routeRow,
       index,
+      card._atoData.route,
+      card._atoData.inherited.startTime,
       () => {
         card._atoData = collectAtoDataFromCard(card);
         updateAtoCardViews(card);
@@ -3489,7 +3770,7 @@ function renderAtoRouteRows(card) {
       () => {
         card._atoData.route.splice(index, 1);
         if (card._atoData.route.length === 0) {
-          card._atoData.route.push({ wp: "WP1", desc: "", coords: "", alt: "", spd: "" });
+          card._atoData.route.push({ wp: "WP1", desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" });
         }
         renderAtoRouteRows(card);
         card._atoData = collectAtoDataFromCard(card);
@@ -3500,6 +3781,156 @@ function renderAtoRouteRows(card) {
 
     routeList.appendChild(element);
     card._atoRouteRows.push(element);
+  });
+}
+
+function createAtoSupportTileElement(tile, index, onChange, onRemove) {
+  const item = sanitizeAtoSupportTile(tile, { title: `TILE ${index + 1}`, description: "", freq: "" });
+  const wrapper = document.createElement("div");
+  wrapper.className = "ato-support-card";
+  wrapper.innerHTML = `
+    <div class="ato-editable-view">
+      <div class="ato-comm-name">${item.title || "--"}</div>
+      <div class="ato-comm-desc">${item.description || "--"}</div>
+      <div class="ato-comm-freq">${item.freq || "--"}</div>
+    </div>
+    <div class="ato-edit-field ato-edit-field-stack">
+      <input class="field-input" data-role="title-input" type="text" placeholder="Title" value="${item.title}" />
+      <input class="field-input" data-role="description-input" type="text" placeholder="Description" value="${item.description}" />
+      <input class="field-input" data-role="freq-input" type="text" placeholder="Frequency" value="${item.freq}" />
+      <button class="mini-action-btn package-delete-btn" data-role="remove-support" type="button">Remove Tile</button>
+    </div>
+  `;
+
+  const titleInput = wrapper.querySelector('[data-role="title-input"]');
+  const descriptionInput = wrapper.querySelector('[data-role="description-input"]');
+  const freqInput = wrapper.querySelector('[data-role="freq-input"]');
+  const removeBtn = wrapper.querySelector('[data-role="remove-support"]');
+
+  [titleInput, descriptionInput, freqInput].forEach((input) => {
+    if (!input) return;
+    input.addEventListener("input", () => {
+      if (input === titleInput) {
+        input.value = sanitizeUpperText(input.value, 24);
+      }
+    });
+    input.addEventListener("change", onChange);
+    input.addEventListener("blur", onChange);
+  });
+
+  if (removeBtn) {
+    removeBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onRemove();
+    });
+  }
+
+  return wrapper;
+}
+
+function createAtoCommTileElement(tile, index, onChange, onRemove) {
+  const item = sanitizeAtoCommRow(tile, { name: `NET ${index + 1}`, description: "", freq: "" });
+  const wrapper = document.createElement("div");
+  wrapper.className = "ato-comm-card";
+  wrapper.innerHTML = `
+    <div class="ato-editable-view">
+      <div class="ato-comm-name">${item.name || "--"}</div>
+      <div class="ato-comm-desc">${item.description || "--"}</div>
+      <div class="ato-comm-freq">${item.freq || "--"}</div>
+    </div>
+    <div class="ato-edit-field ato-edit-field-stack">
+      <input class="field-input" data-role="name-input" type="text" placeholder="Name" value="${item.name}" />
+      <input class="field-input" data-role="description-input" type="text" placeholder="Description" value="${item.description}" />
+      <input class="field-input" data-role="freq-input" type="text" placeholder="Frequency" value="${item.freq}" />
+      <button class="mini-action-btn package-delete-btn" data-role="remove-comm" type="button">Remove Tile</button>
+    </div>
+  `;
+
+  const nameInput = wrapper.querySelector('[data-role="name-input"]');
+  const descriptionInput = wrapper.querySelector('[data-role="description-input"]');
+  const freqInput = wrapper.querySelector('[data-role="freq-input"]');
+  const removeBtn = wrapper.querySelector('[data-role="remove-comm"]');
+
+  [nameInput, descriptionInput, freqInput].forEach((input) => {
+    if (!input) return;
+    input.addEventListener("input", () => {
+      if (input === nameInput) {
+        input.value = sanitizeUpperText(input.value, 24);
+      }
+    });
+    input.addEventListener("change", onChange);
+    input.addEventListener("blur", onChange);
+  });
+
+  if (removeBtn) {
+    removeBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      onRemove();
+    });
+  }
+
+  return wrapper;
+}
+
+function renderAtoCommTiles(card) {
+  const commList = card._atoFields?.statics?.commList;
+  if (!commList) return;
+
+  commList.innerHTML = "";
+  card._atoCommRows = [];
+
+  card._atoData.comm.forEach((tile, index) => {
+    const element = createAtoCommTileElement(
+      tile,
+      index,
+      () => {
+        card._atoData = collectAtoDataFromCard(card);
+        updateAtoCardViews(card);
+        saveCurrentMission();
+      },
+      () => {
+        card._atoData.comm.splice(index, 1);
+        renderAtoCommTiles(card);
+        card._atoData = collectAtoDataFromCard(card);
+        updateAtoCardViews(card);
+        saveCurrentMission();
+      }
+    );
+
+    commList.appendChild(element);
+    card._atoCommRows.push(element);
+  });
+}
+
+function renderAtoSupportTiles(card) {
+  const supportList = card._atoFields?.statics?.supportList;
+  if (!supportList) return;
+
+  supportList.innerHTML = "";
+  card._atoSupportRows = [];
+
+  card._atoData.supportTiles.forEach((tile, index) => {
+    const element = createAtoSupportTileElement(
+      tile,
+      index,
+      () => {
+        card._atoData = collectAtoDataFromCard(card);
+        updateAtoCardViews(card);
+        saveCurrentMission();
+      },
+      () => {
+        card._atoData.supportTiles.splice(index, 1);
+        renderAtoSupportTiles(card);
+        card._atoData = collectAtoDataFromCard(card);
+        updateAtoCardViews(card);
+        saveCurrentMission();
+      }
+    );
+
+    supportList.appendChild(element);
+    card._atoSupportRows.push(element);
   });
 }
 
@@ -3524,19 +3955,25 @@ function updateAtoCardViews(card) {
   setText(statics.subtitle, `Package ${inherited.packageName || "--"} · Mission ${inherited.operationName || inherited.mission || "--"}`);
   setText(statics.aircraft, `${inherited.aircraftCount || "--"} × ${inherited.aircraftType || "--"}`);
   setText(statics.lead, `Lead: ${inherited.leader || "--"}`);
-  setText(statics.launchRecovery, `T/O ${formatZuluTime(data.launchTime)}`);
+  setText(statics.launchRecovery, `T/O ${formatZuluTime(getAtoTakeoffTime(data))}`);
   setText(
     statics.launchRecoverySub,
-    `${data.launchDetails || inherited.departure || "--"} · RTB ${formatZuluTime(data.recoveryTime)}${data.recoveryDetails ? ` · ${data.recoveryDetails}` : ""}`
+    `${data.launchDetails || inherited.departure || "--"} · RTB ${formatZuluTime(data.recoveryTime)} · ${data.recoveryDetails || inherited.destination || "--"}`
   );
   setText(statics.packageFreq, inherited.intra || "--");
-  setText(statics.packageFreqSub, data.packageFrequencyNote || "Primary package common");
+  setText(statics.packageFreqSub, data.packageFrequencyNote || "Sec freq.");
   setText(statics.configuration, `${inherited.aircraftCount || "--"} × ${inherited.aircraftType || "--"}`);
   setText(statics.startTime, formatZuluTime(inherited.startTime));
-  setText(statics.packageCommonFreq, inherited.intra || "--");
+  setText(statics.startIcao, inherited.departure || "--");
+  setText(statics.takeoffTime, formatZuluTime(getAtoTakeoffTime(data)));
+  setText(statics.takeoffIcao, inherited.departure || "--");
+  setText(statics.arrivalIcao, `ARR ${data.recoveryDetails || inherited.destination || "--"}`);
   setText(statics.intraFreq, inherited.intra || "--");
+  setText(statics.intraFreqSub, `PRI ${inherited.intra || "--"} · SEC ${data.packageFrequencyNote || "--"}`);
   setText(statics.chevron, data.collapsed ? "+" : "−");
+  renderAtoCommTiles(card);
   renderAtoRouteRows(card);
+  renderAtoSupportTiles(card);
 
   const crewMembers = getAtoCrewMembers(inherited);
   statics.crewList.innerHTML = crewMembers.length
@@ -3554,23 +3991,18 @@ function updateAtoCardViews(card) {
   Object.entries(views).forEach(([fieldName, node]) => {
     if (!node) return;
 
-    if (fieldName.startsWith("commFreq")) {
-      setText(node, data.comm[Number(fieldName.replace("commFreq", ""))]?.freq || "--");
-      return;
-    }
-
-    if (fieldName.startsWith("commBand")) {
-      setText(node, data.comm[Number(fieldName.replace("commBand", ""))]?.band || "--");
-      return;
-    }
-
     if (["launchTime", "totTime", "recoveryTime", "pushTime"].includes(fieldName)) {
       setText(node, formatZuluTime(data[fieldName]));
       return;
     }
 
+    if (["totNet", "totNlt"].includes(fieldName)) {
+      setText(node, formatShortTime(data[fieldName]));
+      return;
+    }
+
     if (fieldName === "totalDistance") {
-      setText(node, `DIST ${formatDistanceNm(data.totalDistance)}`);
+      setText(node, `DIST ${formatDistanceNm(getAtoTotalDistanceNm(data))}`);
       return;
     }
 
@@ -3580,7 +4012,7 @@ function updateAtoCardViews(card) {
     }
 
     if (fieldName === "totalDistanceDetail") {
-      setText(node, formatDistanceNm(data.totalDistance));
+      setText(node, formatDistanceNm(getAtoTotalDistanceNm(data)));
       return;
     }
 
@@ -3598,24 +4030,34 @@ function collectAtoDataFromCard(card) {
   const inputs = card._atoFields?.inputs || {};
 
   Object.entries(inputs).forEach(([fieldName, input]) => {
-    if (!input || fieldName.startsWith("comm")) return;
+    if (!input) return;
     data[fieldName] = sanitizeAtoValue(fieldName, input.value);
   });
 
   data.route = (card._atoRouteRows || []).map((rowElement, index) => sanitizeAtoRouteRow({
     wp: rowElement.querySelector('[data-role="wp-input"]')?.value,
+    time: rowElement.querySelector('[data-role="time-input"]')?.value,
+    dist: rowElement.querySelector('[data-role="dist-input"]')?.value,
     desc: rowElement.querySelector('[data-role="desc-input"]')?.value,
     coords: rowElement.querySelector('[data-role="coords-input"]')?.value,
     alt: rowElement.querySelector('[data-role="alt-input"]')?.value,
     spd: rowElement.querySelector('[data-role="spd-input"]')?.value,
+    hdg: rowElement.querySelector('[data-role="hdg-input"]')?.value,
+    beacon: rowElement.querySelector('[data-role="beacon-input"]')?.value,
     etaSeconds: Number(rowElement.dataset.etaSeconds)
-  }, { wp: `WP${index + 1}`, desc: "", coords: "", alt: "", spd: "" }));
+  }, { wp: `WP${index + 1}`, time: "", dist: "", desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" }));
 
-  data.comm = getDefaultAtoComm().map((row, index) => sanitizeAtoCommRow({
-    name: row.name,
-    freq: inputs[`commFreq${index}`]?.value,
-    band: inputs[`commBand${index}`]?.value
-  }, row));
+  data.comm = (card._atoCommRows || []).map((rowElement, index) => sanitizeAtoCommRow({
+    name: rowElement.querySelector('[data-role="name-input"]')?.value,
+    description: rowElement.querySelector('[data-role="description-input"]')?.value,
+    freq: rowElement.querySelector('[data-role="freq-input"]')?.value
+  }, { name: `NET ${index + 1}`, description: "", freq: "" }));
+
+  data.supportTiles = (card._atoSupportRows || []).map((rowElement, index) => sanitizeAtoSupportTile({
+    title: rowElement.querySelector('[data-role="title-input"]')?.value,
+    description: rowElement.querySelector('[data-role="description-input"]')?.value,
+    freq: rowElement.querySelector('[data-role="freq-input"]')?.value
+  }, { title: `TILE ${index + 1}`, description: "", freq: "" }));
 
   return normalizeAtoData(data);
 }
@@ -3626,6 +4068,8 @@ function atoShouldSanitizeOnInput(fieldName) {
     "totTime",
     "recoveryTime",
     "pushTime",
+    "totNet",
+    "totNlt",
     "atoDay",
     "estFlightTime"
   ].includes(fieldName);
@@ -3661,32 +4105,33 @@ function createAtoCard(atoData) {
       packageFreqSub: card.querySelector('[data-ato-static="packageFreqSub"]'),
       configuration: card.querySelector('[data-ato-static="configuration"]'),
       startTime: card.querySelector('[data-ato-static="startTime"]'),
+      startIcao: card.querySelector('[data-ato-static="startIcao"]'),
+      takeoffTime: card.querySelector('[data-ato-static="takeoffTime"]'),
+      takeoffIcao: card.querySelector('[data-ato-static="takeoffIcao"]'),
+      arrivalIcao: card.querySelector('[data-ato-static="arrivalIcao"]'),
+      commList: card.querySelector('[data-ato-static="commList"]'),
       routeList: card.querySelector('[data-ato-static="routeList"]'),
       crewList: card.querySelector('[data-ato-static="crewList"]'),
-      packageCommonFreq: card.querySelector('[data-ato-static="packageCommonFreq"]'),
       intraFreq: card.querySelector('[data-ato-static="intraFreq"]'),
+      intraFreqSub: card.querySelector('[data-ato-static="intraFreqSub"]'),
+      supportList: card.querySelector('[data-ato-static="supportList"]'),
       chevron: card.querySelector('[data-ato-static="chevron"]')
     }
   };
 
   Object.entries(card._atoFields.inputs).forEach(([fieldName, input]) => {
     if (!input) return;
-
-    if (fieldName.startsWith("commFreq")) input.value = ato.comm[Number(fieldName.replace("commFreq", ""))]?.freq || "";
-    else if (fieldName.startsWith("commBand")) input.value = ato.comm[Number(fieldName.replace("commBand", ""))]?.band || "";
-    else input.value = ato[fieldName] || "";
+    input.value = ato[fieldName] || "";
 
     const commit = () => {
-      if (!fieldName.startsWith("comm")) {
-        input.value = sanitizeAtoValue(fieldName, input.value);
-      }
+      input.value = sanitizeAtoValue(fieldName, input.value);
       card._atoData = collectAtoDataFromCard(card);
       updateAtoCardViews(card);
       saveCurrentMission();
     };
 
     input.addEventListener("input", () => {
-      if (atoShouldSanitizeOnInput(fieldName) && !fieldName.startsWith("comm")) {
+      if (atoShouldSanitizeOnInput(fieldName)) {
         input.value = sanitizeAtoValue(fieldName, input.value);
       }
     });
@@ -3712,14 +4157,40 @@ function createAtoCard(atoData) {
     });
   }
 
+  const addCommBtn = card.querySelector('[data-ato-action="add-comm"]');
+  if (addCommBtn) {
+    addCommBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      card._atoData.comm.push({ name: `NET ${card._atoData.comm.length + 1}`, description: "", freq: "" });
+      renderAtoCommTiles(card);
+      card._atoData = collectAtoDataFromCard(card);
+      updateAtoCardViews(card);
+      saveCurrentMission();
+    });
+  }
+
   const addRouteBtn = card.querySelector('[data-ato-action="add-route"]');
   if (addRouteBtn) {
     addRouteBtn.addEventListener("click", (event) => {
       event.preventDefault();
       event.stopPropagation();
       const nextIndex = card._atoData.route.length + 1;
-      card._atoData.route.push({ wp: `WP${nextIndex}`, desc: "", coords: "", alt: "", spd: "" });
+      card._atoData.route.push({ wp: `WP${nextIndex}`, desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" });
       renderAtoRouteRows(card);
+      card._atoData = collectAtoDataFromCard(card);
+      updateAtoCardViews(card);
+      saveCurrentMission();
+    });
+  }
+
+  const addSupportBtn = card.querySelector('[data-ato-action="add-support"]');
+  if (addSupportBtn) {
+    addSupportBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      card._atoData.supportTiles.push({ title: `TILE ${card._atoData.supportTiles.length + 1}`, description: "", freq: "" });
+      renderAtoSupportTiles(card);
       card._atoData = collectAtoDataFromCard(card);
       updateAtoCardViews(card);
       saveCurrentMission();
@@ -5178,13 +5649,15 @@ function drawCanvasTextBlock(ctx, text, x, y, maxWidth, options = {}) {
     font = '400 28px "Segoe UI", Arial, sans-serif',
     color = "#eaf4ff",
     lineHeight = 38,
-    maxLines = Infinity
+    maxLines = Infinity,
+    textAlign = "left"
   } = options;
 
   ctx.save();
   ctx.font = font;
   ctx.fillStyle = color;
   ctx.textBaseline = "top";
+  ctx.textAlign = textAlign;
 
   const lines = wrapCanvasText(ctx, text, maxWidth, maxLines);
   lines.forEach((line, index) => {
@@ -5255,80 +5728,230 @@ function drawKneeboardTwoColumnKeyValueList(ctx, items, x, y, width, accentColor
   });
 }
 
+function drawKneeboardMultiColumnList(ctx, items, x, y, width, options = {}) {
+  const {
+    columns = 3,
+    gap = 22,
+    rowHeight = 52,
+    font = '500 15px "Segoe UI", Arial, sans-serif',
+    color = "#e8f2ff",
+    lineHeight = 18,
+    maxLines = 2
+  } = options;
+
+  const safeColumns = Math.max(columns, 1);
+  const columnWidth = Math.max((width - (gap * (safeColumns - 1))) / safeColumns, 120);
+
+  items.forEach((item, index) => {
+    const column = index % safeColumns;
+    const row = Math.floor(index / safeColumns);
+    const itemX = x + (column * (columnWidth + gap));
+    const itemY = y + (row * rowHeight);
+
+    drawCanvasTextBlock(ctx, item || "--", itemX, itemY, columnWidth, {
+      font,
+      color,
+      lineHeight,
+      maxLines
+    });
+  });
+}
+
+function drawKneeboardCommPlanTiles(ctx, items, x, y, width, accentColor) {
+  const count = Math.max(items.length, 1);
+  const columns = count >= 10 ? 4 : count >= 5 ? 3 : 2;
+  const gap = count >= 10 ? 14 : 18;
+  const tileHeight = count >= 10 ? 56 : count >= 7 ? 62 : 68;
+  const titleFont = count >= 10 ? '800 12px "Segoe UI", Arial, sans-serif' : '800 13px "Segoe UI", Arial, sans-serif';
+  const bodyFont = count >= 10 ? '500 12px "Segoe UI", Arial, sans-serif' : '500 13px "Segoe UI", Arial, sans-serif';
+  const lineHeight = count >= 10 ? 14 : 16;
+  const safeColumns = Math.max(columns, 1);
+  const tileWidth = Math.max((width - (gap * (safeColumns - 1))) / safeColumns, 140);
+
+  items.forEach((item, index) => {
+    const column = index % safeColumns;
+    const row = Math.floor(index / safeColumns);
+    const tileX = x + (column * (tileWidth + gap));
+    const tileY = y + (row * (tileHeight + gap));
+    const title = item?.title || "--";
+    const lines = [item?.description || "", item?.freq || ""].filter(Boolean).join("\n");
+
+    fillRoundedRect(ctx, tileX, tileY, tileWidth, tileHeight, 16, "rgba(255,255,255,0.035)");
+    strokeRoundedRect(ctx, tileX, tileY, tileWidth, tileHeight, 16, "rgba(160,205,255,0.12)", 1);
+
+    ctx.save();
+    ctx.font = titleFont;
+    ctx.fillStyle = accentColor;
+    ctx.textBaseline = "top";
+    ctx.fillText(trimCanvasText(ctx, title, tileWidth - 20), tileX + 12, tileY + 10);
+    ctx.restore();
+
+    drawCanvasTextBlock(ctx, lines || "--", tileX + 12, tileY + 28, tileWidth - 24, {
+      font: bodyFont,
+      color: "#e8f2ff",
+      lineHeight,
+      maxLines: 2
+    });
+  });
+}
+
+function getKneeboardRouteTableMetrics(width) {
+  const columns = {
+    wp: 90,
+    time: 88,
+    dist: 72,
+    spd: 68,
+    hdg: 50,
+    beacon: 60,
+    alt: 68,
+    coords: 236
+  };
+  const desc = width
+    - columns.wp
+    - columns.time
+    - columns.dist
+    - columns.spd
+    - columns.hdg
+    - columns.beacon
+    - columns.alt
+    - columns.coords;
+
+  const starts = {};
+  let cursor = 0;
+
+  Object.entries(columns).forEach(([key, value]) => {
+    starts[key] = cursor;
+    cursor += value;
+  });
+  starts.desc = cursor;
+
+  return {
+    columns: { ...columns, desc },
+    starts,
+    centers: {
+      wp: starts.wp + (columns.wp / 2),
+      time: starts.time + (columns.time / 2),
+      dist: starts.dist + (columns.dist / 2),
+      spd: starts.spd + (columns.spd / 2),
+      hdg: starts.hdg + (columns.hdg / 2),
+      beacon: starts.beacon + (columns.beacon / 2),
+      alt: starts.alt + (columns.alt / 2),
+      coords: starts.coords + (columns.coords / 2),
+      desc: starts.desc + (desc / 2)
+    }
+  };
+}
+
 function drawKneeboardRouteRow(ctx, {
   x,
   y,
   width,
   rowHeight,
-  time,
   wp,
-  coords,
-  alt,
+  time,
+  dist,
   spd,
+  hdg,
+  beacon,
+  alt,
+  coords,
   desc,
+  metrics,
   accentColor,
   isEven
 }) {
-  const timeCol = 138;
-  const wpCol = 122;
-  const coordsCol = 308;
-  const altCol = 122;
-  const spdCol = 118;
-  const descCol = width - timeCol - wpCol - coordsCol - altCol - spdCol;
+  const tableMetrics = metrics || getKneeboardRouteTableMetrics(width);
+  const { columns, centers, starts } = tableMetrics;
 
   fillRoundedRect(ctx, x, y, width, rowHeight, 12, isEven ? "rgba(255,255,255,0.028)" : "rgba(255,255,255,0.05)");
 
   ctx.save();
   ctx.textBaseline = "middle";
-  ctx.font = '700 18px "Segoe UI", Arial, sans-serif';
+  ctx.textAlign = "center";
+  ctx.font = '700 14px "Segoe UI", Arial, sans-serif';
   ctx.fillStyle = "#eef6ff";
-  ctx.fillText(trimCanvasText(ctx, time || "--:--L", timeCol - 24), x + 16, y + (rowHeight / 2));
   ctx.fillStyle = accentColor;
-  ctx.fillText(trimCanvasText(ctx, wp || "--", wpCol - 24), x + timeCol + 16, y + (rowHeight / 2));
+  ctx.fillText(trimCanvasText(ctx, wp || "--", columns.wp - 12), x + centers.wp, y + (rowHeight / 2));
+  ctx.fillStyle = "#eef6ff";
+  ctx.fillText(trimCanvasText(ctx, time || "--:--L", columns.time - 12), x + centers.time, y + (rowHeight / 2));
+  ctx.fillText(trimCanvasText(ctx, dist || "--", columns.dist - 12), x + centers.dist, y + (rowHeight / 2));
+  ctx.fillText(trimCanvasText(ctx, spd || "--", columns.spd - 12), x + centers.spd, y + (rowHeight / 2));
+  ctx.fillText(trimCanvasText(ctx, hdg || "--", columns.hdg - 10), x + centers.hdg, y + (rowHeight / 2));
+  ctx.fillText(trimCanvasText(ctx, beacon || "--", columns.beacon - 10), x + centers.beacon, y + (rowHeight / 2));
+  ctx.fillText(trimCanvasText(ctx, alt || "--", columns.alt - 10), x + centers.alt, y + (rowHeight / 2));
   ctx.restore();
 
   ctx.save();
   ctx.textBaseline = "middle";
-  ctx.font = '600 14px "Segoe UI", Arial, sans-serif';
+  ctx.textAlign = "center";
+  ctx.font = '600 12px "Segoe UI", Arial, sans-serif';
   ctx.fillStyle = "#d3e5fb";
-  ctx.fillText(trimCanvasText(ctx, coords || "--", coordsCol - 24), x + timeCol + wpCol + 16, y + (rowHeight / 2));
+  ctx.fillText(trimCanvasText(ctx, coords || "--", columns.coords - 14), x + centers.coords, y + (rowHeight / 2));
   ctx.restore();
 
-  ctx.save();
-  ctx.textBaseline = "top";
-  ctx.font = '600 15px "Segoe UI", Arial, sans-serif';
-  ctx.fillStyle = "#d9e8f8";
-  ctx.fillText(trimCanvasText(ctx, alt || "--", altCol - 24), x + timeCol + wpCol + coordsCol + 16, y + 10);
-  ctx.fillText(trimCanvasText(ctx, spd || "--", spdCol - 24), x + timeCol + wpCol + coordsCol + altCol + 16, y + 10);
-  ctx.restore();
-
-  drawCanvasTextBlock(ctx, desc || "--", x + timeCol + wpCol + coordsCol + altCol + spdCol + 16, y + 8, descCol - 24, {
-    font: '600 14px "Segoe UI", Arial, sans-serif',
+  drawCanvasTextBlock(ctx, desc || "--", x + centers.desc, y + 6, columns.desc - 14, {
+    font: '600 12px "Segoe UI", Arial, sans-serif',
     color: "#e7f2ff",
-    lineHeight: 17,
-    maxLines: 3
+    lineHeight: 14,
+    maxLines: 2,
+    textAlign: "center"
   });
-}
-
-function buildKneeboardSupportMatrixLines(atoData = {}) {
-  const ato = normalizeAtoData(atoData);
-  return [
-    ato.supportEscort ? `ESCORT · ${[ato.supportEscort, ato.supportEscortNote].filter(Boolean).join(" · ")}` : "",
-    ato.supportSead ? `SEAD · ${[ato.supportSead, ato.supportSeadNote].filter(Boolean).join(" · ")}` : "",
-    ato.supportTanker ? `TANKER · ${[ato.supportTanker, ato.supportTankerNote].filter(Boolean).join(" · ")}` : "",
-    ato.supportC2 ? `C2 · ${[ato.supportC2, ato.supportC2Note].filter(Boolean).join(" · ")}` : "",
-    ato.packageSupport ? `PACKAGE · ${ato.packageSupport}` : ""
-  ].filter(Boolean);
 }
 
 function getAtoRouteDisplayTime(atoData, row) {
   const ato = normalizeAtoData(atoData);
+  const manualTime = sanitizeTimeInput(row?.time || "");
+  if (manualTime) {
+    return formatTimeLocal(manualTime);
+  }
+
   const missionStartMinutes = timeDigitsToMinutes(ato.inherited.startTime);
   if (missionStartMinutes === null || !Number.isFinite(row?.etaSeconds)) {
     return "--:--L";
   }
 
   return formatTimeLocal(secondsToTimeDigits((missionStartMinutes * 60) + row.etaSeconds));
+}
+
+function getAtoRouteDisplayDistanceForExport(route = [], index = 0, row = {}) {
+  const legDistance = getAtoRouteLegDistanceNm(route, index, row);
+  const cumulativeDistance = getAtoRouteCumulativeDistanceNm(route, index);
+  return `${formatDistanceNmCompact(legDistance)}/${formatDistanceNmCompact(cumulativeDistance)}`;
+}
+
+function buildKneeboardCommPlanItems(atoData = {}) {
+  const ato = normalizeAtoData(atoData);
+  const items = [];
+  const primary = ato.inherited.intra || "--";
+  const secondary = ato.packageFrequencyNote || "--";
+
+  items.push({
+    title: "INTRA-FLIGHT",
+    description: `PRI ${primary}`,
+    freq: `SEC ${secondary}`
+  });
+
+  ato.comm
+    .filter((row) => row.name || row.freq || row.description)
+    .forEach((row) => {
+      items.push({
+        title: row.name || "NET",
+        description: row.description || "",
+        freq: row.freq || ""
+      });
+    });
+
+  ato.supportTiles
+    .filter((tile) => tile.title || tile.description || tile.freq)
+    .forEach((tile) => {
+      items.push({
+        title: tile.title || "SUPPORT",
+        description: tile.description || "",
+        freq: tile.freq || ""
+      });
+    });
+
+  return items;
 }
 
 function getAtoRouteCoordinateForFormat(row = {}, coordFormat = "lldm") {
@@ -5347,11 +5970,15 @@ function getAtoRouteCoordinateForFormat(row = {}, coordFormat = "lldm") {
 function isMeaningfulAtoRouteRow(row = {}, index = 0) {
   const normalizedWp = sanitizeUpperText(row.wp || "", 24);
   return Boolean(
+    sanitizeTimeInput(row.time || "") ||
+    sanitizeFreeText(row.dist || "", 20) ||
     Number.isFinite(row.etaSeconds) ||
     sanitizeFreeText(row.desc || "", 120) ||
     sanitizeMultilineText(row.coords || "", 180) ||
     sanitizeFreeText(row.alt || "", 20) ||
     sanitizeFreeText(row.spd || "", 20) ||
+    sanitizeDigits(String(row.hdg || ""), 3) ||
+    sanitizeUpperText(row.beacon || "", 24) ||
     (normalizedWp && normalizedWp !== `WP${index + 1}`)
   );
 }
@@ -5386,7 +6013,7 @@ function renderKneeboardToCanvas(atoData, options = {}) {
     : Math.max(1, Math.ceil(routeRows.length / routePageSize));
   const routeStart = routePageIndex * routePageSize;
   const visibleRouteRows = routeRows.slice(routeStart, routeStart + routePageSize);
-  const supportMatrixLines = buildKneeboardSupportMatrixLines(ato);
+  const commPlanItems = buildKneeboardCommPlanItems(ato);
 
   const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
   bgGradient.addColorStop(0, "#08131f");
@@ -5417,14 +6044,14 @@ function renderKneeboardToCanvas(atoData, options = {}) {
 
   ctx.save();
   ctx.fillStyle = accentColor;
-  ctx.fillRect(margin + 32, 92, 220, 8);
+  ctx.fillRect(margin + 32, 86, 220, 8);
   ctx.font = '900 54px "Segoe UI", Arial, sans-serif';
   ctx.fillStyle = "#f4fbff";
-  ctx.fillText(trimCanvasText(ctx, ato.inherited.callsign || "PACKAGE", 520), margin + 32, 146);
+  ctx.fillText(trimCanvasText(ctx, ato.inherited.callsign || "PACKAGE", 520), margin + 32, 140);
   ctx.textAlign = "right";
   ctx.font = '800 24px "Segoe UI", Arial, sans-serif';
   ctx.fillStyle = "#a7c0dd";
-  ctx.fillText(formatDate(overview.dateInGame), margin + contentWidth - 32, 110);
+  ctx.fillText(formatDate(overview.dateInGame), margin + contentWidth - 32, 102);
   ctx.restore();
 
   drawCanvasTextBlock(
@@ -5433,13 +6060,13 @@ function renderKneeboardToCanvas(atoData, options = {}) {
       .filter(Boolean)
       .join(" · "),
     margin + 32,
-    194,
-    760,
+    176,
+    860,
     {
-      font: '700 24px "Segoe UI", Arial, sans-serif',
+      font: '700 22px "Segoe UI", Arial, sans-serif',
       color: "#d7e6f8",
-      lineHeight: 30,
-      maxLines: 2
+      lineHeight: 26,
+      maxLines: 1
     }
   );
 
@@ -5451,54 +6078,70 @@ function renderKneeboardToCanvas(atoData, options = {}) {
   ctx.fillText(
     overview.dateInGame ? `${formatDate(overview.dateInGame)} · ${formatTimeLocal(overview.startTime)}` : formatTimeLocal(overview.startTime),
     margin + contentWidth - 32,
-    150
+    138
   );
-  ctx.fillText(overview.mapName || "--", margin + contentWidth - 32, 174);
+  ctx.fillText(overview.mapName || "--", margin + contentWidth - 32, 162);
   ctx.restore();
 
-  drawKneeboardSection(ctx, margin, 268, 660, 292, "MISSION DATA", accentColor);
-  drawKneeboardSection(ctx, margin + 684, 268, 708, 292, "EXECUTION", accentColor);
+  drawKneeboardSection(ctx, margin, 268, 448, 292, "MISSION DATA", accentColor);
+  drawKneeboardSection(ctx, margin + 472, 268, 448, 292, "EXECUTION", accentColor);
+  drawKneeboardSection(ctx, margin + 944, 268, 448, 292, "NOTES", accentColor);
   drawKneeboardSection(ctx, margin, 592, contentWidth, 1052, "ROUTE", accentColor);
-  drawKneeboardSection(ctx, margin, 1676, 420, 302, "COMMS", accentColor);
-  drawKneeboardSection(ctx, margin + 452, 1676, 420, 302, "SUPPORT MATRIX", accentColor);
-  drawKneeboardSection(ctx, margin + 904, 1676, 488, 302, "NOTES", accentColor);
+  drawKneeboardSection(ctx, margin, 1676, contentWidth, 302, "COMM PLAN", accentColor);
 
   drawKneeboardTwoColumnKeyValueList(ctx, [
     { key: "PACKAGE", value: ato.inherited.packageName || "--" },
     { key: "AIRCRAFT", value: `${ato.inherited.aircraftCount || "--"} x ${ato.inherited.aircraftType || "--"}` },
-    { key: "LEAD", value: ato.inherited.leader || "--" },
-    { key: "DEP / RTB", value: `${ato.launchDetails || ato.inherited.departure || "--"} / ${ato.recoveryDetails || ato.inherited.destination || "--"}` },
-    { key: "TARGET", value: [ato.targetName, ato.targetDetails].filter(Boolean).join(" · ") || "--" }
-  ], margin + 24, 352, 612, accentColor);
+    { key: "IFF", value: [ato.iffModes, ato.iffNote].filter(Boolean).join(" · ") || "--" },
+    { key: "DATALINK", value: [ato.datalink, ato.datalinkNote].filter(Boolean).join(" · ") || "--" },
+    { key: "LASER", value: [ato.laser, ato.laserNote].filter(Boolean).join(" · ") || "--" },
+    { key: "AUTH", value: [ato.authentication, ato.authenticationReply].filter(Boolean).join(" / ") || "--" }
+  ], margin + 24, 352, 400, accentColor);
 
   drawKneeboardTwoColumnKeyValueList(ctx, [
     { key: "STEP", value: formatTimeLocal(ato.inherited.startTime) },
     { key: "TAKEOFF", value: formatTimeLocal(ato.launchTime) },
     { key: "TOT", value: formatZuluTime(ato.totTime) },
-    { key: "RECOVERY", value: formatZuluTime(ato.recoveryTime) }
-  ], margin + 708, 352, 660, accentColor);
+    { key: "RECOVERY", value: formatZuluTime(ato.recoveryTime) },
+    { key: "NET", value: formatShortTime(ato.totNet) },
+    { key: "NLT", value: formatShortTime(ato.totNlt) }
+  ], margin + 496, 352, 400, accentColor);
+
+  drawCanvasTextBlock(
+    ctx,
+    `PRI ${ato.inherited.intra || "--"} · SEC ${ato.packageFrequencyNote || "--"}`,
+    margin + 32,
+    204,
+    860,
+    {
+      font: '700 17px "Segoe UI", Arial, sans-serif',
+      color: "#9fd3ff",
+      lineHeight: 20,
+      maxLines: 1
+    }
+  );
 
   const tableX = margin + 24;
   const tableY = 676;
   const tableWidth = contentWidth - 48;
-  const timeCol = 138;
-  const wpCol = 122;
-  const coordsCol = 308;
-  const altCol = 122;
-  const spdCol = 118;
-  const rowHeight = 56;
+  const routeTableMetrics = getKneeboardRouteTableMetrics(tableWidth);
+  const rowHeight = 50;
 
   fillRoundedRect(ctx, tableX, tableY, tableWidth, 56, 16, "rgba(88,199,255,0.12)");
   ctx.save();
-  ctx.font = '800 17px "Segoe UI", Arial, sans-serif';
+  ctx.textAlign = "center";
+  ctx.font = '800 13px "Segoe UI", Arial, sans-serif';
   ctx.fillStyle = "#eff7ff";
   ctx.textBaseline = "middle";
-  ctx.fillText("TIME", tableX + 18, tableY + 28);
-  ctx.fillText("WP", tableX + timeCol + 18, tableY + 28);
-  ctx.fillText(coordFormat === "mgrs" ? "MGRS" : coordFormat === "dd" ? "DD" : "LL DM", tableX + timeCol + wpCol + 18, tableY + 28);
-  ctx.fillText("ALT", tableX + timeCol + wpCol + coordsCol + 18, tableY + 28);
-  ctx.fillText("SPD", tableX + timeCol + wpCol + coordsCol + altCol + 18, tableY + 28);
-  ctx.fillText("DESCRIPTION", tableX + timeCol + wpCol + coordsCol + altCol + spdCol + 18, tableY + 28);
+  ctx.fillText("WP", tableX + routeTableMetrics.centers.wp, tableY + 28);
+  ctx.fillText("TIME", tableX + routeTableMetrics.centers.time, tableY + 28);
+  ctx.fillText("DIST", tableX + routeTableMetrics.centers.dist, tableY + 28);
+  ctx.fillText("SPD", tableX + routeTableMetrics.centers.spd, tableY + 28);
+  ctx.fillText("HDG", tableX + routeTableMetrics.centers.hdg, tableY + 28);
+  ctx.fillText("BCN", tableX + routeTableMetrics.centers.beacon, tableY + 28);
+  ctx.fillText("ALT", tableX + routeTableMetrics.centers.alt, tableY + 28);
+  ctx.fillText(coordFormat === "mgrs" ? "MGRS" : coordFormat === "dd" ? "DD" : "LL DM", tableX + routeTableMetrics.centers.coords, tableY + 28);
+  ctx.fillText("DESCRIPTION", tableX + routeTableMetrics.centers.desc, tableY + 28);
   ctx.restore();
 
   visibleRouteRows.forEach((row, index) => {
@@ -5507,13 +6150,17 @@ function renderKneeboardToCanvas(atoData, options = {}) {
       x: tableX,
       y: top,
       width: tableWidth,
-      rowHeight: 48,
-      time: getAtoRouteDisplayTime(ato, row),
+      rowHeight: 42,
       wp: row.wp || `WP${routeStart + index + 1}`,
-      coords: getAtoRouteCoordinateForFormat(row, coordFormat),
-      alt: row.alt || "--",
+      time: getAtoRouteDisplayTime(ato, row),
+      dist: getAtoRouteDisplayDistanceForExport(routeRows, routeStart + index, row),
       spd: row.spd || "--",
+      hdg: row.hdg || "--",
+      beacon: row.beacon || "--",
+      alt: row.alt || "--",
+      coords: getAtoRouteCoordinateForFormat(row, coordFormat),
       desc: row.desc || "--",
+      metrics: routeTableMetrics,
       accentColor,
       isEven: index % 2 === 0
     });
@@ -5536,64 +6183,36 @@ function renderKneeboardToCanvas(atoData, options = {}) {
     );
   }
 
-  const commRows = ato.comm.filter((row) => row.name || row.freq || row.band);
-  let commY = 1768;
-  commRows.forEach((row) => {
-    ctx.save();
-    ctx.font = '800 16px "Segoe UI", Arial, sans-serif';
-    ctx.fillStyle = accentColor;
-    ctx.textBaseline = "top";
-    ctx.fillText(trimCanvasText(ctx, row.name || "--", 160), margin + 28, commY);
-    ctx.font = '600 18px "Segoe UI", Arial, sans-serif';
-    ctx.fillStyle = "#e8f3ff";
-    ctx.fillText(trimCanvasText(ctx, `${row.freq || "--"} ${row.band || ""}`.trim(), 240), margin + 28, commY + 20);
-    ctx.restore();
-    commY += 44;
-  });
-
-  if (!commRows.length) {
-    drawCanvasTextBlock(ctx, "Aucune frequence package renseignee.", margin + 28, 1768, 360, {
-      font: '500 18px "Segoe UI", Arial, sans-serif',
-      color: "#9eb9d7",
-      lineHeight: 24,
-      maxLines: 3
-    });
-  }
-
-  drawCanvasTextBlock(
-    ctx,
-    supportMatrixLines.join("\n\n") || "Aucun support declare.",
-    margin + 480,
-    1768,
-    364,
-    {
-      font: '500 16px "Segoe UI", Arial, sans-serif',
-      color: "#e8f2ff",
-      lineHeight: 21,
-      maxLines: 12
-    }
-  );
-
   const notesText = [
     ato.threats ? `THREATS\n${ato.threats}` : "",
     ato.abortCriteria ? `ABORT\n${ato.abortCriteria}` : "",
-    ato.pilotNotes ? `PILOT NOTES\n${ato.pilotNotes}` : "",
-    ato.commanderNotes ? `COMMANDER NOTES\n${ato.commanderNotes}` : ""
+    ato.pilotNotes ? `PILOT NOTES\n${ato.pilotNotes}` : ""
   ].filter(Boolean).join("\n\n");
 
   drawCanvasTextBlock(
     ctx,
     notesText || "Aucune note specifique.",
-    margin + 932,
-    1768,
-    432,
+    margin + 968,
+    352,
+    376,
     {
-      font: '500 16px "Segoe UI", Arial, sans-serif',
+      font: '500 15px "Segoe UI", Arial, sans-serif',
       color: "#e8f2ff",
-      lineHeight: 20,
+      lineHeight: 19,
       maxLines: 10
     }
   );
+
+  if (commPlanItems.length) {
+    drawKneeboardCommPlanTiles(ctx, commPlanItems, margin + 28, 1768, contentWidth - 56, accentColor);
+  } else {
+    drawCanvasTextBlock(ctx, "Aucun comm plan declare.", margin + 28, 1768, contentWidth - 56, {
+      font: '500 16px "Segoe UI", Arial, sans-serif',
+      color: "#e8f2ff",
+      lineHeight: 21,
+      maxLines: 3
+    });
+  }
 
   ctx.save();
   ctx.textAlign = "right";
@@ -5638,8 +6257,7 @@ function exportSelectedKneeboard() {
 }
 
 function shouldUseCompactTopbarActions() {
-  const topbar = document.querySelector(".topbar");
-  return Boolean(topbar?.classList.contains("is-scrolled") && window.innerWidth <= 1280);
+  return false;
 }
 
 function closeTopbarActionsMenu() {
