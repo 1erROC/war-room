@@ -10,6 +10,38 @@ const pasteMissionIdBtn = document.getElementById("pasteMissionIdBtn");
 const copyTokenBtn = document.getElementById("copyTokenBtn");
 const pasteTokenBtnBottom = document.getElementById("pasteTokenBtnBottom");
 const publishMissionBtn = document.getElementById("publishMissionBtn");
+const loadMizBtn = document.getElementById("loadMizBtn");
+const exportKneeboardBtn = document.getElementById("exportKneeboardBtn");
+const topbarActionsBtn = document.getElementById("topbarActionsBtn");
+const topbarActionsDropdown = document.getElementById("topbarActionsDropdown");
+const topbarActionItems = Array.from(document.querySelectorAll("[data-topbar-action]"));
+
+const mizImportModal = document.getElementById("mizImportModal");
+const mizImportBackdrop = document.getElementById("mizImportBackdrop");
+const mizImportCloseBtn = document.getElementById("mizImportCloseBtn");
+const mizFileInput = document.getElementById("mizFileInput");
+const mizDropzone = document.getElementById("mizDropzone");
+const mizFileMeta = document.getElementById("mizFileMeta");
+const mizMissionTextInput = document.getElementById("mizMissionTextInput");
+const mizImportStatus = document.getElementById("mizImportStatus");
+const mizValidateFileBtn = document.getElementById("mizValidateFileBtn");
+const mizCoalitionRedBtn = document.getElementById("mizCoalitionRedBtn");
+const mizCoalitionBlueBtn = document.getElementById("mizCoalitionBlueBtn");
+const mizBackToFileBtn = document.getElementById("mizBackToFileBtn");
+const mizBackToCoalitionBtn = document.getElementById("mizBackToCoalitionBtn");
+const mizGroupHeading = document.getElementById("mizGroupHeading");
+const mizGroupList = document.getElementById("mizGroupList");
+const mizSelectAllGroupsBtn = document.getElementById("mizSelectAllGroupsBtn");
+const mizClearGroupsBtn = document.getElementById("mizClearGroupsBtn");
+const mizImportGroupsBtn = document.getElementById("mizImportGroupsBtn");
+const kneeboardExportModal = document.getElementById("kneeboardExportModal");
+const kneeboardExportBackdrop = document.getElementById("kneeboardExportBackdrop");
+const kneeboardExportCloseBtn = document.getElementById("kneeboardExportCloseBtn");
+const kneeboardPackageSelect = document.getElementById("kneeboardPackageSelect");
+const kneeboardCoordsFormatSelect = document.getElementById("kneeboardCoordsFormatSelect");
+const kneeboardPackageMeta = document.getElementById("kneeboardPackageMeta");
+const kneeboardExportCancelBtn = document.getElementById("kneeboardExportCancelBtn");
+const kneeboardExportConfirmBtn = document.getElementById("kneeboardExportConfirmBtn");
 
 const missionIdDisplay = document.getElementById("missionIdDisplay");
 const tokenOutput = document.getElementById("tokenOutput");
@@ -35,12 +67,11 @@ const STORAGE_PREFIX = "warroom_mission_";
 const URL_PARAM_NAME = "mission";
 const WEATHER_MAX_ALTITUDE = 45000;
 const ACO_MAX_ALTITUDE = 40000;
+const KNEEBOARD_EXPORT_WIDTH = 1536;
+const KNEEBOARD_EXPORT_HEIGHT = 2048;
 const TIMELINE_DEFAULT_EVENT_LABELS = [
   { key: "startTime", label: "STEP", noteField: "" },
-  { key: "launchTime", label: "TAKEOFF", noteField: "launchDetails" },
-  { key: "pushTime", label: "PUSH", noteField: "pushNote" },
-  { key: "totTime", label: "TOT", noteField: "totNote" },
-  { key: "recoveryTime", label: "RECOVERY", noteField: "recoveryDetails" }
+  { key: "launchTime", label: "TAKEOFF", noteField: "launchDetails" }
 ];
 
 const PACKAGE_RANDOM_COLORS = [
@@ -98,12 +129,12 @@ const PACKAGE_NAME_OPTIONS = [
 ];
 
 const ATO_ROUTE_DEFAULTS = [
-  { wp: "WP1", desc: "", alt: "", spd: "" },
-  { wp: "WP2", desc: "", alt: "", spd: "" },
-  { wp: "IP", desc: "", alt: "", spd: "" },
-  { wp: "TGT", desc: "", alt: "", spd: "" },
-  { wp: "EP", desc: "", alt: "", spd: "" },
-  { wp: "WP6", desc: "", alt: "", spd: "" }
+  { wp: "WP1", desc: "", coords: "", alt: "", spd: "" },
+  { wp: "WP2", desc: "", coords: "", alt: "", spd: "" },
+  { wp: "IP", desc: "", coords: "", alt: "", spd: "" },
+  { wp: "TGT", desc: "", coords: "", alt: "", spd: "" },
+  { wp: "EP", desc: "", coords: "", alt: "", spd: "" },
+  { wp: "WP6", desc: "", coords: "", alt: "", spd: "" }
 ];
 
 const ATO_COMM_DEFAULTS = [
@@ -269,6 +300,15 @@ const weatherView = {
 
 let currentMissionId = "";
 let currentMissionData = deepClone(defaultMissionData);
+const mizImportState = {
+  step: 1,
+  file: null,
+  pastedMissionText: "",
+  parsedMission: null,
+  selectedCoalition: "",
+  selectedGroupIds: new Set(),
+  loading: false
+};
 
 /* =========================================================
    HELPERS GENERIQUES
@@ -515,6 +555,1531 @@ function normalizeQnhPair(qnhInHgValue, qnhHpaValue) {
   }
 
   return { qnhInHg, qnhHpa };
+}
+
+/* =========================================================
+   IMPORT MIZ
+========================================================= */
+
+function resetMizImportState() {
+  mizImportState.step = 1;
+  mizImportState.file = null;
+  mizImportState.pastedMissionText = "";
+  mizImportState.parsedMission = null;
+  mizImportState.selectedCoalition = "";
+  mizImportState.selectedGroupIds = new Set();
+  mizImportState.loading = false;
+}
+
+function setMizImportStatus(message) {
+  if (mizImportStatus) {
+    mizImportStatus.textContent = message;
+  }
+}
+
+function updateMizFileMeta() {
+  if (!mizFileMeta) return;
+
+  if (!mizImportState.file) {
+    mizFileMeta.textContent = "Import texte uniquement";
+    return;
+  }
+
+  const sizeMb = (mizImportState.file.size / (1024 * 1024)).toFixed(2);
+  mizFileMeta.textContent = `${mizImportState.file.name}\n${sizeMb} MB`;
+}
+
+function getMizMissionTextValue() {
+  return String(mizMissionTextInput?.value || "").trim();
+}
+
+function syncMizTextState() {
+  mizImportState.pastedMissionText = getMizMissionTextValue();
+}
+
+function updateMizStepUi() {
+  const step = mizImportState.step;
+
+  document.querySelectorAll("[data-miz-step-pill]").forEach((node) => {
+    node.classList.toggle("is-active", String(step) === node.dataset.mizStepPill);
+  });
+
+  document.querySelectorAll("[data-miz-step-panel]").forEach((node) => {
+    node.classList.toggle("is-active", String(step) === node.dataset.mizStepPanel);
+  });
+}
+
+function openMizImportModal() {
+  if (!mizImportModal) return;
+
+  resetMizImportState();
+  if (mizMissionTextInput) {
+    mizMissionTextInput.value = "";
+  }
+  updateMizFileMeta();
+  updateMizStepUi();
+  renderMizCoalitionCounts();
+  renderMizGroupList();
+  setMizImportStatus("En attente du texte `mission = { ... }`.");
+  mizImportModal.classList.add("is-open");
+  mizImportModal.setAttribute("aria-hidden", "false");
+}
+
+function closeMizImportModal() {
+  if (!mizImportModal) return;
+
+  mizImportModal.classList.remove("is-open");
+  mizImportModal.setAttribute("aria-hidden", "true");
+  if (mizFileInput) {
+    mizFileInput.value = "";
+  }
+  if (mizMissionTextInput) {
+    mizMissionTextInput.value = "";
+  }
+  resetMizImportState();
+}
+
+function goToMizStep(step) {
+  mizImportState.step = clamp(Number(step) || 1, 1, 3);
+  updateMizStepUi();
+
+  if (mizImportState.step === 2) {
+    renderMizCoalitionCounts();
+  }
+
+  if (mizImportState.step === 3) {
+    renderMizGroupList();
+  }
+}
+
+function ensureMizLibrariesAvailable() {
+  if (!window.luaparse) {
+    throw new Error("La bibliotheque d'import LuaParse n'est pas disponible.");
+  }
+}
+
+async function readFileAsText(file) {
+  return file.text();
+}
+
+function getLuaAssignmentValue(ast, identifierName) {
+  if (!ast?.body) return null;
+
+  for (const statement of ast.body) {
+    if (!statement) continue;
+
+    if (statement.type === "AssignmentStatement") {
+      const index = statement.variables.findIndex(
+        (variable) => variable?.type === "Identifier" && variable.name === identifierName
+      );
+
+      if (index >= 0) {
+        return statement.init?.[index] || null;
+      }
+    }
+
+    if (statement.type === "LocalStatement") {
+      const index = statement.variables.findIndex(
+        (variable) => variable?.type === "Identifier" && variable.name === identifierName
+      );
+
+      if (index >= 0) {
+        return statement.init?.[index] || null;
+      }
+    }
+  }
+
+  return null;
+}
+
+function getLuaKeyValue(node) {
+  if (!node) return "";
+
+  if (node.type === "Identifier") return node.name;
+  if (node.type === "StringLiteral") return node.value || "";
+  if (node.type === "NumericLiteral") return String(node.value);
+  if (node.type === "BooleanLiteral") return node.value ? "true" : "false";
+
+  return String(evaluateLuaNode(node));
+}
+
+function evaluateLuaNode(node) {
+  if (!node) return null;
+
+  switch (node.type) {
+    case "StringLiteral":
+      return node.value || "";
+
+    case "NumericLiteral":
+      return Number(node.value);
+
+    case "BooleanLiteral":
+      return Boolean(node.value);
+
+    case "NilLiteral":
+      return null;
+
+    case "UnaryExpression": {
+      const argument = evaluateLuaNode(node.argument);
+      if (node.operator === "-") {
+        return -Number(argument || 0);
+      }
+      return argument;
+    }
+
+    case "BinaryExpression": {
+      const left = Number(evaluateLuaNode(node.left) || 0);
+      const right = Number(evaluateLuaNode(node.right) || 0);
+
+      switch (node.operator) {
+        case "+":
+          return left + right;
+        case "-":
+          return left - right;
+        case "*":
+          return left * right;
+        case "/":
+          return right === 0 ? 0 : left / right;
+        default:
+          return null;
+      }
+    }
+
+    case "TableConstructorExpression": {
+      const output = {};
+      let implicitIndex = 1;
+
+      (node.fields || []).forEach((field) => {
+        if (!field) return;
+
+        if (field.type === "TableKeyString") {
+          output[field.key?.name || ""] = evaluateLuaNode(field.value);
+          return;
+        }
+
+        if (field.type === "TableKey") {
+          output[getLuaKeyValue(field.key)] = evaluateLuaNode(field.value);
+          return;
+        }
+
+        if (field.type === "TableValue") {
+          output[String(implicitIndex)] = evaluateLuaNode(field.value);
+          implicitIndex += 1;
+        }
+      });
+
+      return output;
+    }
+
+    default:
+      return null;
+  }
+}
+
+function tableValues(value) {
+  if (!value || typeof value !== "object") return [];
+
+  return Object.keys(value)
+    .sort((left, right) => {
+      const leftNum = Number(left);
+      const rightNum = Number(right);
+      const leftIsNum = Number.isFinite(leftNum);
+      const rightIsNum = Number.isFinite(rightNum);
+
+      if (leftIsNum && rightIsNum) return leftNum - rightNum;
+      if (leftIsNum) return -1;
+      if (rightIsNum) return 1;
+      return left.localeCompare(right);
+    })
+    .map((key) => value[key])
+    .filter((entry) => entry !== undefined && entry !== null);
+}
+
+function getNested(source, path, fallback = null) {
+  const value = path.reduce((acc, key) => {
+    if (acc === null || acc === undefined) return undefined;
+    return acc[key];
+  }, source);
+
+  return value === undefined ? fallback : value;
+}
+
+function metersToFeet(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "";
+  return String(Math.round(numeric * 3.28084));
+}
+
+function metersPerSecondToKnots(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "";
+  return String(Math.round(numeric * 1.94384));
+}
+
+function radiansToDegrees(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return "";
+  if (Math.abs(numeric) > (Math.PI * 2) + 0.01) {
+    return Math.round(((numeric % 360) + 360) % 360);
+  }
+  return Math.round((((numeric * 180) / Math.PI) % 360 + 360) % 360);
+}
+
+function secondsToTimeDigits(totalSeconds) {
+  const numeric = Number(totalSeconds);
+  if (!Number.isFinite(numeric)) return "";
+
+  const normalizedSeconds = ((Math.round(numeric) % 86400) + 86400) % 86400;
+  const hours = Math.floor(normalizedSeconds / 3600);
+  const minutes = Math.floor((normalizedSeconds % 3600) / 60);
+  return `${String(hours).padStart(2, "0")}${String(minutes).padStart(2, "0")}`;
+}
+
+function mmHgToInHg(mmHg) {
+  const numeric = Number(mmHg);
+  if (!Number.isFinite(numeric) || numeric <= 0) return "";
+  return (numeric / 25.4).toFixed(2);
+}
+
+function mmHgToHpa(mmHg) {
+  const numeric = Number(mmHg);
+  if (!Number.isFinite(numeric) || numeric <= 0) return "";
+  return String(Math.round(numeric * 1.33322));
+}
+
+function inferCloudCoverFromDensity(density) {
+  const numeric = Number(density);
+  if (!Number.isFinite(numeric) || numeric <= 0) return "";
+  if (numeric <= 2) return "FEW";
+  if (numeric <= 5) return "SCT";
+  if (numeric <= 8) return "BKN";
+  return "OVC";
+}
+
+function formatMissionDate(dateTable) {
+  const year = sanitizeDigits(String(dateTable?.Year || dateTable?.year || ""), 4);
+  const month = sanitizeDigits(String(dateTable?.Month || dateTable?.month || ""), 2).padStart(2, "0");
+  const day = sanitizeDigits(String(dateTable?.Day || dateTable?.day || ""), 2).padStart(2, "0");
+
+  if (!year || month === "00" || day === "00") return "";
+  return `${year}-${month}-${day}`;
+}
+
+function formatMissionFrequency(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric <= 0) return "";
+
+  if (numeric >= 1000000) {
+    return (numeric / 1000000).toFixed(3);
+  }
+
+  if (numeric >= 1000) {
+    return (numeric / 1000).toFixed(3);
+  }
+
+  return numeric.toFixed(3);
+}
+
+function prettifyLoadoutToken(rawValue) {
+  return String(rawValue || "")
+    .replace(/[{}]/g, "")
+    .replace(/^weapons\./i, "")
+    .replace(/^pylon_/i, "")
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
+function extractUnitPayloadSummary(unit) {
+  const pylons = tableValues(getNested(unit, ["payload", "pylons"], {}));
+  const counts = new Map();
+
+  pylons.forEach((pylon) => {
+    const token = prettifyLoadoutToken(pylon?.CLSID || pylon?.clsid || "");
+    if (!token) return;
+    counts.set(token, (counts.get(token) || 0) + 1);
+  });
+
+  const summary = Array.from(counts.entries())
+    .map(([name, count]) => `${count}x ${name}`)
+    .join(", ");
+
+  const payload = getNested(unit, ["payload"], {});
+  const noteParts = [
+    payload?.fuel ? `Fuel ${payload.fuel}` : "",
+    payload?.chaff ? `Chaff ${payload.chaff}` : "",
+    payload?.flare ? `Flare ${payload.flare}` : "",
+    payload?.gun ? `Gun ${payload.gun}` : ""
+  ].filter(Boolean);
+
+  return {
+    summary: sanitizeFreeText(summary, 120),
+    note: sanitizeFreeText(noteParts.join(" · "), 120)
+  };
+}
+
+function extractWaypointTaskIds(point) {
+  const tasks = tableValues(getNested(point, ["task", "params", "tasks"], {}));
+  return tasks
+    .map((task) => sanitizeUpperText(task?.id || "", 40))
+    .filter(Boolean);
+}
+
+function buildRouteRows(pointsTable) {
+  const points = tableValues(pointsTable);
+
+  return points.map((point, index) => {
+    const name = sanitizeUpperText(point?.NAME || point?.name || "", 24);
+    const action = sanitizeUpperText(point?.action || "", 24);
+    const eta = Number(point?.ETA);
+    const taskIds = extractWaypointTaskIds(point);
+    const descriptorParts = [action].filter(Boolean);
+
+    return {
+      wp: sanitizeUpperText(name || `WP${index + 1}`, 24),
+      desc: sanitizeFreeText(descriptorParts.join(" · ") || `Waypoint ${index + 1}`, 120),
+      coords: "",
+      alt: metersToFeet(point?.alt) ? `${metersToFeet(point?.alt)} FT` : "",
+      spd: metersPerSecondToKnots(point?.speed) ? `${metersPerSecondToKnots(point?.speed)} KT` : "",
+      etaSeconds: Number.isFinite(eta) ? eta : null,
+      name,
+      action,
+      taskIds
+    };
+  });
+}
+
+function pickTargetWaypoint(routeRows) {
+  if (!Array.isArray(routeRows) || routeRows.length === 0) return null;
+
+  const priorityMatch = routeRows.find((row) => {
+    const haystack = `${row.name} ${row.action} ${(row.taskIds || []).join(" ")}`;
+    return /(TGT|TARGET|STRIKE|BOMB|ATTACK|SEAD|DEAD|IP|CAS)/i.test(haystack);
+  });
+
+  if (priorityMatch) return priorityMatch;
+  if (routeRows.length >= 3) return routeRows[Math.min(2, routeRows.length - 1)];
+  return routeRows[routeRows.length - 1] || null;
+}
+
+function inferDepartureLabel(group, routeRows) {
+  const firstPoint = routeRows[0] || null;
+  const airdromeId = getNested(group, ["route", "points", "1", "airdromeId"], "");
+  const helipadId = getNested(group, ["route", "points", "1", "helipadId"], "");
+
+  return sanitizeUpperText(
+    firstPoint?.name || (airdromeId ? `AB ${airdromeId}` : "") || (helipadId ? `FARP ${helipadId}` : "") || "DEP",
+    24
+  );
+}
+
+function inferDestinationLabel(group, routeRows) {
+  const points = tableValues(getNested(group, ["route", "points"], {}));
+  const lastPoint = routeRows[routeRows.length - 1] || null;
+  const lastRawPoint = points[points.length - 1] || {};
+  const airdromeId = lastRawPoint?.airdromeId || "";
+  const helipadId = lastRawPoint?.helipadId || "";
+
+  return sanitizeUpperText(
+    lastPoint?.name || (airdromeId ? `AB ${airdromeId}` : "") || (helipadId ? `FARP ${helipadId}` : "") || "RTB",
+    24
+  );
+}
+
+function mapImportedTask(taskValue) {
+  const normalized = sanitizeUpperText(taskValue || "", 40);
+  if (!normalized) return "";
+  if (PACKAGE_TASK_OPTIONS.includes(normalized)) return normalized;
+
+  const aliasMap = new Map([
+    ["GROUND ATTACK", "STRIKE"],
+    ["PINPOINT STRIKE", "PRECISION STRIKE"],
+    ["AFAC", "FAC(A)"],
+    ["ANTISHIP STRIKE", "STRIKE"],
+    ["TRANSPORT", "AIRLIFT"],
+    ["REFUELING", "TANKER"]
+  ]);
+
+  return aliasMap.get(normalized) || "";
+}
+
+function isLikelyAirUnit(unit) {
+  if (!unit || typeof unit !== "object") return false;
+
+  const type = sanitizeUpperText(unit?.type || unit?.unitType || "", 40);
+  if (!type) return false;
+
+  return !/(SHIP|TANK|TRUCK|APC|IFV|SAM|AAA|INFANTRY|SOLDIER|STATIC|FORTIFICATION)/i.test(type);
+}
+
+function isLikelyAirGroup(group) {
+  if (!group || typeof group !== "object") return false;
+
+  const units = tableValues(group?.units);
+  if (!units.length) return false;
+
+  return units.some(isLikelyAirUnit);
+}
+
+function collectAirGroupsDeep(source, categoryHint = "", visited = new Set(), results = []) {
+  if (!source || typeof source !== "object" || visited.has(source)) {
+    return results;
+  }
+
+  visited.add(source);
+
+  if (source.group && typeof source.group === "object") {
+    const nextHint = sanitizeUpperText(source.name || source.category || categoryHint || "", 24).toLowerCase();
+
+    tableValues(source.group).forEach((group) => {
+      if (isLikelyAirGroup(group)) {
+        results.push({
+          category: nextHint === "helicopter" ? "helicopter" : "plane",
+          group
+        });
+      }
+    });
+  }
+
+  Object.entries(source).forEach(([key, value]) => {
+    if (!value || typeof value !== "object") return;
+    const nextHint = ["plane", "helicopter"].includes(String(key).toLowerCase()) ? String(key).toLowerCase() : categoryHint;
+    collectAirGroupsDeep(value, nextHint, visited, results);
+  });
+
+  return results;
+}
+
+function collectExplicitCountryAirGroups(country) {
+  const results = [];
+
+  ["plane", "helicopter"].forEach((category) => {
+    const groups = tableValues(getNested(country, [category, "group"], {}));
+    groups.forEach((group) => {
+      if (!group || typeof group !== "object") return;
+
+      const units = tableValues(group?.units);
+      if (!units.length) return;
+
+      // On truste le chemin DCS explicite: si le groupe est dans plane/helicopter,
+      // on le garde sauf si les unites sont manifestement non aeriennes.
+      const hasAirLikeUnit = units.some((unit) => isLikelyAirUnit(unit));
+      if (!hasAirLikeUnit && category === "plane") return;
+
+      results.push({ category, group });
+    });
+  });
+
+  return results;
+}
+
+function buildImportedGroupsForCoalition(mission, coalitionName) {
+  const coalition = getNested(mission, ["coalition", coalitionName], {});
+  const countries = tableValues(coalition?.country);
+  const groups = [];
+  const seenGroupNames = new Set();
+
+  countries.forEach((country, countryIndex) => {
+    const airGroups = [
+      ...collectExplicitCountryAirGroups(country),
+      ...collectAirGroupsDeep(country)
+    ];
+
+    airGroups.forEach(({ category, group }, groupIndex) => {
+      const units = tableValues(group?.units);
+      if (!units.length) return;
+
+      const leaderUnit = units[0];
+      const canonicalName = sanitizeUpperText(group?.name || leaderUnit?.name || `GROUP_${groupIndex + 1}`, 80);
+      if (seenGroupNames.has(canonicalName)) return;
+      seenGroupNames.add(canonicalName);
+
+      const route = buildRouteRows(getNested(group, ["route", "points"], {}));
+      const payload = extractUnitPayloadSummary(leaderUnit);
+      const task = mapImportedTask(group?.task || "");
+      const frequency = formatMissionFrequency(group?.frequency || leaderUnit?.frequency || "");
+      const targetWaypoint = pickTargetWaypoint(route);
+
+      groups.push({
+        id: sanitizeUpperText(
+          `${coalitionName}_${countryIndex + 1}_${category}_${groupIndex + 1}_${group?.name || leaderUnit?.name || "GROUP"}`,
+          80
+        ),
+        coalition: coalitionName,
+        category,
+        rawName: sanitizeFreeText(group?.name || leaderUnit?.name || "Group", 80),
+        task,
+        aircraftType: sanitizeUpperText(leaderUnit?.type || leaderUnit?.unitType || "", 24),
+        aircraftCount: String(units.length),
+        leader: sanitizeFreeText(leaderUnit?.name || "", 40),
+        wingmen: sanitizeMultilineText(
+          units
+            .slice(1)
+            .map((unit, index) => `${index + 2}. ${sanitizeFreeText(unit?.name || "", 40)}`)
+            .filter(Boolean)
+            .join("\n"),
+          400
+        ),
+        departure: inferDepartureLabel(group, route),
+        destination: inferDestinationLabel(group, route),
+        groupStartSeconds: Number.isFinite(Number(group?.start_time)) ? Number(group.start_time) : null,
+        intra: sanitizeFreeText(frequency, 20),
+        route,
+        loadout: payload.summary,
+        loadoutNote: payload.note,
+        targetName: sanitizeUpperText(targetWaypoint?.name || "", 48),
+        targetDetails: sanitizeFreeText(targetWaypoint?.desc || "", 120),
+        launchTime: "",
+        totTime: "",
+        recoveryTime: ""
+      });
+    });
+  });
+
+  return groups;
+}
+
+function getImportedGroupBaseName(rawName) {
+  const normalized = sanitizeFreeText(String(rawName || "").trim(), 80);
+  if (!normalized) return "";
+  return normalized.replace(/-\d+$/i, "").trim();
+}
+
+function getImportedGroupSequence(rawName) {
+  const match = String(rawName || "").trim().match(/-(\d+)$/);
+  return match ? Number(match[1]) : null;
+}
+
+function consolidateImportedGroups(groups) {
+  const sourceGroups = Array.isArray(groups) ? groups : [];
+  const buckets = new Map();
+
+  sourceGroups.forEach((group, index) => {
+    const rawName = sanitizeFreeText(group?.rawName || "", 80);
+    const baseName = getImportedGroupBaseName(rawName) || rawName || `GROUP ${index + 1}`;
+    const bucketKey = sanitizeUpperText(baseName, 80);
+    const sequence = getImportedGroupSequence(rawName);
+
+    if (!buckets.has(bucketKey)) {
+      buckets.set(bucketKey, []);
+    }
+
+    buckets.get(bucketKey).push({
+      index,
+      sequence,
+      baseName,
+      group
+    });
+  });
+
+  return Array.from(buckets.values())
+    .sort((left, right) => left[0].index - right[0].index)
+    .map((bucket) => {
+      if (bucket.length === 1) {
+        return bucket[0].group;
+      }
+
+      const representative = bucket.find((entry) => entry.sequence === 1)
+        || [...bucket].sort((left, right) => {
+          const leftRank = Number.isFinite(left.sequence) ? left.sequence : Number.MAX_SAFE_INTEGER;
+          const rightRank = Number.isFinite(right.sequence) ? right.sequence : Number.MAX_SAFE_INTEGER;
+          return leftRank - rightRank || left.index - right.index;
+        })[0];
+
+      const totalAircraftCount = bucket.reduce((sum, entry) => {
+        const count = Number.parseInt(entry.group?.aircraftCount || "0", 10);
+        return sum + (Number.isFinite(count) ? count : 0);
+      }, 0);
+
+      const representativeWingmen = String(representative.group?.wingmen || "")
+        .split(/\r?\n/)
+        .map((line) => line.replace(/^\s*\d+\.\s*/, "").trim())
+        .filter(Boolean);
+
+      const groupedWingmen = bucket
+        .filter((entry) => entry !== representative)
+        .sort((left, right) => left.index - right.index)
+        .map((entry) => sanitizeFreeText(entry.group?.leader || "", 40))
+        .filter(Boolean);
+
+      const mergedWingmen = [...representativeWingmen, ...groupedWingmen]
+        .map((name, index) => `${index + 2}. ${name}`)
+        .join("\n");
+
+      return {
+        ...representative.group,
+        id: sanitizeUpperText(`${representative.group.id}_${representative.baseName}`, 80),
+        rawName: representative.baseName,
+        aircraftCount: String(Math.max(totalAircraftCount, 1)),
+        wingmen: sanitizeMultilineText(mergedWingmen, 400)
+      };
+    });
+}
+
+function findMatchingBrace(sourceText, openingBraceIndex) {
+  if (openingBraceIndex < 0 || sourceText[openingBraceIndex] !== "{") return -1;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let index = openingBraceIndex; index < sourceText.length; index += 1) {
+    const char = sourceText[index];
+
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+
+      if (char === "\\") {
+        escaped = true;
+        continue;
+      }
+
+      if (char === "\"") {
+        inString = false;
+      }
+
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = true;
+      continue;
+    }
+
+    if (char === "{") depth += 1;
+    if (char === "}") {
+      depth -= 1;
+      if (depth === 0) return index;
+    }
+  }
+
+  return -1;
+}
+
+function extractLuaBlockAfterMarker(sourceText, marker, startIndex = 0) {
+  const markerIndex = sourceText.indexOf(marker, startIndex);
+  if (markerIndex < 0) return null;
+
+  const braceIndex = sourceText.indexOf("{", markerIndex);
+  if (braceIndex < 0) return null;
+
+  const endIndex = findMatchingBrace(sourceText, braceIndex);
+  if (endIndex < 0) return null;
+
+  return {
+    markerIndex,
+    braceIndex,
+    endIndex,
+    text: sourceText.slice(braceIndex, endIndex + 1)
+  };
+}
+
+function extractTopLevelLuaTableEntries(tableText) {
+  const entries = [];
+  if (!tableText || tableText[0] !== "{") return entries;
+
+  let index = 1;
+
+  while (index < tableText.length - 1) {
+    const keyMatch = tableText.slice(index).match(/^\s*\[(\d+)\]\s*=\s*/);
+    if (!keyMatch) {
+      index += 1;
+      continue;
+    }
+
+    const entryStart = index + keyMatch[0].length;
+    if (tableText[entryStart] !== "{") {
+      index = entryStart;
+      continue;
+    }
+
+    const entryEnd = findMatchingBrace(tableText, entryStart);
+    if (entryEnd < 0) break;
+
+    entries.push({
+      key: keyMatch[1],
+      text: tableText.slice(entryStart, entryEnd + 1)
+    });
+
+    index = entryEnd + 1;
+  }
+
+  return entries;
+}
+
+function extractLuaStringField(blockText, fieldName) {
+  const match = blockText.match(new RegExp(`\\["${fieldName}"\\]\\s*=\\s*"([^"]*)"`, "i"));
+  return match ? match[1] : "";
+}
+
+function extractLuaNumberField(blockText, fieldName) {
+  const match = blockText.match(new RegExp(`\\["${fieldName}"\\]\\s*=\\s*(-?\\d+(?:\\.\\d+)?)`, "i"));
+  return match ? Number(match[1]) : null;
+}
+
+function getLuaTopLevelFieldValueStart(blockText, fieldName) {
+  const text = String(blockText || "");
+  const fieldKey = `["${fieldName}"]`;
+  const startBrace = text.indexOf("{");
+  if (startBrace < 0) return -1;
+
+  let depth = 0;
+  let inString = false;
+
+  for (let index = startBrace; index < text.length; index += 1) {
+    const char = text[index];
+    const previous = text[index - 1];
+
+    if (inString) {
+      if (char === "\"" && previous !== "\\") {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (char === "-" && text[index + 1] === "-") {
+      while (index < text.length && text[index] !== "\n") {
+        index += 1;
+      }
+      continue;
+    }
+
+    if (char === "\"") {
+      inString = true;
+      continue;
+    }
+
+    if (char === "{") {
+      depth += 1;
+      continue;
+    }
+
+    if (char === "}") {
+      depth -= 1;
+      if (depth <= 0) break;
+      continue;
+    }
+
+    if (depth !== 1) continue;
+    if (!text.startsWith(fieldKey, index)) continue;
+
+    let cursor = index + fieldKey.length;
+    while (/\s/.test(text[cursor] || "")) cursor += 1;
+    if (text[cursor] !== "=") continue;
+    cursor += 1;
+    while (/\s/.test(text[cursor] || "")) cursor += 1;
+    return cursor;
+  }
+
+  return -1;
+}
+
+function extractLuaTopLevelStringField(blockText, fieldName) {
+  const valueStart = getLuaTopLevelFieldValueStart(blockText, fieldName);
+  if (valueStart < 0 || blockText[valueStart] !== "\"") return "";
+
+  let value = "";
+  for (let index = valueStart + 1; index < blockText.length; index += 1) {
+    const char = blockText[index];
+    const previous = blockText[index - 1];
+    if (char === "\"" && previous !== "\\") {
+      return value;
+    }
+    value += char;
+  }
+
+  return "";
+}
+
+function extractLuaTopLevelNumberField(blockText, fieldName) {
+  const valueStart = getLuaTopLevelFieldValueStart(blockText, fieldName);
+  if (valueStart < 0) return null;
+
+  const match = String(blockText || "").slice(valueStart).match(/^-?\d+(?:\.\d+)?/);
+  return match ? Number(match[0]) : null;
+}
+
+function extractLuaWaypointTaskIds(pointText) {
+  const taskBlock = extractLuaBlockAfterMarker(pointText, '["task"]');
+  const paramsBlock = extractLuaBlockAfterMarker(taskBlock?.text || "", '["params"]');
+  const tasksBlock = extractLuaBlockAfterMarker(paramsBlock?.text || "", '["tasks"]');
+  const taskEntries = extractTopLevelLuaTableEntries(tasksBlock?.text || "");
+
+  return taskEntries
+    .map((entry) => sanitizeUpperText(extractLuaTopLevelStringField(entry.text, "id"), 40))
+    .filter(Boolean);
+}
+
+function buildRouteRowsFromLuaText(groupText) {
+  const routeBlock = extractLuaBlockAfterMarker(groupText, '["route"]');
+  const pointsBlock = extractLuaBlockAfterMarker(routeBlock?.text || "", '["points"]');
+  const pointEntries = extractTopLevelLuaTableEntries(pointsBlock?.text || "");
+
+  return pointEntries.map((entry, index) => {
+    const pointText = entry.text;
+    const name = sanitizeUpperText(
+      extractLuaTopLevelStringField(pointText, "NAME") || extractLuaTopLevelStringField(pointText, "name"),
+      24
+    );
+    const action = sanitizeUpperText(extractLuaTopLevelStringField(pointText, "action"), 24);
+    const eta = extractLuaTopLevelNumberField(pointText, "ETA");
+    const altitudeMeters = extractLuaTopLevelNumberField(pointText, "alt");
+    const speedMetersPerSecond = extractLuaTopLevelNumberField(pointText, "speed");
+    const taskIds = extractLuaWaypointTaskIds(pointText);
+    const descriptorParts = [action].filter(Boolean);
+
+    return {
+      wp: sanitizeUpperText(name || `WP${index + 1}`, 24),
+      desc: sanitizeFreeText(descriptorParts.join(" · ") || `Waypoint ${index + 1}`, 120),
+      coords: "",
+      alt: metersToFeet(altitudeMeters) ? `${metersToFeet(altitudeMeters)} FT` : "",
+      spd: metersPerSecondToKnots(speedMetersPerSecond) ? `${metersPerSecondToKnots(speedMetersPerSecond)} KT` : "",
+      etaSeconds: Number.isFinite(eta) ? eta : null,
+      name,
+      action,
+      taskIds
+    };
+  });
+}
+
+function buildImportedGroupFromLuaText(groupText, coalitionName, category, countryIndex, groupIndex) {
+  const unitsBlock = extractLuaBlockAfterMarker(groupText, '["units"]');
+  const unitEntries = extractTopLevelLuaTableEntries(unitsBlock?.text || "");
+  if (!unitEntries.length) return null;
+
+  const leaderUnitText = unitEntries[0].text;
+  const leaderType = extractLuaTopLevelStringField(leaderUnitText, "type");
+  const leaderName = extractLuaTopLevelStringField(leaderUnitText, "name");
+  const groupName = extractLuaTopLevelStringField(groupText, "name");
+  const groupTask = extractLuaTopLevelStringField(groupText, "task");
+  const groupFrequency = extractLuaTopLevelNumberField(groupText, "frequency");
+  const groupStartSeconds = extractLuaTopLevelNumberField(groupText, "start_time");
+  const route = buildRouteRowsFromLuaText(groupText);
+  const targetWaypoint = pickTargetWaypoint(route);
+  if (!leaderType) return null;
+
+  return {
+    id: sanitizeUpperText(`${coalitionName}_${countryIndex}_${category}_${groupIndex}_${groupName || leaderName || "GROUP"}`, 80),
+    coalition: coalitionName,
+    category,
+    rawName: sanitizeFreeText(groupName || leaderName || `Group ${groupIndex}`, 80),
+    task: mapImportedTask(groupTask),
+    aircraftType: sanitizeUpperText(leaderType, 24),
+    aircraftCount: String(unitEntries.length),
+    leader: sanitizeFreeText(leaderName, 40),
+    wingmen: sanitizeMultilineText(
+      unitEntries
+        .slice(1)
+        .map((entry, index) => `${index + 2}. ${sanitizeFreeText(extractLuaTopLevelStringField(entry.text, "name"), 40)}`)
+        .filter(Boolean)
+        .join("\n"),
+      400
+    ),
+    departure: inferDepartureLabel({}, route),
+    destination: inferDestinationLabel({ route: { points: {} } }, route),
+    groupStartSeconds: Number.isFinite(groupStartSeconds) ? groupStartSeconds : null,
+    intra: sanitizeFreeText(formatMissionFrequency(groupFrequency), 20),
+    route,
+    loadout: "",
+    loadoutNote: "",
+    targetName: sanitizeUpperText(targetWaypoint?.name || "", 48),
+    targetDetails: sanitizeFreeText(targetWaypoint?.desc || "", 120),
+    launchTime: "",
+    totTime: "",
+    recoveryTime: ""
+  };
+}
+
+function extractImportedGroupsFromMissionText(rawText, coalitionName) {
+  const text = String(rawText || "");
+  const missionCoalitionBlock = extractLuaBlockAfterMarker(text, '["coalition"]');
+  if (!missionCoalitionBlock) return [];
+
+  const coalitionBlock = extractLuaBlockAfterMarker(missionCoalitionBlock.text, `["${coalitionName}"]`);
+  if (!coalitionBlock) return [];
+
+  const countryBlock = extractLuaBlockAfterMarker(coalitionBlock.text, '["country"]');
+  if (!countryBlock) return [];
+
+  const countryEntries = extractTopLevelLuaTableEntries(countryBlock.text);
+  const groups = [];
+  const seenNames = new Set();
+
+  countryEntries.forEach((countryEntry, countryIndex) => {
+    ["plane", "helicopter"].forEach((category) => {
+      const categoryBlock = extractLuaBlockAfterMarker(countryEntry.text, `["${category}"]`);
+      if (!categoryBlock) return;
+
+      const groupsBlock = extractLuaBlockAfterMarker(categoryBlock.text, '["group"]');
+      if (!groupsBlock) return;
+
+      extractTopLevelLuaTableEntries(groupsBlock.text).forEach((groupEntry, groupIndex) => {
+        const parsedGroup = buildImportedGroupFromLuaText(
+          groupEntry.text,
+          coalitionName,
+          category,
+          countryIndex + 1,
+          groupIndex + 1
+        );
+
+        if (!parsedGroup) return;
+
+        const dedupeKey = sanitizeUpperText(parsedGroup.rawName || parsedGroup.leader || parsedGroup.id, 80);
+        if (seenNames.has(dedupeKey)) return;
+        seenNames.add(dedupeKey);
+        groups.push(parsedGroup);
+      });
+    });
+  });
+
+  return groups;
+}
+
+function extractMissionTextMetadata(rawText) {
+  const text = String(rawText || "");
+  const theatre = extractLuaTopLevelStringField(text, "theatre");
+  const startTime = extractLuaTopLevelNumberField(text, "start_time");
+  const dateBlock = extractLuaBlockAfterMarker(text, '["date"]');
+  const year = extractLuaTopLevelNumberField(dateBlock?.text || "", "Year");
+  const month = extractLuaTopLevelNumberField(dateBlock?.text || "", "Month");
+  const day = extractLuaTopLevelNumberField(dateBlock?.text || "", "Day");
+
+  return {
+    theatre: sanitizeUpperText(theatre, 24),
+    startTime: Number.isFinite(startTime) ? startTime : null,
+    dateInGame: year && month && day
+      ? `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`
+      : ""
+  };
+}
+
+function extractImportedWeatherFromMissionText(rawText, missionFallback = {}) {
+  const weatherBlock = extractLuaBlockAfterMarker(rawText, '["weather"]');
+  const fallbackWeather = getNested(missionFallback, ["weather"], {});
+  if (!weatherBlock && !fallbackWeather) {
+    return extractImportedWeather(missionFallback);
+  }
+
+  const seasonBlock = extractLuaBlockAfterMarker(weatherBlock?.text || "", '["season"]');
+  const windBlock = extractLuaBlockAfterMarker(weatherBlock?.text || "", '["wind"]');
+  const groundWindBlock = extractLuaBlockAfterMarker(windBlock?.text || "", '["atGround"]');
+  const cloudsBlock = extractLuaBlockAfterMarker(weatherBlock?.text || "", '["clouds"]');
+  const fogBlock = extractLuaBlockAfterMarker(weatherBlock?.text || "", '["fog"]');
+
+  const mergedMission = {
+    weather: {
+      ...fallbackWeather,
+      qnh: extractLuaTopLevelNumberField(weatherBlock?.text || "", "qnh") ?? fallbackWeather?.qnh,
+      season: {
+        ...(fallbackWeather?.season || {}),
+        temperature: extractLuaTopLevelNumberField(seasonBlock?.text || "", "temperature") ?? getNested(fallbackWeather, ["season", "temperature"], "")
+      },
+      wind: {
+        ...(fallbackWeather?.wind || {}),
+        atGround: {
+          ...(getNested(fallbackWeather, ["wind", "atGround"], {}) || {}),
+          dir: extractLuaTopLevelNumberField(groundWindBlock?.text || "", "dir") ?? getNested(fallbackWeather, ["wind", "atGround", "dir"], ""),
+          speed: extractLuaTopLevelNumberField(groundWindBlock?.text || "", "speed") ?? getNested(fallbackWeather, ["wind", "atGround", "speed"], "")
+        }
+      },
+      clouds: {
+        ...(fallbackWeather?.clouds || {}),
+        density: extractLuaTopLevelNumberField(cloudsBlock?.text || "", "density") ?? getNested(fallbackWeather, ["clouds", "density"], ""),
+        base: extractLuaTopLevelNumberField(cloudsBlock?.text || "", "base") ?? getNested(fallbackWeather, ["clouds", "base"], ""),
+        thickness: extractLuaTopLevelNumberField(cloudsBlock?.text || "", "thickness") ?? getNested(fallbackWeather, ["clouds", "thickness"], "")
+      },
+      fog: {
+        ...(fallbackWeather?.fog || {}),
+        visibility: extractLuaTopLevelNumberField(fogBlock?.text || "", "visibility") ?? getNested(fallbackWeather, ["fog", "visibility"], ""),
+        thickness: extractLuaTopLevelNumberField(fogBlock?.text || "", "thickness") ?? getNested(fallbackWeather, ["fog", "thickness"], "")
+      }
+    }
+  };
+
+  return extractImportedWeather(mergedMission);
+}
+
+function buildImportedMissionModelFromLuaText(rawText, sourceName, missionFallback = {}) {
+  const metadata = extractMissionTextMetadata(rawText);
+  const startTimeSeconds = Number.isFinite(metadata.startTime) ? metadata.startTime : Number(missionFallback?.start_time);
+  const blueGroups = consolidateImportedGroups(
+    extractImportedGroupsFromMissionText(rawText, "blue")
+      .map((group) => applyImportedMissionTiming(group, startTimeSeconds))
+  );
+  const redGroups = consolidateImportedGroups(
+    extractImportedGroupsFromMissionText(rawText, "red")
+      .map((group) => applyImportedMissionTiming(group, startTimeSeconds))
+  );
+
+  return {
+    mission: missionFallback,
+    fileName: sourceName,
+    title: sanitizeFreeText(missionFallback?.name || sourceName.replace(/\.(miz|lua|txt|json)$/i, ""), 80),
+    theatre: metadata.theatre || sanitizeUpperText(missionFallback?.theatre || "", 24),
+    dateInGame: metadata.dateInGame || formatMissionDate(missionFallback?.date),
+    startTime: secondsToTimeDigits(startTimeSeconds),
+    weatherValidTime: secondsToTimeDigits(startTimeSeconds),
+    weather: extractImportedWeatherFromMissionText(rawText, missionFallback),
+    coalitions: {
+      red: redGroups,
+      blue: blueGroups
+    }
+  };
+}
+
+function parseMissionLua(luaText) {
+  const ast = window.luaparse.parse(luaText, {
+    comments: false,
+    scope: false,
+    luaVersion: "5.1"
+  });
+
+  const missionNode = getLuaAssignmentValue(ast, "mission");
+  if (!missionNode) {
+    throw new Error("Impossible de trouver la table `mission` dans le fichier.");
+  }
+
+  const mission = evaluateLuaNode(missionNode);
+  if (!mission || typeof mission !== "object") {
+    throw new Error("Le contenu `mission` n'a pas pu etre interprete.");
+  }
+
+  return mission;
+}
+
+function parseMissionTextWithDcsMissionParserFallback(missionString) {
+  let text = String(missionString || "");
+
+  const rules = [
+    (value) => value.replace(/mission = /g, ""),
+    (value) => value.replace(/\["(.*)"\] =/g, (_, p1) => `"${p1}":`),
+    (value) => value.replace(/\[(\d*)\] = (\n *{)/g, (_, p1, p2) => `"${p1}0":${p2}`),
+    (value) => value.replace(/\[(\d*)\] =/g, (_, p1) => `"${p1}":`),
+    (value) => value.replace(/( -- end of \["*([\d\w /]*)"*\])/g, (_, p1, p2) => `"${p2}1": "${String(p1).replace(/"/g, '\\"')}",`),
+    (value) => value.replace(/(,)(\n *})/g, (_, __, p2) => p2),
+    (value) => value.replace(/-- end of mission/g, "")
+  ];
+
+  rules.forEach((rule) => {
+    text = rule(text);
+  });
+
+  return JSON.parse(text);
+}
+
+function extractImportedWeather(mission) {
+  const weather = getNested(mission, ["weather"], {});
+  const qnhMmHg = weather?.qnh || "";
+  const qnhInHg = mmHgToInHg(qnhMmHg);
+  const qnhHpa = mmHgToHpa(qnhMmHg);
+  const rawWindDir = radiansToDegrees(getNested(weather, ["wind", "atGround", "dir"], ""));
+  const windDir = rawWindDir === ""
+    ? ""
+    : String((Number(rawWindDir) + 180) % 360);
+  const windSpeed = metersPerSecondToKnots(getNested(weather, ["wind", "atGround", "speed"], ""));
+  const clouds = weather?.clouds || {};
+  const cloudBaseFt = metersToFeet(clouds?.base);
+  const cloudTopFt = clouds?.base !== undefined && clouds?.thickness !== undefined
+    ? metersToFeet(Number(clouds.base) + Number(clouds.thickness))
+    : "";
+  const fog = weather?.fog || {};
+  const fogTopFt = metersToFeet(fog?.thickness);
+
+  return normalizeWeatherData({
+    temperatureC: sanitizeDigits(String(getNested(weather, ["season", "temperature"], "")), 3),
+    qnhInHg,
+    qnhHpa,
+    windDirection: sanitizeDigits(String(windDir), 3),
+    windSpeed: sanitizeDigits(String(windSpeed), 3),
+    windGust: "",
+    fogEnabled: Number(fog?.visibility || 0) > 0 ? "YES" : "NO",
+    fogBase: Number(fog?.visibility || 0) > 0 ? "0" : "",
+    fogTop: Number(fog?.visibility || 0) > 0 ? sanitizeDigits(String(fogTopFt), 5) : "",
+    layers: [
+      {
+        cover: inferCloudCoverFromDensity(clouds?.density),
+        base: sanitizeDigits(String(cloudBaseFt), 5),
+        top: sanitizeDigits(String(cloudTopFt), 5)
+      },
+      { cover: "", base: "", top: "" },
+      { cover: "", base: "", top: "" }
+    ]
+  });
+}
+
+function applyImportedMissionTiming(importedGroup, missionStartSeconds) {
+  const missionAbsolute = Number.isFinite(missionStartSeconds) ? missionStartSeconds : null;
+  const firstWaypoint = importedGroup.route[0] || null;
+  const groupStartSeconds = Number.isFinite(importedGroup.groupStartSeconds) ? importedGroup.groupStartSeconds : null;
+  const launchOffset = Number.isFinite(firstWaypoint?.etaSeconds)
+    ? firstWaypoint.etaSeconds
+    : groupStartSeconds;
+  const launchAbsolute = missionAbsolute !== null && Number.isFinite(launchOffset)
+    ? missionAbsolute + launchOffset
+    : missionAbsolute;
+  const targetWaypoint = pickTargetWaypoint(importedGroup.route);
+  const lastTimedWaypoint = [...importedGroup.route].reverse().find((row) => Number.isFinite(row.etaSeconds));
+  const pushWaypointIndex = importedGroup.route.findIndex((row) => row === targetWaypoint) - 1;
+  const pushWaypoint = pushWaypointIndex >= 0 ? importedGroup.route[pushWaypointIndex] : null;
+
+  return {
+    ...importedGroup,
+    launchTime: launchAbsolute !== null ? secondsToTimeDigits(launchAbsolute) : "",
+    totTime: missionAbsolute !== null && Number.isFinite(targetWaypoint?.etaSeconds)
+      ? secondsToTimeDigits(missionAbsolute + targetWaypoint.etaSeconds)
+      : "",
+    recoveryTime: missionAbsolute !== null && Number.isFinite(lastTimedWaypoint?.etaSeconds)
+      ? secondsToTimeDigits(missionAbsolute + lastTimedWaypoint.etaSeconds)
+      : "",
+    pushTime: missionAbsolute !== null && Number.isFinite(pushWaypoint?.etaSeconds)
+      ? secondsToTimeDigits(missionAbsolute + pushWaypoint.etaSeconds)
+      : ""
+  };
+}
+
+function buildImportedMissionModel(mission, fileName) {
+  const startTimeSeconds = Number(mission?.start_time);
+  const blueGroups = consolidateImportedGroups(
+    buildImportedGroupsForCoalition(mission, "blue")
+      .map((group) => applyImportedMissionTiming(group, startTimeSeconds))
+  );
+  const redGroups = consolidateImportedGroups(
+    buildImportedGroupsForCoalition(mission, "red")
+      .map((group) => applyImportedMissionTiming(group, startTimeSeconds))
+  );
+
+  return {
+    mission,
+    fileName,
+    title: sanitizeFreeText(mission?.name || fileName.replace(/\.(miz|lua|txt|json)$/i, ""), 80),
+    theatre: sanitizeUpperText(mission?.theatre || "", 24),
+    dateInGame: formatMissionDate(mission?.date),
+    startTime: secondsToTimeDigits(startTimeSeconds),
+    weatherValidTime: secondsToTimeDigits(startTimeSeconds),
+    weather: extractImportedWeather(mission),
+    coalitions: {
+      red: redGroups,
+      blue: blueGroups
+    }
+  };
+}
+
+async function parseMizFile(file) {
+  const fileName = String(file?.name || "mission").trim();
+  const lowerName = fileName.toLowerCase();
+
+  if (lowerName.endsWith(".json")) {
+    const text = await readFileAsText(file);
+    const parsed = JSON.parse(text);
+
+    if (parsed?.coalitions?.red || parsed?.coalitions?.blue) {
+      return parsed;
+    }
+
+    return buildImportedMissionModel(parsed, fileName);
+  }
+
+  const text = await readFileAsText(file);
+  const trimmed = String(text || "").trim();
+
+  if (!trimmed.includes("mission") || !trimmed.includes("coalition")) {
+    throw new Error("Le fichier fourni ne ressemble pas au fichier `mission` DCS.");
+  }
+
+  let mission = null;
+
+  try {
+    mission = parseMissionLua(trimmed);
+  } catch (primaryError) {
+    console.warn("LuaParse a echoue, tentative via fallback dcs-mission-parser.", primaryError);
+    mission = parseMissionTextWithDcsMissionParserFallback(trimmed);
+  }
+
+  return buildImportedMissionModel(mission, fileName);
+}
+
+function parseMissionTextInput(rawText, sourceName = "mission.lua") {
+  const trimmed = String(rawText || "").trim();
+
+  if (!trimmed) {
+    throw new Error("Le texte colle est vide.");
+  }
+
+  if (!trimmed.includes("mission") || !trimmed.includes("coalition")) {
+    throw new Error("Le texte colle ne ressemble pas au fichier `mission` DCS.");
+  }
+
+  ensureMizLibrariesAvailable();
+
+  let mission = null;
+
+  try {
+    mission = parseMissionLua(trimmed);
+  } catch (primaryError) {
+    console.warn("LuaParse a echoue sur le texte colle, tentative via fallback dcs-mission-parser.", primaryError);
+    mission = parseMissionTextWithDcsMissionParserFallback(trimmed);
+  }
+
+  const parsedModel = buildImportedMissionModel(mission, sourceName);
+  if ((parsedModel.coalitions.red.length + parsedModel.coalitions.blue.length) > 0) {
+    return parsedModel;
+  }
+
+  console.warn("Le parseur mission complet n'a trouve aucun groupe, bascule sur l'analyse textuelle directe.");
+  return buildImportedMissionModelFromLuaText(trimmed, sourceName, mission);
+}
+
+function renderMizCoalitionCounts() {
+  const parsed = mizImportState.parsedMission;
+  const redCount = parsed?.coalitions?.red?.length || 0;
+  const blueCount = parsed?.coalitions?.blue?.length || 0;
+
+  document.querySelectorAll("[data-miz-coalition-count]").forEach((node) => {
+    const coalition = node.dataset.mizCoalitionCount;
+    const count = coalition === "red" ? redCount : blueCount;
+    node.textContent = `${count} groupe${count > 1 ? "s" : ""}`;
+  });
+}
+
+function renderMizGroupList() {
+  if (!mizGroupList || !mizGroupHeading) return;
+
+  const coalition = mizImportState.selectedCoalition;
+  const groups = mizImportState.parsedMission?.coalitions?.[coalition] || [];
+
+  mizGroupHeading.textContent = `Coalition selectionnee : ${coalition ? coalition.toUpperCase() : "--"}`;
+  mizGroupList.innerHTML = "";
+
+  if (!groups.length) {
+    const empty = document.createElement("div");
+    empty.className = "miz-group-empty";
+    empty.textContent = "Aucun groupe aerien n'a ete trouve pour cette coalition.";
+    mizGroupList.appendChild(empty);
+    return;
+  }
+
+  const fragment = document.createDocumentFragment();
+
+  groups.forEach((group) => {
+    const wrapper = document.createElement("label");
+    wrapper.className = "miz-group-item";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = mizImportState.selectedGroupIds.has(group.id);
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) {
+        mizImportState.selectedGroupIds.add(group.id);
+      } else {
+        mizImportState.selectedGroupIds.delete(group.id);
+      }
+    });
+
+    const main = document.createElement("div");
+    main.className = "miz-group-main";
+
+    const title = document.createElement("div");
+    title.className = "miz-group-title";
+    title.textContent = group.rawName.toUpperCase();
+
+    const meta = document.createElement("div");
+    meta.className = "miz-group-meta";
+    meta.textContent = [
+      group.task || "TASK --",
+      `${group.aircraftCount || "--"} x ${group.aircraftType || "TYPE --"}`,
+      group.departure ? `DEP ${group.departure}` : "",
+      group.destination ? `RTB ${group.destination}` : ""
+    ].filter(Boolean).join(" · ");
+
+    const submeta = document.createElement("div");
+    submeta.className = "miz-group-submeta";
+    submeta.textContent = [
+      group.intra ? `INTRA ${group.intra}` : "",
+      group.loadout ? `LOADOUT ${group.loadout}` : "",
+      group.route.length ? `${group.route.length} waypoints` : ""
+    ].filter(Boolean).join(" · ") || "Aucune donnee supplementaire.";
+
+    main.append(title, meta, submeta);
+    wrapper.append(checkbox, main);
+    fragment.appendChild(wrapper);
+  });
+
+  mizGroupList.appendChild(fragment);
+}
+
+async function validateSelectedMizFile() {
+  syncMizTextState();
+  const pastedText = mizImportState.pastedMissionText;
+  const hasPastedText = Boolean(pastedText);
+
+  if (!hasPastedText) {
+    alert("Collez le texte `mission = { ... }` avant de continuer.");
+    return;
+  }
+
+  mizImportState.loading = true;
+  setMizImportStatus("Analyse du texte colle en cours (`mission = { ... }`)...");
+
+  try {
+    mizImportState.parsedMission = parseMissionTextInput(pastedText, "mission-pasted.lua");
+    console.info("[MIZ IMPORT] Groupes detectes", {
+      red: mizImportState.parsedMission?.coalitions?.red?.length || 0,
+      blue: mizImportState.parsedMission?.coalitions?.blue?.length || 0,
+      source: "pasted-text"
+    });
+    mizImportState.selectedCoalition = "";
+    mizImportState.selectedGroupIds = new Set();
+
+    const redCount = mizImportState.parsedMission.coalitions.red.length;
+    const blueCount = mizImportState.parsedMission.coalitions.blue.length;
+
+    if (redCount === 0 && blueCount === 0) {
+      setMizImportStatus(
+        "Mission chargee mais aucun groupe aerien n'a ete detecte.\nVerifiez que vous avez bien colle le texte complet `mission = { ... }`."
+      );
+    } else {
+      setMizImportStatus(
+        `Mission chargee : ${mizImportState.parsedMission.title}\nTheatre : ${mizImportState.parsedMission.theatre || "--"} · Rouge : ${redCount} · Bleu : ${blueCount}`
+      );
+    }
+    goToMizStep(2);
+  } catch (error) {
+    console.error("Echec d'import mission :", error);
+    setMizImportStatus(`Import impossible : ${error.message || "erreur inconnue"}`);
+    alert(`Import mission impossible.\n${error.message || "Erreur inconnue."}`);
+  } finally {
+    mizImportState.loading = false;
+  }
+}
+
+function chooseMizCoalition(coalition) {
+  const groups = mizImportState.parsedMission?.coalitions?.[coalition] || [];
+  mizImportState.selectedCoalition = coalition;
+  mizImportState.selectedGroupIds = new Set(groups.map((group) => group.id));
+  goToMizStep(3);
+}
+
+function buildImportedAcoFromPackage(pkg, importedGroup) {
+  const aco = createDefaultAco(pkg);
+  const routeAltitudes = importedGroup.route
+    .map((row) => Number.parseInt(String(row.alt || "").replace(/\D/g, ""), 10))
+    .filter(Number.isFinite);
+  const mainAltitude = routeAltitudes.length
+    ? routeAltitudes[Math.floor(routeAltitudes.length / 2)]
+    : null;
+
+  aco.inherited = buildInheritedAcoData(pkg);
+  aco.floorAltitude = mainAltitude ? String(Math.max(mainAltitude - 2000, 500)) : "";
+  aco.transitAltitude = mainAltitude ? String(mainAltitude) : "";
+  aco.ceilingAltitude = mainAltitude ? String(mainAltitude + 2000) : "";
+  aco.airspaceArea = sanitizeUpperText(importedGroup.targetName || importedGroup.rawName, 40);
+  aco.notes = sanitizeMultilineText(
+    [
+      importedGroup.departure ? `DEP ${importedGroup.departure}` : "",
+      importedGroup.destination ? `RTB ${importedGroup.destination}` : ""
+    ].filter(Boolean).join("\n"),
+    400
+  );
+  return normalizeAcoData(aco);
+}
+
+function buildImportedAtoFromPackage(pkg, importedGroup, importedOverview) {
+  const ato = createDefaultAto(pkg);
+  ato.inherited = buildInheritedAtoData(pkg);
+  ato.inherited.operationName = sanitizeUpperText(importedOverview.operationName || "", 48);
+  ato.inherited.startTime = sanitizeTimeInput(importedOverview.startTime || "");
+  ato.inherited.totTime = sanitizeTimeInput(importedOverview.totTime || "");
+  ato.primaryTask = importedGroup.task || "";
+  ato.targetName = sanitizeUpperText(importedGroup.targetName || importedGroup.rawName, 48);
+  ato.targetDetails = sanitizeFreeText(importedGroup.targetDetails || "", 120);
+  ato.launchTime = sanitizeTimeInput(importedGroup.launchTime || "");
+  ato.totTime = sanitizeTimeInput(importedGroup.totTime || importedOverview.totTime || "");
+  ato.recoveryTime = sanitizeTimeInput(importedGroup.recoveryTime || "");
+  ato.pushTime = sanitizeTimeInput(importedGroup.pushTime || "");
+  ato.launchDetails = sanitizeFreeText(importedGroup.departure || "", 120);
+  ato.recoveryDetails = sanitizeFreeText(importedGroup.destination || "", 120);
+  ato.loadout = sanitizeFreeText(importedGroup.loadout || "", 120);
+  ato.loadoutNote = sanitizeFreeText(importedGroup.loadoutNote || "", 120);
+  ato.route = importedGroup.route.map((row) => sanitizeAtoRouteRow(row));
+  ato.comm = getDefaultAtoComm().map((row) => ({ ...row }));
+
+  if (ato.comm[2]) {
+    ato.comm[2].freq = sanitizeFreeText(importedGroup.intra || "", 16);
+    ato.comm[2].name = "PACKAGE";
+  }
+
+  return normalizeAtoData(ato);
+}
+
+function importSelectedMizGroups() {
+  const coalition = mizImportState.selectedCoalition;
+  const parsed = mizImportState.parsedMission;
+
+  if (!coalition || !parsed) {
+    alert("Aucune coalition chargee.");
+    return;
+  }
+
+  const importedGroups = (parsed.coalitions[coalition] || [])
+    .filter((group) => mizImportState.selectedGroupIds.has(group.id));
+
+  if (!importedGroups.length) {
+    alert("Selectionnez au moins un groupe a importer.");
+    return;
+  }
+
+  const operationName = sanitizeUpperText(parsed.title || parsed.fileName.replace(/\.(miz|lua|txt|json)$/i, ""), 48);
+  const overviewTot = importedGroups.find((group) => group.totTime)?.totTime || parsed.startTime || "";
+  const overview = {
+    operationName,
+    mapName: sanitizeUpperText(parsed.theatre || "", 24),
+    dateInGame: parsed.dateInGame || "",
+    dateIRL: new Date().toISOString().slice(0, 10),
+    startTime: parsed.startTime || "",
+    totTime: overviewTot,
+    endTime: importedGroups.find((group) => group.recoveryTime)?.recoveryTime || "",
+    status: "Planned",
+    weatherArea: sanitizeUpperText(parsed.theatre || "DCS", 24),
+    weatherValidTime: parsed.weatherValidTime || ""
+  };
+
+  const packageNamePool = [...PACKAGE_NAME_OPTIONS];
+  const packages = importedGroups.map((group, index) => {
+    const pkg = normalizePackageData({
+      ...createDefaultPackage(),
+      callsign: group.rawName,
+      packageName: packageNamePool[index % packageNamePool.length] || "",
+      mission: group.task,
+      aircraftCount: group.aircraftCount,
+      aircraftType: group.aircraftType,
+      departure: group.departure,
+      leader: group.leader,
+      wingmen: group.wingmen,
+      intra: group.intra,
+      destination: group.destination
+    });
+
+    return pkg;
+  });
+
+  const atos = packages.map((pkg, index) => buildImportedAtoFromPackage(pkg, importedGroups[index], overview));
+  const acos = packages.map((pkg, index) => buildImportedAcoFromPackage(pkg, importedGroups[index]));
+
+  applyBriefingPayload({
+    ...overview,
+    weather: parsed.weather,
+    packages,
+    atos,
+    acos,
+    timelinePackages: []
+  }, currentMissionId || "");
+
+  updateTimelineFromAtos();
+  closeMizImportModal();
 }
 
 /* =========================================================
@@ -1463,10 +3028,25 @@ function sanitizeAtoValue(fieldName, value) {
 
 function sanitizeAtoRouteRow(row = {}, fallback = {}) {
   return {
-    wp: sanitizeUpperText(row.wp || fallback.wp || "", 8),
-    desc: sanitizeFreeText(row.desc || fallback.desc || "", 48),
+    wp: sanitizeUpperText(row.wp || fallback.wp || "", 24),
+    desc: sanitizeFreeText(row.desc || fallback.desc || "", 120),
+    coords: sanitizeMultilineText(row.coords || fallback.coords || "", 180),
     alt: sanitizeFreeText(row.alt || fallback.alt || "", 20),
-    spd: sanitizeFreeText(row.spd || fallback.spd || "", 20)
+    spd: sanitizeFreeText(row.spd || fallback.spd || "", 20),
+    etaSeconds: Number.isFinite(Number(row.etaSeconds)) ? Number(row.etaSeconds) : null
+  };
+}
+
+function parseAtoRouteCoordinatesDisplay(value) {
+  const lines = sanitizeMultilineText(value || "", 180)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  return {
+    lldm: lines[0] || "",
+    dd: lines[1] || "",
+    mgrs: lines[2] || ""
   };
 }
 
@@ -1596,7 +3176,7 @@ function normalizeAtoData(ato = {}) {
     totalDistance: sanitizeAtoValue("totalDistance", ato.totalDistance),
     estFlightTime: sanitizeAtoValue("estFlightTime", ato.estFlightTime),
     comm: getDefaultAtoComm().map((row, index) => sanitizeAtoCommRow(ato.comm?.[index], row)),
-    route: routeSource.map((row, index) => sanitizeAtoRouteRow(row, { wp: `WP${index + 1}`, desc: "", alt: "", spd: "" })),
+    route: routeSource.map((row, index) => sanitizeAtoRouteRow(row, { wp: `WP${index + 1}`, desc: "", coords: "", alt: "", spd: "" })),
     pilotNotes: sanitizeAtoValue("pilotNotes", ato.pilotNotes),
     commanderNotes: sanitizeAtoValue("commanderNotes", ato.commanderNotes)
   };
@@ -1836,17 +3416,25 @@ function getAtoCrewMembers(inherited) {
 }
 
 function createAtoRouteRowElement(routeRow, index, onChange, onRemove) {
-  const row = sanitizeAtoRouteRow(routeRow, { wp: `WP${index + 1}`, desc: "", alt: "", spd: "" });
+  const row = sanitizeAtoRouteRow(routeRow, { wp: `WP${index + 1}`, desc: "", coords: "", alt: "", spd: "" });
+  const coordsDisplay = parseAtoRouteCoordinatesDisplay(row.coords);
   const wrapper = document.createElement("div");
   wrapper.className = "ato-route-row";
+  wrapper.dataset.etaSeconds = Number.isFinite(row.etaSeconds) ? String(row.etaSeconds) : "";
   wrapper.innerHTML = `
     <div class="ato-editable-view ato-route-wp" data-role="wp-view">${row.wp || "--"}</div>
     <div class="ato-editable-view" data-role="desc-view">${row.desc || "--"}</div>
+    <div class="ato-editable-view ato-route-coords" data-role="coords-view">
+      <div class="ato-route-coords-ddm">${coordsDisplay.lldm || "--"}</div>
+      <div class="ato-route-coords-dd">${coordsDisplay.dd || "--"}</div>
+      <div class="ato-route-coords-mgrs">${coordsDisplay.mgrs || "--"}</div>
+    </div>
     <div class="ato-editable-view ato-route-alt" data-role="alt-view">${row.alt || "--"}</div>
     <div class="ato-editable-view ato-route-spd" data-role="spd-view">${row.spd || "--"}</div>
     <div class="ato-edit-field ato-edit-field-stack ato-section-full">
       <input class="field-input" data-role="wp-input" type="text" placeholder="WP" value="${row.wp}" />
       <input class="field-input" data-role="desc-input" type="text" placeholder="Description" value="${row.desc}" />
+      <textarea class="ato-textarea" data-role="coords-input" placeholder="LL DM&#10;DD&#10;MGRS">${row.coords}</textarea>
       <input class="field-input" data-role="alt-input" type="text" placeholder="Altitude" value="${row.alt}" />
       <input class="field-input" data-role="spd-input" type="text" placeholder="Speed" value="${row.spd}" />
       <button class="mini-action-btn package-delete-btn" data-role="remove-route" type="button">Remove Waypoint</button>
@@ -1855,14 +3443,16 @@ function createAtoRouteRowElement(routeRow, index, onChange, onRemove) {
 
   const wpInput = wrapper.querySelector('[data-role="wp-input"]');
   const descInput = wrapper.querySelector('[data-role="desc-input"]');
+  const coordsInput = wrapper.querySelector('[data-role="coords-input"]');
   const altInput = wrapper.querySelector('[data-role="alt-input"]');
   const spdInput = wrapper.querySelector('[data-role="spd-input"]');
   const removeBtn = wrapper.querySelector('[data-role="remove-route"]');
 
-  [wpInput, descInput, altInput, spdInput].forEach((input) => {
+  [wpInput, descInput, coordsInput, altInput, spdInput].forEach((input) => {
+    if (!input) return;
     input.addEventListener("input", () => {
       if (input === wpInput) {
-        input.value = sanitizeUpperText(input.value, 8);
+        input.value = sanitizeUpperText(input.value, 24);
       }
     });
     input.addEventListener("change", onChange);
@@ -1899,7 +3489,7 @@ function renderAtoRouteRows(card) {
       () => {
         card._atoData.route.splice(index, 1);
         if (card._atoData.route.length === 0) {
-          card._atoData.route.push({ wp: "WP1", desc: "", alt: "", spd: "" });
+          card._atoData.route.push({ wp: "WP1", desc: "", coords: "", alt: "", spd: "" });
         }
         renderAtoRouteRows(card);
         card._atoData = collectAtoDataFromCard(card);
@@ -2015,9 +3605,11 @@ function collectAtoDataFromCard(card) {
   data.route = (card._atoRouteRows || []).map((rowElement, index) => sanitizeAtoRouteRow({
     wp: rowElement.querySelector('[data-role="wp-input"]')?.value,
     desc: rowElement.querySelector('[data-role="desc-input"]')?.value,
+    coords: rowElement.querySelector('[data-role="coords-input"]')?.value,
     alt: rowElement.querySelector('[data-role="alt-input"]')?.value,
-    spd: rowElement.querySelector('[data-role="spd-input"]')?.value
-  }, { wp: `WP${index + 1}`, desc: "", alt: "", spd: "" }));
+    spd: rowElement.querySelector('[data-role="spd-input"]')?.value,
+    etaSeconds: Number(rowElement.dataset.etaSeconds)
+  }, { wp: `WP${index + 1}`, desc: "", coords: "", alt: "", spd: "" }));
 
   data.comm = getDefaultAtoComm().map((row, index) => sanitizeAtoCommRow({
     name: row.name,
@@ -2126,7 +3718,7 @@ function createAtoCard(atoData) {
       event.preventDefault();
       event.stopPropagation();
       const nextIndex = card._atoData.route.length + 1;
-      card._atoData.route.push({ wp: `WP${nextIndex}`, desc: "", alt: "", spd: "" });
+      card._atoData.route.push({ wp: `WP${nextIndex}`, desc: "", coords: "", alt: "", spd: "" });
       renderAtoRouteRows(card);
       card._atoData = collectAtoDataFromCard(card);
       updateAtoCardViews(card);
@@ -2563,10 +4155,34 @@ function buildInheritedTimelineData(atoData = {}) {
   };
 }
 
+function buildTimelineWaypointEventsFromAto(atoData = {}) {
+  const ato = normalizeAtoData(atoData);
+  const missionStartSeconds = timeDigitsToMinutes(ato.inherited.startTime);
+  if (missionStartSeconds === null) return [];
+
+  return ato.route
+    .map((row, index) => {
+      if (index === 0) return null;
+      if (!Number.isFinite(row.etaSeconds)) return null;
+
+      const label = sanitizeUpperText(row.wp || `WP${index + 1}`, 32);
+      const note = sanitizeFreeText(row.desc || "", 80);
+
+      return normalizeTimelineEvent({
+        id: `${ato.packageId || ato.id}_wp_${index + 1}`,
+        time: secondsToTimeDigits((missionStartSeconds * 60) + row.etaSeconds),
+        label,
+        note,
+        source: "auto"
+      });
+    })
+    .filter(Boolean);
+}
+
 function buildAutoTimelineEventsFromAto(atoData = {}) {
   const ato = normalizeAtoData(atoData);
 
-  return TIMELINE_DEFAULT_EVENT_LABELS
+  const fixedEvents = TIMELINE_DEFAULT_EVENT_LABELS
     .map(({ key, label, noteField }) => {
       const time = key === "startTime" ? ato.inherited.startTime : ato[key];
       if (!time) return null;
@@ -2580,6 +4196,9 @@ function buildAutoTimelineEventsFromAto(atoData = {}) {
       });
     })
     .filter(Boolean);
+  const waypointEvents = buildTimelineWaypointEventsFromAto(ato);
+
+  return [...fixedEvents, ...waypointEvents];
 }
 
 function createDefaultTimelinePackage(atoData = {}) {
@@ -3350,6 +4969,728 @@ function publishMission() {
   downloadJsonFile(filename, jsonContent);
 }
 
+function downloadCanvasPng(canvas, filename) {
+  if (!canvas) return;
+
+  const safeName = String(filename || "kneeboard.png").replace(/[\\/:*?"<>|]+/g, "-");
+
+  if (canvas.toBlob) {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        alert("Impossible de generer l'image du kneeboard.");
+        return;
+      }
+
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = safeName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(blobUrl);
+    }, "image/png");
+    return;
+  }
+
+  const link = document.createElement("a");
+  link.href = canvas.toDataURL("image/png");
+  link.download = safeName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+function getAvailableAtosForExport() {
+  return normalizeAtosArray(getCurrentAtosFromDom())
+    .filter((ato) => ato.packageId || ato.inherited.callsign || ato.inherited.packageName);
+}
+
+function formatKneeboardPackageOption(atoData = {}) {
+  const ato = normalizeAtoData(atoData);
+  const parts = [
+    ato.inherited.callsign || "PACKAGE",
+    ato.inherited.mission || "TASK",
+    ato.inherited.packageName ? `PKG ${ato.inherited.packageName}` : ""
+  ].filter(Boolean);
+  return parts.join(" · ");
+}
+
+function getSelectedKneeboardAto() {
+  const packageId = kneeboardPackageSelect?.value || "";
+  const atos = getAvailableAtosForExport();
+  return atos.find((ato) => ato.packageId === packageId) || atos[0] || null;
+}
+
+function updateKneeboardPackageMeta() {
+  if (!kneeboardPackageMeta) return;
+
+  const ato = getSelectedKneeboardAto();
+  const coordFormat = kneeboardCoordsFormatSelect?.value === "mgrs"
+    ? "MGRS"
+    : kneeboardCoordsFormatSelect?.value === "dd"
+      ? "DD"
+      : "LL DM";
+  if (!ato) {
+    kneeboardPackageMeta.textContent = "Aucun package ATO disponible.";
+    return;
+  }
+
+  kneeboardPackageMeta.textContent = [
+    `${ato.inherited.callsign || "PACKAGE"} · ${ato.inherited.mission || "TASK"}`,
+    `Package ${ato.inherited.packageName || "--"} · ${ato.inherited.aircraftCount || "--"} x ${ato.inherited.aircraftType || "--"}`,
+    `DEP ${ato.launchDetails || ato.inherited.departure || "--"} · TGT ${ato.targetName || "--"} · RTB ${ato.recoveryDetails || ato.inherited.destination || "--"}`,
+    `Route coords exportees en ${coordFormat}`
+  ].join("\n");
+}
+
+function syncKneeboardPackageOptions(preferredPackageId = "") {
+  if (!kneeboardPackageSelect) return;
+
+  const atos = getAvailableAtosForExport();
+  kneeboardPackageSelect.innerHTML = "";
+
+  atos.forEach((ato) => {
+    const option = document.createElement("option");
+    option.value = ato.packageId || ato.id;
+    option.textContent = formatKneeboardPackageOption(ato);
+    kneeboardPackageSelect.appendChild(option);
+  });
+
+  const targetValue = atos.find((ato) => (ato.packageId || ato.id) === preferredPackageId)
+    ? preferredPackageId
+    : atos[0]?.packageId || atos[0]?.id || "";
+
+  kneeboardPackageSelect.value = targetValue;
+  kneeboardExportConfirmBtn.disabled = atos.length === 0;
+  updateKneeboardPackageMeta();
+}
+
+function openKneeboardExportModal() {
+  const atos = getAvailableAtosForExport();
+  if (!atos.length) {
+    alert("Aucun package ATO disponible a exporter.");
+    return;
+  }
+
+  syncKneeboardPackageOptions(kneeboardPackageSelect?.value || atos[0].packageId || atos[0].id);
+  kneeboardExportModal?.classList.add("is-open");
+  kneeboardExportModal?.setAttribute("aria-hidden", "false");
+}
+
+function closeKneeboardExportModal() {
+  kneeboardExportModal?.classList.remove("is-open");
+  kneeboardExportModal?.setAttribute("aria-hidden", "true");
+}
+
+function drawRoundedRectPath(ctx, x, y, width, height, radius = 24) {
+  const safeRadius = Math.max(0, Math.min(radius, width / 2, height / 2));
+  ctx.beginPath();
+  ctx.moveTo(x + safeRadius, y);
+  ctx.lineTo(x + width - safeRadius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  ctx.lineTo(x + width, y + height - safeRadius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+  ctx.lineTo(x + safeRadius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  ctx.lineTo(x, y + safeRadius);
+  ctx.quadraticCurveTo(x, y, x + safeRadius, y);
+  ctx.closePath();
+}
+
+function fillRoundedRect(ctx, x, y, width, height, radius, fillStyle) {
+  ctx.save();
+  ctx.fillStyle = fillStyle;
+  drawRoundedRectPath(ctx, x, y, width, height, radius);
+  ctx.fill();
+  ctx.restore();
+}
+
+function strokeRoundedRect(ctx, x, y, width, height, radius, strokeStyle, lineWidth = 1) {
+  ctx.save();
+  ctx.strokeStyle = strokeStyle;
+  ctx.lineWidth = lineWidth;
+  drawRoundedRectPath(ctx, x, y, width, height, radius);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function trimCanvasText(ctx, text, maxWidth) {
+  const source = String(text || "").trim();
+  if (!source) return "";
+  if (ctx.measureText(source).width <= maxWidth) return source;
+
+  let output = source;
+  while (output.length > 1 && ctx.measureText(`${output}...`).width > maxWidth) {
+    output = output.slice(0, -1);
+  }
+
+  return `${output}...`;
+}
+
+function wrapCanvasText(ctx, text, maxWidth, maxLines = Infinity) {
+  const paragraphs = String(text || "")
+    .replace(/\r/g, "")
+    .split("\n")
+    .map((line) => line.trim());
+  const lines = [];
+
+  paragraphs.forEach((paragraph) => {
+    if (!paragraph) {
+      lines.push("");
+      return;
+    }
+
+    const words = paragraph.split(/\s+/);
+    let currentLine = "";
+
+    words.forEach((word) => {
+      const candidate = currentLine ? `${currentLine} ${word}` : word;
+      if (ctx.measureText(candidate).width <= maxWidth) {
+        currentLine = candidate;
+        return;
+      }
+
+      if (currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        lines.push(trimCanvasText(ctx, word, maxWidth));
+      }
+    });
+
+    if (currentLine) {
+      lines.push(currentLine);
+    }
+  });
+
+  if (lines.length <= maxLines) {
+    return lines;
+  }
+
+  const trimmed = lines.slice(0, Math.max(maxLines, 1));
+  trimmed[trimmed.length - 1] = trimCanvasText(ctx, trimmed[trimmed.length - 1], maxWidth);
+  return trimmed;
+}
+
+function drawCanvasTextBlock(ctx, text, x, y, maxWidth, options = {}) {
+  const {
+    font = '400 28px "Segoe UI", Arial, sans-serif',
+    color = "#eaf4ff",
+    lineHeight = 38,
+    maxLines = Infinity
+  } = options;
+
+  ctx.save();
+  ctx.font = font;
+  ctx.fillStyle = color;
+  ctx.textBaseline = "top";
+
+  const lines = wrapCanvasText(ctx, text, maxWidth, maxLines);
+  lines.forEach((line, index) => {
+    ctx.fillText(line, x, y + (index * lineHeight));
+  });
+  ctx.restore();
+
+  return y + (lines.length * lineHeight);
+}
+
+function drawKneeboardSection(ctx, x, y, width, height, title, accentColor) {
+  fillRoundedRect(ctx, x, y, width, height, 28, "rgba(10, 21, 34, 0.88)");
+  strokeRoundedRect(ctx, x, y, width, height, 28, "rgba(160, 205, 255, 0.16)", 2);
+  ctx.save();
+  ctx.fillStyle = accentColor;
+  ctx.fillRect(x + 24, y + 22, 92, 6);
+  ctx.font = '800 28px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = "#f3f8ff";
+  ctx.textBaseline = "top";
+  ctx.fillText(title, x + 24, y + 44);
+  ctx.restore();
+}
+
+function drawKneeboardKeyValueList(ctx, items, x, y, width, accentColor) {
+  let cursorY = y;
+
+  items.forEach(({ key, value }) => {
+    ctx.save();
+    ctx.font = '800 21px "Segoe UI", Arial, sans-serif';
+    ctx.fillStyle = accentColor;
+    ctx.textBaseline = "top";
+    ctx.fillText(key, x, cursorY);
+    ctx.restore();
+
+    cursorY = drawCanvasTextBlock(ctx, value || "--", x, cursorY + 28, width, {
+      font: '500 27px "Segoe UI", Arial, sans-serif',
+      color: "#e8f3ff",
+      lineHeight: 34,
+      maxLines: 2
+    }) + 16;
+  });
+}
+
+function drawKneeboardTwoColumnKeyValueList(ctx, items, x, y, width, accentColor) {
+  const gap = 26;
+  const columnWidth = Math.max((width - gap) / 2, 120);
+  const rowHeight = 68;
+
+  items.forEach(({ key, value }, index) => {
+    const column = index % 2;
+    const row = Math.floor(index / 2);
+    const itemX = x + (column * (columnWidth + gap));
+    const itemY = y + (row * rowHeight);
+
+    ctx.save();
+    ctx.font = '800 17px "Segoe UI", Arial, sans-serif';
+    ctx.fillStyle = accentColor;
+    ctx.textBaseline = "top";
+    ctx.fillText(key, itemX, itemY);
+    ctx.restore();
+
+    drawCanvasTextBlock(ctx, value || "--", itemX, itemY + 24, columnWidth, {
+      font: '600 18px "Segoe UI", Arial, sans-serif',
+      color: "#e8f3ff",
+      lineHeight: 20,
+      maxLines: 2
+    });
+  });
+}
+
+function drawKneeboardRouteRow(ctx, {
+  x,
+  y,
+  width,
+  rowHeight,
+  time,
+  wp,
+  coords,
+  alt,
+  spd,
+  desc,
+  accentColor,
+  isEven
+}) {
+  const timeCol = 138;
+  const wpCol = 122;
+  const coordsCol = 308;
+  const altCol = 122;
+  const spdCol = 118;
+  const descCol = width - timeCol - wpCol - coordsCol - altCol - spdCol;
+
+  fillRoundedRect(ctx, x, y, width, rowHeight, 12, isEven ? "rgba(255,255,255,0.028)" : "rgba(255,255,255,0.05)");
+
+  ctx.save();
+  ctx.textBaseline = "middle";
+  ctx.font = '700 18px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = "#eef6ff";
+  ctx.fillText(trimCanvasText(ctx, time || "--:--L", timeCol - 24), x + 16, y + (rowHeight / 2));
+  ctx.fillStyle = accentColor;
+  ctx.fillText(trimCanvasText(ctx, wp || "--", wpCol - 24), x + timeCol + 16, y + (rowHeight / 2));
+  ctx.restore();
+
+  ctx.save();
+  ctx.textBaseline = "middle";
+  ctx.font = '600 14px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = "#d3e5fb";
+  ctx.fillText(trimCanvasText(ctx, coords || "--", coordsCol - 24), x + timeCol + wpCol + 16, y + (rowHeight / 2));
+  ctx.restore();
+
+  ctx.save();
+  ctx.textBaseline = "top";
+  ctx.font = '600 15px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = "#d9e8f8";
+  ctx.fillText(trimCanvasText(ctx, alt || "--", altCol - 24), x + timeCol + wpCol + coordsCol + 16, y + 10);
+  ctx.fillText(trimCanvasText(ctx, spd || "--", spdCol - 24), x + timeCol + wpCol + coordsCol + altCol + 16, y + 10);
+  ctx.restore();
+
+  drawCanvasTextBlock(ctx, desc || "--", x + timeCol + wpCol + coordsCol + altCol + spdCol + 16, y + 8, descCol - 24, {
+    font: '600 14px "Segoe UI", Arial, sans-serif',
+    color: "#e7f2ff",
+    lineHeight: 17,
+    maxLines: 3
+  });
+}
+
+function buildKneeboardSupportMatrixLines(atoData = {}) {
+  const ato = normalizeAtoData(atoData);
+  return [
+    ato.supportEscort ? `ESCORT · ${[ato.supportEscort, ato.supportEscortNote].filter(Boolean).join(" · ")}` : "",
+    ato.supportSead ? `SEAD · ${[ato.supportSead, ato.supportSeadNote].filter(Boolean).join(" · ")}` : "",
+    ato.supportTanker ? `TANKER · ${[ato.supportTanker, ato.supportTankerNote].filter(Boolean).join(" · ")}` : "",
+    ato.supportC2 ? `C2 · ${[ato.supportC2, ato.supportC2Note].filter(Boolean).join(" · ")}` : "",
+    ato.packageSupport ? `PACKAGE · ${ato.packageSupport}` : ""
+  ].filter(Boolean);
+}
+
+function getAtoRouteDisplayTime(atoData, row) {
+  const ato = normalizeAtoData(atoData);
+  const missionStartMinutes = timeDigitsToMinutes(ato.inherited.startTime);
+  if (missionStartMinutes === null || !Number.isFinite(row?.etaSeconds)) {
+    return "--:--L";
+  }
+
+  return formatTimeLocal(secondsToTimeDigits((missionStartMinutes * 60) + row.etaSeconds));
+}
+
+function getAtoRouteCoordinateForFormat(row = {}, coordFormat = "lldm") {
+  const coords = parseAtoRouteCoordinatesDisplay(row.coords || "");
+  if (coordFormat === "dd") {
+    return coords.dd || coords.lldm || coords.mgrs || "--";
+  }
+
+  if (coordFormat === "mgrs") {
+    return coords.mgrs || coords.lldm || coords.dd || "--";
+  }
+
+  return coords.lldm || coords.dd || coords.mgrs || "--";
+}
+
+function isMeaningfulAtoRouteRow(row = {}, index = 0) {
+  const normalizedWp = sanitizeUpperText(row.wp || "", 24);
+  return Boolean(
+    Number.isFinite(row.etaSeconds) ||
+    sanitizeFreeText(row.desc || "", 120) ||
+    sanitizeMultilineText(row.coords || "", 180) ||
+    sanitizeFreeText(row.alt || "", 20) ||
+    sanitizeFreeText(row.spd || "", 20) ||
+    (normalizedWp && normalizedWp !== `WP${index + 1}`)
+  );
+}
+
+function renderKneeboardToCanvas(atoData, options = {}) {
+  const ato = normalizeAtoData(atoData);
+  const overview = collectOverviewDataFromInputs();
+  const coordFormat = options.coordFormat === "mgrs"
+    ? "mgrs"
+    : options.coordFormat === "dd"
+      ? "dd"
+      : "lldm";
+  const canvas = document.createElement("canvas");
+  canvas.width = KNEEBOARD_EXPORT_WIDTH;
+  canvas.height = KNEEBOARD_EXPORT_HEIGHT;
+
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const accentColor = ato.inherited.color || "#58c7ff";
+  const margin = 72;
+  const contentWidth = canvas.width - (margin * 2);
+  const routeRows = ato.route.filter(isMeaningfulAtoRouteRow);
+  const routePageSize = Number.isFinite(options.routePageSize) && options.routePageSize > 0
+    ? options.routePageSize
+    : 15;
+  const routePageIndex = Number.isFinite(options.routePageIndex) && options.routePageIndex >= 0
+    ? options.routePageIndex
+    : 0;
+  const routePageCount = Number.isFinite(options.routePageCount) && options.routePageCount > 0
+    ? options.routePageCount
+    : Math.max(1, Math.ceil(routeRows.length / routePageSize));
+  const routeStart = routePageIndex * routePageSize;
+  const visibleRouteRows = routeRows.slice(routeStart, routeStart + routePageSize);
+  const supportMatrixLines = buildKneeboardSupportMatrixLines(ato);
+
+  const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  bgGradient.addColorStop(0, "#08131f");
+  bgGradient.addColorStop(.5, "#0b1d2e");
+  bgGradient.addColorStop(1, "#08111b");
+  ctx.fillStyle = bgGradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const flareGradient = ctx.createRadialGradient(canvas.width * .82, 140, 20, canvas.width * .82, 140, 520);
+  flareGradient.addColorStop(0, "rgba(125,240,183,0.18)");
+  flareGradient.addColorStop(1, "rgba(125,240,183,0)");
+  ctx.fillStyle = flareGradient;
+  ctx.fillRect(0, 0, canvas.width, 560);
+
+  ctx.save();
+  ctx.strokeStyle = "rgba(255,255,255,0.04)";
+  ctx.lineWidth = 1;
+  for (let y = 0; y < canvas.height; y += 96) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  fillRoundedRect(ctx, margin, 54, contentWidth, 180, 34, "rgba(8, 19, 31, 0.82)");
+  strokeRoundedRect(ctx, margin, 54, contentWidth, 180, 34, "rgba(160,205,255,0.18)", 2);
+
+  ctx.save();
+  ctx.fillStyle = accentColor;
+  ctx.fillRect(margin + 32, 92, 220, 8);
+  ctx.font = '900 54px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = "#f4fbff";
+  ctx.fillText(trimCanvasText(ctx, ato.inherited.callsign || "PACKAGE", 520), margin + 32, 146);
+  ctx.textAlign = "right";
+  ctx.font = '800 24px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = "#a7c0dd";
+  ctx.fillText(formatDate(overview.dateInGame), margin + contentWidth - 32, 110);
+  ctx.restore();
+
+  drawCanvasTextBlock(
+    ctx,
+    [ato.inherited.mission || "TASK", ato.targetName || "TARGET --", ato.inherited.packageName ? `PKG ${ato.inherited.packageName}` : ""]
+      .filter(Boolean)
+      .join(" · "),
+    margin + 32,
+    194,
+    760,
+    {
+      font: '700 24px "Segoe UI", Arial, sans-serif',
+      color: "#d7e6f8",
+      lineHeight: 30,
+      maxLines: 2
+    }
+  );
+
+  ctx.save();
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+  ctx.font = '700 20px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = "#eaf4ff";
+  ctx.fillText(
+    overview.dateInGame ? `${formatDate(overview.dateInGame)} · ${formatTimeLocal(overview.startTime)}` : formatTimeLocal(overview.startTime),
+    margin + contentWidth - 32,
+    150
+  );
+  ctx.fillText(overview.mapName || "--", margin + contentWidth - 32, 174);
+  ctx.restore();
+
+  drawKneeboardSection(ctx, margin, 268, 660, 292, "MISSION DATA", accentColor);
+  drawKneeboardSection(ctx, margin + 684, 268, 708, 292, "EXECUTION", accentColor);
+  drawKneeboardSection(ctx, margin, 592, contentWidth, 1052, "ROUTE", accentColor);
+  drawKneeboardSection(ctx, margin, 1676, 420, 302, "COMMS", accentColor);
+  drawKneeboardSection(ctx, margin + 452, 1676, 420, 302, "SUPPORT MATRIX", accentColor);
+  drawKneeboardSection(ctx, margin + 904, 1676, 488, 302, "NOTES", accentColor);
+
+  drawKneeboardTwoColumnKeyValueList(ctx, [
+    { key: "PACKAGE", value: ato.inherited.packageName || "--" },
+    { key: "AIRCRAFT", value: `${ato.inherited.aircraftCount || "--"} x ${ato.inherited.aircraftType || "--"}` },
+    { key: "LEAD", value: ato.inherited.leader || "--" },
+    { key: "DEP / RTB", value: `${ato.launchDetails || ato.inherited.departure || "--"} / ${ato.recoveryDetails || ato.inherited.destination || "--"}` },
+    { key: "TARGET", value: [ato.targetName, ato.targetDetails].filter(Boolean).join(" · ") || "--" }
+  ], margin + 24, 352, 612, accentColor);
+
+  drawKneeboardTwoColumnKeyValueList(ctx, [
+    { key: "STEP", value: formatTimeLocal(ato.inherited.startTime) },
+    { key: "TAKEOFF", value: formatTimeLocal(ato.launchTime) },
+    { key: "TOT", value: formatZuluTime(ato.totTime) },
+    { key: "RECOVERY", value: formatZuluTime(ato.recoveryTime) }
+  ], margin + 708, 352, 660, accentColor);
+
+  const tableX = margin + 24;
+  const tableY = 676;
+  const tableWidth = contentWidth - 48;
+  const timeCol = 138;
+  const wpCol = 122;
+  const coordsCol = 308;
+  const altCol = 122;
+  const spdCol = 118;
+  const rowHeight = 56;
+
+  fillRoundedRect(ctx, tableX, tableY, tableWidth, 56, 16, "rgba(88,199,255,0.12)");
+  ctx.save();
+  ctx.font = '800 17px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = "#eff7ff";
+  ctx.textBaseline = "middle";
+  ctx.fillText("TIME", tableX + 18, tableY + 28);
+  ctx.fillText("WP", tableX + timeCol + 18, tableY + 28);
+  ctx.fillText(coordFormat === "mgrs" ? "MGRS" : coordFormat === "dd" ? "DD" : "LL DM", tableX + timeCol + wpCol + 18, tableY + 28);
+  ctx.fillText("ALT", tableX + timeCol + wpCol + coordsCol + 18, tableY + 28);
+  ctx.fillText("SPD", tableX + timeCol + wpCol + coordsCol + altCol + 18, tableY + 28);
+  ctx.fillText("DESCRIPTION", tableX + timeCol + wpCol + coordsCol + altCol + spdCol + 18, tableY + 28);
+  ctx.restore();
+
+  visibleRouteRows.forEach((row, index) => {
+    const top = tableY + 72 + (index * rowHeight);
+    drawKneeboardRouteRow(ctx, {
+      x: tableX,
+      y: top,
+      width: tableWidth,
+      rowHeight: 48,
+      time: getAtoRouteDisplayTime(ato, row),
+      wp: row.wp || `WP${routeStart + index + 1}`,
+      coords: getAtoRouteCoordinateForFormat(row, coordFormat),
+      alt: row.alt || "--",
+      spd: row.spd || "--",
+      desc: row.desc || "--",
+      accentColor,
+      isEven: index % 2 === 0
+    });
+  });
+
+  if (routePageCount > 1) {
+    const routeEnd = Math.min(routeStart + visibleRouteRows.length, routeRows.length);
+    drawCanvasTextBlock(
+      ctx,
+      `WP ${routeStart + 1}-${routeEnd} · PAGE ${routePageIndex + 1}/${routePageCount}`,
+      tableX + 6,
+      tableY + 72 + (visibleRouteRows.length * rowHeight) + 16,
+      tableWidth - 24,
+      {
+        font: '600 20px "Segoe UI", Arial, sans-serif',
+        color: "#9cb7d6",
+        lineHeight: 28,
+        maxLines: 1
+      }
+    );
+  }
+
+  const commRows = ato.comm.filter((row) => row.name || row.freq || row.band);
+  let commY = 1768;
+  commRows.forEach((row) => {
+    ctx.save();
+    ctx.font = '800 16px "Segoe UI", Arial, sans-serif';
+    ctx.fillStyle = accentColor;
+    ctx.textBaseline = "top";
+    ctx.fillText(trimCanvasText(ctx, row.name || "--", 160), margin + 28, commY);
+    ctx.font = '600 18px "Segoe UI", Arial, sans-serif';
+    ctx.fillStyle = "#e8f3ff";
+    ctx.fillText(trimCanvasText(ctx, `${row.freq || "--"} ${row.band || ""}`.trim(), 240), margin + 28, commY + 20);
+    ctx.restore();
+    commY += 44;
+  });
+
+  if (!commRows.length) {
+    drawCanvasTextBlock(ctx, "Aucune frequence package renseignee.", margin + 28, 1768, 360, {
+      font: '500 18px "Segoe UI", Arial, sans-serif',
+      color: "#9eb9d7",
+      lineHeight: 24,
+      maxLines: 3
+    });
+  }
+
+  drawCanvasTextBlock(
+    ctx,
+    supportMatrixLines.join("\n\n") || "Aucun support declare.",
+    margin + 480,
+    1768,
+    364,
+    {
+      font: '500 16px "Segoe UI", Arial, sans-serif',
+      color: "#e8f2ff",
+      lineHeight: 21,
+      maxLines: 12
+    }
+  );
+
+  const notesText = [
+    ato.threats ? `THREATS\n${ato.threats}` : "",
+    ato.abortCriteria ? `ABORT\n${ato.abortCriteria}` : "",
+    ato.pilotNotes ? `PILOT NOTES\n${ato.pilotNotes}` : "",
+    ato.commanderNotes ? `COMMANDER NOTES\n${ato.commanderNotes}` : ""
+  ].filter(Boolean).join("\n\n");
+
+  drawCanvasTextBlock(
+    ctx,
+    notesText || "Aucune note specifique.",
+    margin + 932,
+    1768,
+    432,
+    {
+      font: '500 16px "Segoe UI", Arial, sans-serif',
+      color: "#e8f2ff",
+      lineHeight: 20,
+      maxLines: 10
+    }
+  );
+
+  ctx.save();
+  ctx.textAlign = "right";
+  ctx.font = '700 18px "Segoe UI", Arial, sans-serif';
+  ctx.fillStyle = "#88a7c7";
+  ctx.fillText("Generated by WAR ROOM", canvas.width - margin, canvas.height - 34);
+  ctx.restore();
+
+  return canvas;
+}
+
+function exportSelectedKneeboard() {
+  const ato = getSelectedKneeboardAto();
+  if (!ato) {
+    alert("Aucun package selectionne.");
+    return;
+  }
+
+  const coordFormat = kneeboardCoordsFormatSelect?.value || "lldm";
+  const routeRows = ato.route.filter(isMeaningfulAtoRouteRow);
+  const routePageSize = 15;
+  const routePageCount = Math.max(1, Math.ceil(routeRows.length / routePageSize));
+  const baseFilename = `${sanitizeUpperText(ato.inherited.callsign || "PACKAGE", 24).replace(/\s+/g, "_")}_KNEEBOARD`;
+
+  for (let pageIndex = 0; pageIndex < routePageCount; pageIndex += 1) {
+    const canvas = renderKneeboardToCanvas(ato, {
+      coordFormat,
+      routePageIndex: pageIndex,
+      routePageSize,
+      routePageCount
+    });
+    if (!canvas) {
+      alert("Impossible de construire le kneeboard.");
+      return;
+    }
+
+    const filename = routePageCount > 1
+      ? `${baseFilename}_P${String(pageIndex + 1).padStart(2, "0")}.png`
+      : `${baseFilename}.png`;
+    downloadCanvasPng(canvas, filename);
+  }
+}
+
+function shouldUseCompactTopbarActions() {
+  const topbar = document.querySelector(".topbar");
+  return Boolean(topbar?.classList.contains("is-scrolled") && window.innerWidth <= 1280);
+}
+
+function closeTopbarActionsMenu() {
+  if (topbarActionsDropdown) {
+    topbarActionsDropdown.hidden = true;
+  }
+
+  if (topbarActionsBtn) {
+    topbarActionsBtn.setAttribute("aria-expanded", "false");
+  }
+}
+
+function toggleTopbarActionsMenu() {
+  if (!topbarActionsDropdown || !topbarActionsBtn || !shouldUseCompactTopbarActions()) {
+    closeTopbarActionsMenu();
+    return;
+  }
+
+  const willOpen = topbarActionsDropdown.hidden;
+  topbarActionsDropdown.hidden = !willOpen;
+  topbarActionsBtn.setAttribute("aria-expanded", String(willOpen));
+}
+
+function handleTopbarAction(action) {
+  switch (action) {
+    case "new":
+      createNewMission();
+      break;
+    case "load":
+      openMizImportModal();
+      break;
+    case "kneeboard":
+      openKneeboardExportModal();
+      break;
+    case "url":
+      copyCurrentUrl();
+      break;
+    case "copy-id":
+      copyCurrentMissionId();
+      break;
+    case "paste-id":
+      promptAndLoadMissionId();
+      break;
+    case "menu":
+      window.location.href = "../index.html";
+      break;
+    default:
+      break;
+  }
+}
+
 /* =========================================================
    UI / MODE / COLLAPSE
 ========================================================= */
@@ -3524,6 +5865,87 @@ function syncTopbarScrolledState() {
   const topbar = document.querySelector(".topbar");
   if (!topbar) return;
   topbar.classList.toggle("is-scrolled", window.scrollY > 24);
+  if (!shouldUseCompactTopbarActions()) {
+    closeTopbarActionsMenu();
+  }
+}
+
+function bindMizImportUi() {
+  if (!loadMizBtn) return;
+
+  loadMizBtn.addEventListener("click", openMizImportModal);
+  mizImportCloseBtn?.addEventListener("click", closeMizImportModal);
+  mizImportBackdrop?.addEventListener("click", closeMizImportModal);
+  mizBackToFileBtn?.addEventListener("click", () => goToMizStep(1));
+  mizBackToCoalitionBtn?.addEventListener("click", () => goToMizStep(2));
+  mizValidateFileBtn?.addEventListener("click", validateSelectedMizFile);
+  mizCoalitionRedBtn?.addEventListener("click", () => chooseMizCoalition("red"));
+  mizCoalitionBlueBtn?.addEventListener("click", () => chooseMizCoalition("blue"));
+  mizImportGroupsBtn?.addEventListener("click", importSelectedMizGroups);
+
+  mizSelectAllGroupsBtn?.addEventListener("click", () => {
+    const groups = mizImportState.parsedMission?.coalitions?.[mizImportState.selectedCoalition] || [];
+    mizImportState.selectedGroupIds = new Set(groups.map((group) => group.id));
+    renderMizGroupList();
+  });
+
+  mizClearGroupsBtn?.addEventListener("click", () => {
+    mizImportState.selectedGroupIds = new Set();
+    renderMizGroupList();
+  });
+
+  mizFileInput?.addEventListener("change", () => {
+    const [file] = Array.from(mizFileInput.files || []);
+    if (!file) return;
+
+    mizImportState.file = file;
+    if (mizMissionTextInput) {
+      mizMissionTextInput.value = "";
+    }
+    mizImportState.pastedMissionText = "";
+    updateMizFileMeta();
+    setMizImportStatus(`Fichier pret : ${file.name}`);
+  });
+
+  mizMissionTextInput?.addEventListener("input", () => {
+    syncMizTextState();
+    if (mizImportState.pastedMissionText) {
+      mizImportState.file = null;
+      if (mizFileInput) {
+        mizFileInput.value = "";
+      }
+      updateMizFileMeta();
+      setMizImportStatus("Texte `mission` pret a etre analyse.");
+      return;
+    }
+
+    setMizImportStatus("En attente du texte `mission = { ... }`.");
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && mizImportModal?.classList.contains("is-open")) {
+      closeMizImportModal();
+    }
+  });
+}
+
+function bindKneeboardExportUi() {
+  exportKneeboardBtn?.addEventListener("click", openKneeboardExportModal);
+  kneeboardExportCloseBtn?.addEventListener("click", closeKneeboardExportModal);
+  kneeboardExportBackdrop?.addEventListener("click", closeKneeboardExportModal);
+  kneeboardExportCancelBtn?.addEventListener("click", closeKneeboardExportModal);
+  kneeboardPackageSelect?.addEventListener("change", updateKneeboardPackageMeta);
+  kneeboardCoordsFormatSelect?.addEventListener("change", updateKneeboardPackageMeta);
+  kneeboardExportConfirmBtn?.addEventListener("click", () => {
+    exportSelectedKneeboard();
+    closeKneeboardExportModal();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && kneeboardExportModal?.classList.contains("is-open")) {
+      closeKneeboardExportModal();
+    }
+  });
 }
 
 /* =========================================================
@@ -3540,6 +5962,28 @@ modeSwitch.addEventListener("click", () => {
 
 window.addEventListener("scroll", syncTopbarScrolledState, { passive: true });
 syncTopbarScrolledState();
+bindMizImportUi();
+bindKneeboardExportUi();
+
+topbarActionsBtn?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  toggleTopbarActionsMenu();
+});
+
+topbarActionItems.forEach((button) => {
+  button.addEventListener("click", () => {
+    handleTopbarAction(button.dataset.topbarAction || "");
+    closeTopbarActionsMenu();
+  });
+});
+
+document.addEventListener("click", (event) => {
+  if (!event.target.closest(".topbar-actions-menu")) {
+    closeTopbarActionsMenu();
+  }
+});
+
+window.addEventListener("resize", syncTopbarScrolledState);
 
 newMissionBtn.addEventListener("click", createNewMission);
 copyUrlBtn.addEventListener("click", copyCurrentUrl);
