@@ -96,7 +96,7 @@ a{
 
 .app-shell{
   width:min(var(--shell-max-width), calc(100% - 44px));
-  margin:18px auto 28px;
+  margin:0 auto 28px;
 }
 
 .workspace{
@@ -109,86 +109,33 @@ a{
 ========================================= */
 
 .topbar{
+  position:sticky;
+  top:0;
+  z-index:50;
+  margin:0 calc(50% - 50vw) 16px;
+  padding:12px 24px;
+  border-top:none;
+  border-right:none;
+  border-left:none;
+  border-bottom:1px solid rgba(140,190,255,.14);
+  border-radius:0;
+  background:linear-gradient(180deg, rgba(7,16,27,.97), rgba(8,18,30,.94));
+  backdrop-filter:blur(12px);
+  box-shadow:0 14px 30px rgba(0,0,0,.22);
+}
+
+.topbar-shell{
+  width:min(var(--shell-max-width), calc(100% - 44px));
+  margin:0 auto;
   display:grid;
   grid-template-columns:minmax(320px, 1fr) auto;
   gap:18px;
   align-items:start;
-  margin-bottom:16px;
-  position:sticky;
-  top:0;
-  z-index:50;
-  padding:12px 16px;
-  border:1px solid rgba(140,190,255,.14);
-  border-radius:24px;
-  background:linear-gradient(180deg, rgba(8,18,30,.94), rgba(8,18,30,.88));
-  backdrop-filter:blur(12px);
-  box-shadow:0 14px 30px rgba(0,0,0,.22);
-  transition:
-    margin .28s ease,
-    width .28s ease,
-    padding .28s ease,
-    border-radius .28s ease,
-    background .28s ease,
-    box-shadow .28s ease,
-    border-color .28s ease;
-}
-
-.topbar.is-scrolled{
-  width:100vw;
-  margin-left:calc(50% - 50vw);
-  margin-right:calc(50% - 50vw);
-  padding:12px 24px;
-  border-radius:0;
-  border-left:none;
-  border-right:none;
-  background:linear-gradient(180deg, rgba(7,16,27,.97), rgba(8,18,30,.94));
-  box-shadow:0 18px 36px rgba(0,0,0,.28);
-}
-
-.topbar.is-scrolled .title{
-  font-size:clamp(2rem, 3vw, 3rem);
-}
-
-.topbar.is-scrolled .topbar-right{
-  gap:6px;
-}
-
-.topbar.is-scrolled .mode-panel{
-  gap:10px;
-  padding:8px 12px;
-  flex-wrap:wrap;
-}
-
-.topbar.is-scrolled .mode-panel-row{
-  display:flex;
-}
-
-.topbar.is-scrolled .mode-text{
-  min-width:76px;
-}
-
-.topbar.is-scrolled .mode-label{
-  font-size:.56rem;
-}
-
-.topbar.is-scrolled .mode-value{
-  font-size:.78rem;
-}
-
-.topbar.is-scrolled .topbar-btn,
-.topbar.is-scrolled .topbar-link,
-.topbar.is-scrolled .mini-action-btn{
-  min-height:28px;
-  padding:0 11px;
-  font-size:.72rem;
-}
-
-.topbar.is-scrolled .author-line{
-  font-size:.74rem;
 }
 
 .title-wrap{
   min-width:0;
+  padding-top:6px;
 }
 
 .subtitle{
@@ -218,24 +165,30 @@ a{
 }
 
 .mode-panel{
-  display:grid;
-  grid-template-columns:minmax(0, 1fr);
-  gap:8px;
-  padding:7px 10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 10px;
   border:1px solid var(--border-strong);
   border-radius:24px;
   background:linear-gradient(180deg, rgba(10,22,34,.86), rgba(9,18,28,.92));
   box-shadow:0 10px 28px rgba(0,0,0,.22);
-  width:min(100%, 760px);
+  width:auto;
+  max-width:100%;
 }
 
-.mode-panel-row{
+.topbar-actions-inline{
   display:flex;
   align-items:center;
-  justify-content:flex-end;
-  flex-wrap:wrap;
+  flex-wrap:nowrap;
   gap:8px;
   min-width:0;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+
+.topbar-actions-inline::-webkit-scrollbar{
+  display:none;
 }
 
 .mode-control{
@@ -247,11 +200,26 @@ a{
 
 .topbar-actions-menu{
   position:relative;
-  display:none !important;
+  display:none;
 }
 
 .topbar-actions-trigger{
-  min-width:92px;
+  min-width:44px;
+  width:44px;
+  padding:0;
+}
+
+.topbar-burger{
+  display:grid;
+  gap:4px;
+}
+
+.topbar-burger span{
+  display:block;
+  width:16px;
+  height:2px;
+  border-radius:999px;
+  background:#eef5ff;
 }
 
 .topbar-actions-dropdown{
@@ -270,6 +238,10 @@ a{
   box-shadow:0 18px 38px rgba(0,0,0,.34);
 }
 
+.topbar-actions-dropdown[hidden]{
+  display:none !important;
+}
+
 .topbar-actions-item{
   appearance:none;
   display:flex;
@@ -285,6 +257,13 @@ a{
   font-weight:800;
   letter-spacing:.06em;
   text-transform:uppercase;
+}
+
+.topbar-btn.is-feedback,
+.topbar-actions-item.is-feedback{
+  border-color:rgba(88,199,255,.52);
+  background:rgba(18,46,72,.96);
+  box-shadow:0 0 0 3px rgba(88,199,255,.12);
 }
 
 .mode-text{
@@ -585,6 +564,10 @@ a{
   justify-content:flex-start;
 }
 
+.data-card-status{
+  justify-content:space-between;
+}
+
 .weather-info-card{
   min-height:96px;
   padding:var(--card-pad);
@@ -632,7 +615,36 @@ a{
 }
 
 .status-value{
-  font-size:.9rem;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  min-height:36px;
+  height:36px;
+  margin-top:0;
+  padding:0 16px;
+  border:1px solid rgba(140,190,255,.16);
+  border-radius:var(--radius-pill);
+  font-size:.82rem;
+  font-weight:800;
+  letter-spacing:.08em;
+  line-height:36px;
+  text-transform:uppercase;
+  text-align:center;
+  vertical-align:middle;
+  white-space:nowrap;
+}
+
+.status-value-draft{
+  border-color:rgba(255,211,106,.28);
+  background:rgba(255,211,106,.12);
+  color:#ffe38f;
+}
+
+.status-value-planned{
+  border-color:rgba(125,240,183,.28);
+  background:rgba(125,240,183,.12);
+  color:#baf6d4;
 }
 
 /* =========================================
@@ -765,6 +777,11 @@ a{
   pointer-events:none !important;
 }
 
+.app-shell.mode-briefing .package-delete-btn{
+  display:none !important;
+  pointer-events:none !important;
+}
+
 .app-shell.mode-briefing .view-value,
 .app-shell.mode-briefing .view-value-inline,
 .app-shell.mode-briefing .view-mode-task{
@@ -773,6 +790,10 @@ a{
 
 .app-shell.mode-briefing .weather-wind-view{
   display:block !important;
+}
+
+.mode-edition .airfield-field-value{
+  display:none;
 }
 
 .miz-modal{
@@ -1217,6 +1238,14 @@ a{
   display:inline-flex;
 }
 
+#addAirfieldBtn{
+  display:none;
+}
+
+.mode-edition #addAirfieldBtn{
+  display:inline-flex;
+}
+
 /* =========================================
    INLINE META / BADGES
 ========================================= */
@@ -1579,6 +1608,119 @@ a{
   gap:14px;
 }
 
+.airfield-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:14px;
+  padding:var(--panel-pad);
+}
+
+.airfield-card{
+  border:1px solid rgba(140,190,255,.12);
+  border-radius:18px;
+  background:linear-gradient(180deg, rgba(8,26,48,.78), rgba(6,18,34,.9));
+  padding:16px;
+  display:grid;
+  gap:14px;
+}
+
+.airfield-card-head{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  align-items:flex-start;
+}
+
+.airfield-card-toggle{
+  display:flex;
+  align-items:flex-start;
+  justify-content:flex-start;
+  width:100%;
+  padding:0;
+  background:none;
+  color:inherit;
+  text-align:left;
+}
+
+.airfield-card-actions{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.airfield-card-kicker{
+  color:var(--muted);
+  font-size:.72rem;
+  text-transform:uppercase;
+  letter-spacing:.12em;
+}
+
+.airfield-card-title{
+  margin-top:4px;
+  color:#f3f8ff;
+  font-size:1.28rem;
+  font-weight:800;
+  letter-spacing:.08em;
+}
+
+.airfield-card-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:10px;
+}
+
+.airfield-card.is-collapsed .airfield-card-grid{
+  display:none;
+}
+
+.app-shell.mode-briefing .airfield-card [data-airfield-action="delete"]{
+  display:none;
+}
+
+.airfield-field{
+  display:grid;
+  gap:6px;
+  min-height:92px;
+  padding:12px 14px;
+  border:1px solid rgba(140,190,255,.1);
+  border-radius:14px;
+  background:rgba(255,255,255,.03);
+}
+
+.airfield-field-wide{
+  grid-column:1 / -1;
+}
+
+.airfield-field-icao{
+  background:linear-gradient(180deg, rgba(88,199,255,.12), rgba(255,255,255,.03));
+}
+
+.airfield-field-value{
+  color:#f3f8ff;
+  font-size:1rem;
+  font-weight:800;
+  line-height:1.35;
+  white-space:pre-line;
+  word-break:break-word;
+}
+
+.airfield-field-value-muted{
+  color:var(--muted);
+  font-size:.84rem;
+  font-weight:600;
+}
+
+.airfield-inline-grid{
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:10px;
+}
+
+.airfield-empty-state{
+  padding:var(--panel-pad);
+  color:var(--muted);
+}
+
 .weather-layer-card .field-select{
   text-transform:uppercase;
 }
@@ -1838,6 +1980,20 @@ a{
   margin-top:auto;
   padding-top:12px;
   border-top:1px solid rgba(140,190,255,.12);
+}
+
+.package-airfield-inline{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+}
+
+.package-inline-edit{
+  min-width:170px;
+}
+
+.package-inline-select{
+  min-width:170px;
 }
 
 .package-footer-line{
@@ -2224,9 +2380,31 @@ a{
   background:rgba(255,255,255,.03);
 }
 
+.ato-kv-timeline{
+  position:relative;
+  min-height:146px;
+}
+
+.ato-kv-timeline .ato-edit-field{
+  margin-top:12px;
+}
+
+.ato-kv-timeline-mid .ato-s{
+  position:absolute;
+  top:14px;
+  right:14px;
+  margin-top:0;
+  text-align:right;
+}
+
+.ato-kv-timeline-step .ato-edit-field,
+.ato-kv-timeline-stack .ato-edit-field{
+  margin-top:22px;
+}
+
 .ato-mission-data-grid{
   display:grid;
-  grid-template-columns:repeat(4, minmax(0, 1fr));
+  grid-template-columns:repeat(3, minmax(0, 1fr));
   gap:10px;
 }
 
@@ -2257,6 +2435,23 @@ a{
   margin-top:8px;
 }
 
+.ato-ident-input-grid{
+  gap:8px;
+}
+
+.ato-ident-input-row{
+  display:grid;
+  gap:6px;
+}
+
+.ato-ident-input-label{
+  color:var(--muted);
+  font-size:.68rem;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
 .ato-k,
 .ato-head-label{
   margin-bottom:6px;
@@ -2284,6 +2479,11 @@ a{
   font-size:.84rem;
   line-height:1.35;
   white-space:pre-line;
+}
+
+.ato-head-sub-stack{
+  display:grid;
+  gap:2px;
 }
 
 .ato-s-micro{
@@ -2478,26 +2678,197 @@ a{
   min-height:108px;
 }
 
+.ato-comm-card .ato-editable-view,
+.ato-support-card .ato-editable-view{
+  text-align:left;
+}
+
 .ato-comm-name{
   font-weight:700;
 }
 
+.ato-comm-meta-line{
+  display:grid;
+  grid-template-columns:56px minmax(0, 1fr);
+  gap:8px;
+  align-items:baseline;
+  margin-top:8px;
+}
+
+.ato-comm-meta-key{
+  color:#8fb6df;
+  font-size:.72rem;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  flex:0 0 auto;
+}
+
+.ato-comm-card-primary [data-ato-static="intraFreqRows"] .ato-comm-meta-key:first-child{
+  color:var(--accent);
+  font-size:1rem;
+  line-height:1.45;
+}
+
+.ato-comm-card-primary [data-ato-static="intraFreqRows"] .ato-comm-meta-line:last-child .ato-comm-meta-key,
+.ato-comm-card-primary [data-ato-static="intraFreqRows"] .ato-comm-meta-line:last-child .ato-comm-freq{
+  color:var(--muted);
+}
+
 .ato-comm-desc{
-  margin-top:6px;
   color:var(--muted);
   font-size:.84rem;
   line-height:1.35;
+  white-space:pre-line;
+}
+
+.ato-comm-desc-empty{
+  min-height:1.35em;
 }
 
 .ato-comm-freq{
   color:var(--accent);
   font-weight:800;
   font-size:1rem;
+  line-height:1.45;
+  white-space:pre-line;
+}
+
+.ato-comm-card-primary [data-ato-static="intraFreqRows"]{
+  display:grid;
+  gap:2px;
+  margin-top:6px;
+  white-space:normal;
+}
+
+.ato-comm-radio-line{
+  display:grid;
+  grid-template-columns:56px minmax(0, 1fr);
+  gap:8px;
+  align-items:baseline;
+}
+
+.ato-comm-radio-key{
+  color:var(--muted);
+  font-size:.84rem;
+  line-height:1.35;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.ato-comm-radio-value{
+  color:var(--muted);
+  font-size:.84rem;
+  line-height:1.35;
+}
+
+.ato-comm-radio-key-primary,
+.ato-comm-radio-value-primary{
+  color:var(--accent);
+  font-size:1rem;
+  font-weight:800;
+  line-height:1.45;
+}
+
+.ato-summary-grid--header-compact{
+  grid-template-columns:repeat(2, minmax(200px, 1fr));
+  align-self:center;
+}
+
+.ato-overview-layout{
+  display:grid;
+  grid-template-columns:minmax(0, 1.2fr) minmax(320px, .8fr);
+  gap:18px;
+  grid-column:1 / -1;
+}
+
+.ato-overview-column{
+  display:grid;
+  gap:18px;
+}
+
+.ato-section-airfield{
+  display:flex;
+  flex-direction:column;
+}
+
+.ato-airfield-grid{
+  display:grid;
+  gap:10px;
+  flex:1;
+}
+
+.ato-airfield-card{
+  min-width:0;
+  padding:12px 14px;
+  border:1px solid rgba(140,190,255,.12);
+  border-radius:14px;
+  background:rgba(255,255,255,.03);
+}
+
+.ato-airfield-card-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+
+.ato-airfield-card-label{
+  color:var(--muted);
+  font-size:.7rem;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.ato-airfield-card-title{
+  margin-top:6px;
+  color:#f3f8ff;
+  font-size:1rem;
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.ato-airfield-card-meta{
+  margin-top:6px;
+  color:var(--muted);
+  font-size:.82rem;
+  line-height:1.45;
+  display:grid;
+  gap:6px;
+}
+
+.ato-airfield-meta-line{
+  display:grid;
+  grid-template-columns:56px minmax(0, 1fr);
+  gap:8px;
+  align-items:start;
+}
+
+.ato-airfield-meta-key{
+  color:#8fb6df;
+  font-size:.68rem;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.ato-airfield-meta-value{
+  color:#dcecff;
+  font-size:.8rem;
+  line-height:1.45;
+  word-break:break-word;
 }
 
 .ato-comm-card-primary{
-  border-color:rgba(88,199,255,.22);
-  background:linear-gradient(180deg, rgba(88,199,255,.08), rgba(255,255,255,.025));
+  border-color:rgba(140,190,255,.1);
+  background:rgba(255,255,255,.025);
+}
+
+.ato-comm-card-primary .ato-comm-freq{
+  font-size:1rem;
+  white-space:nowrap;
 }
 
 .ato-support-grid{
@@ -2525,6 +2896,17 @@ a{
 .ato-edit-field-stack{
   display:grid;
   gap:10px;
+}
+
+.ato-divert-builder{
+  display:grid;
+  gap:8px;
+}
+
+.ato-divert-row{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto;
+  gap:8px;
 }
 
 .ato-textarea{
@@ -2557,6 +2939,10 @@ a{
 
 .mode-edition .ato-editable-view{
   display:none;
+}
+
+.mode-edition .ato-comm-card-primary .ato-editable-view{
+  display:block;
 }
 
 .app-shell.mode-briefing .ato-edit-field{
@@ -3375,14 +3761,8 @@ a{
   }
 
   .mode-panel{
-    display:flex;
-    flex-wrap:nowrap;
     gap:6px;
-    overflow:hidden;
-  }
-
-  .mode-panel-row{
-    display:contents;
+    flex-wrap:wrap;
   }
 
   .mode-control{
@@ -3410,7 +3790,7 @@ a{
 }
 
 @media (max-width:1280px){
-  .topbar.is-scrolled .author-line{
+  .author-line{
     display:none;
   }
 }
@@ -3433,6 +3813,10 @@ a{
     grid-template-columns:repeat(2, minmax(0, 1fr));
   }
 
+  .airfield-grid{
+    grid-template-columns:1fr;
+  }
+
   .weather-profile,
   .weather-profile-grid{
     min-height:540px;
@@ -3446,6 +3830,10 @@ a{
     grid-template-columns:repeat(2, minmax(0, 1fr));
   }
 
+  .ato-overview-layout{
+    grid-template-columns:1fr;
+  }
+
   .aco-shell{
     grid-template-columns:1fr;
   }
@@ -3456,7 +3844,7 @@ a{
 }
 
 @media (max-width:1180px){
-  .topbar{
+  .topbar-shell{
     grid-template-columns:1fr;
   }
 
@@ -3467,15 +3855,16 @@ a{
 
   .mode-panel{
     width:100%;
-  }
-
-  .mode-panel-row{
-    justify-content:flex-start;
   }
 }
 
 @media (max-width:980px){
   .topbar{
+    padding:12px 14px;
+  }
+
+  .topbar-shell{
+    width:min(100% - 20px, var(--shell-max-width));
     grid-template-columns:1fr;
   }
 
@@ -3485,16 +3874,21 @@ a{
   }
 
   .mode-panel{
+    justify-content:space-between;
     border-radius:24px;
     width:100%;
   }
 
-  .mode-panel-row{
-    justify-content:flex-start;
-  }
-
   .mode-control{
     justify-content:space-between;
+  }
+
+  .topbar-actions-inline{
+    display:none;
+  }
+
+  .topbar-actions-menu{
+    display:block;
   }
 
   .panel-header--collapsible{
@@ -3508,6 +3902,10 @@ a{
 
   .package-grid{
     grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
+
+  .airfield-card-grid{
+    grid-template-columns:1fr;
   }
 
   .ato-board{
@@ -3561,6 +3959,10 @@ a{
 
   .ato-mission-data-grid{
     grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
+
+  .airfield-inline-grid{
+    grid-template-columns:1fr;
   }
 
   .weather-profile-grid{
@@ -3637,6 +4039,10 @@ a{
     padding:16px;
   }
 
+  .topbar-shell{
+    width:min(100% - 20px, var(--shell-max-width));
+  }
+
   .title{
     font-size:2.6rem;
   }
@@ -3656,6 +4062,15 @@ a{
   .ato-summary-grid,
   .ato-kv-grid{
     grid-template-columns:1fr;
+  }
+
+  .ato-summary-grid--header-compact{
+    grid-template-columns:1fr;
+  }
+
+  .package-airfield-inline{
+    flex-direction:column;
+    align-items:flex-start;
   }
 
   .ato-mission-data-grid{
