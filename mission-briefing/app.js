@@ -49,6 +49,9 @@ const tokenOutput = document.getElementById("tokenOutput");
 const packageGrid = document.getElementById("packageGrid");
 const addPackageBtn = document.getElementById("addPackageBtn");
 const packageCardTemplate = document.getElementById("packageCardTemplate");
+const airfieldGrid = document.getElementById("airfieldGrid");
+const addAirfieldBtn = document.getElementById("addAirfieldBtn");
+const airfieldEmptyState = document.getElementById("airfieldEmptyState");
 const atoGrid = document.getElementById("atoGrid");
 const atoEmptyState = document.getElementById("atoEmptyState");
 const updateAtoBtn = document.getElementById("updateAtoBtn");
@@ -138,12 +141,13 @@ const ATO_ROUTE_DEFAULTS = [
 ];
 
 const ATO_COMM_DEFAULTS = [
-  { name: "AWACS", description: "Radar / C2", freq: "" },
-  { name: "TANKER", description: "AAR", freq: "" },
   { name: "DEPART", description: "Departure", freq: "" },
   { name: "ARRIVAL", description: "Arrival", freq: "" },
   { name: "DIVERT", description: "Divert", freq: "" }
 ];
+
+const ATO_COMM_PRIMARY_ORDER = ["DEPART", "ARRIVAL", "DIVERT"];
+const ATO_SUPPORT_PRIMARY_ORDER = ["C2", "AWACS", "TANKER", "ESCORT", "SEAD", "PACKAGE"];
 
 const defaultMissionData = {
   operationName: "",
@@ -153,7 +157,7 @@ const defaultMissionData = {
   startTime: "",
   totTime: "",
   endTime: "",
-  status: "Draft",
+  status: "DRAFT",
   weatherArea: "ICAO CODE",
   weatherValidTime: "",
   weather: {
@@ -172,6 +176,7 @@ const defaultMissionData = {
       { cover: "", base: "", top: "" }
     ]
   },
+  airfields: [],
   packages: [],
   atos: [],
   acos: [],
@@ -222,7 +227,7 @@ const fieldDefinitions = {
   status: {
     viewSelector: '[data-field="status"]',
     input: document.getElementById("statusInput"),
-    fallback: "Draft"
+    fallback: "DRAFT"
   },
   weatherArea: {
     viewSelector: '[data-field="weatherArea"]',
@@ -410,6 +415,18 @@ function formatWeatherValidTime(value) {
   const mm = digits.slice(2, 4);
 
   return `VALID ${hh}:${mm}L`;
+}
+
+function normalizeMissionStatus(value = "") {
+  return String(value || "").trim().toUpperCase() === "PLANNED" ? "PLANNED" : "DRAFT";
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function timeDigitsToMinutes(value) {
@@ -1676,6 +1693,337 @@ function parseMissionTextWithDcsMissionParserFallback(missionString) {
   return JSON.parse(text);
 }
 
+/* =========================================================
+   AIRFIELDS
+========================================================= */
+
+function createDefaultAirfield() {
+  return {
+    id: generateUid("af"),
+    icao: "",
+    vhf: "",
+    uhf: "",
+    runway: "",
+    ilsFreq: "",
+    ilsCourse: "",
+    ilsRunway: "",
+    beacon: "",
+    notes: ""
+  };
+}
+
+function normalizeAirfieldData(airfield = {}) {
+  return {
+    id: airfield.id || generateUid("af"),
+    icao: sanitizeUpperText(airfield.icao || "", 8),
+    vhf: sanitizeFreeText(airfield.vhf || "", 20),
+    uhf: sanitizeFreeText(airfield.uhf || "", 20),
+    runway: sanitizeUpperText(airfield.runway || "", 20),
+    ilsFreq: sanitizeFreeText(airfield.ilsFreq || "", 20),
+    ilsCourse: sanitizeDigits(String(airfield.ilsCourse || ""), 3),
+    ilsRunway: sanitizeUpperText(airfield.ilsRunway || "", 20),
+    beacon: sanitizeUpperText(airfield.beacon || "", 24),
+    notes: sanitizeFreeText(airfield.notes || "", 120)
+  };
+}
+
+function normalizeAirfieldsArray(airfields) {
+  if (!Array.isArray(airfields)) return [];
+  return airfields.map(normalizeAirfieldData);
+}
+
+function getCurrentAirfieldsFromDom() {
+  const cards = airfieldGrid ? Array.from(airfieldGrid.querySelectorAll(".airfield-card")) : [];
+  return cards.map((card) => normalizeAirfieldData({
+    id: card.dataset.airfieldId,
+    icao: card.querySelector('[data-airfield-input="icao"]')?.value,
+    vhf: card.querySelector('[data-airfield-input="vhf"]')?.value,
+    uhf: card.querySelector('[data-airfield-input="uhf"]')?.value,
+    runway: card.querySelector('[data-airfield-input="runway"]')?.value,
+    ilsFreq: card.querySelector('[data-airfield-input="ilsFreq"]')?.value,
+    ilsCourse: card.querySelector('[data-airfield-input="ilsCourse"]')?.value,
+    ilsRunway: card.querySelector('[data-airfield-input="ilsRunway"]')?.value,
+    beacon: card.querySelector('[data-airfield-input="beacon"]')?.value,
+    notes: card.querySelector('[data-airfield-input="notes"]')?.value
+  }));
+}
+
+function getAirfieldMap(airfields = getCurrentAirfieldsFromDom()) {
+  return new Map(
+    normalizeAirfieldsArray(airfields)
+      .filter((airfield) => airfield.icao)
+      .map((airfield) => [airfield.icao, airfield])
+  );
+}
+
+function populateAirfieldSelect(select, currentValue = "", options = getCurrentAirfieldsFromDom(), placeholder = "Select airfield") {
+  if (!select) return;
+
+  const normalizedOptions = normalizeAirfieldsArray(options);
+  const normalizedValue = sanitizeUpperText(currentValue || "", 8);
+  const optionValues = new Set(normalizedOptions.map((airfield) => airfield.icao).filter(Boolean));
+
+  const rows = [`<option value="">${placeholder}</option>`];
+  normalizedOptions.forEach((airfield) => {
+    if (!airfield.icao) return;
+    rows.push(`<option value="${escapeHtml(airfield.icao)}">${escapeHtml(airfield.icao)}</option>`);
+  });
+
+  if (normalizedValue && !optionValues.has(normalizedValue)) {
+    rows.push(`<option value="${escapeHtml(normalizedValue)}">${escapeHtml(normalizedValue)}</option>`);
+  }
+
+  select.innerHTML = rows.join("");
+  select.value = normalizedValue;
+}
+
+function formatAirfieldLine(code = "", options = getCurrentAirfieldsFromDom()) {
+  const normalizedCode = sanitizeUpperText(code || "", 8);
+  if (!normalizedCode) return "--";
+
+  const airfield = getAirfieldMap(options).get(normalizedCode);
+  if (!airfield) return normalizedCode;
+
+  const parts = [
+    airfield.vhf ? `VHF ${airfield.vhf}` : "",
+    airfield.uhf ? `UHF ${airfield.uhf}` : "",
+    airfield.runway ? `RWY ${airfield.runway}` : "",
+    airfield.ilsFreq || airfield.ilsCourse || airfield.ilsRunway
+      ? `ILS ${formatAirfieldIlsDisplay(airfield, " / ")}`
+      : "",
+    airfield.beacon ? `BCN ${airfield.beacon}` : "",
+    airfield.notes || ""
+  ].filter(Boolean);
+
+  return [normalizedCode, ...parts].join(" · ");
+}
+
+function buildAirfieldMetaMarkup(code = "", options = getCurrentAirfieldsFromDom()) {
+  const normalizedCode = sanitizeUpperText(code || "", 8);
+  if (!normalizedCode) {
+    return `<div class="ato-airfield-meta-line">Aucune donnée.</div>`;
+  }
+
+  const airfield = getAirfieldMap(options).get(normalizedCode);
+  if (!airfield) {
+    return `<div class="ato-airfield-meta-line">${escapeHtml(normalizedCode)}</div>`;
+  }
+
+  const rows = [
+    { label: "RADIO", value: [airfield.vhf ? `VHF ${airfield.vhf}` : "", airfield.uhf ? `UHF ${airfield.uhf}` : ""].filter(Boolean).join(" · ") },
+    { label: "RWY", value: airfield.runway || "" },
+    { label: "ILS", value: formatAirfieldIlsDisplay(airfield, " / ") },
+    { label: "BCN", value: airfield.beacon || "" },
+    { label: "NOTES", value: airfield.notes || "" }
+  ].filter((row) => row.value);
+
+  return rows.length
+    ? rows.map((row) => `
+      <div class="ato-airfield-meta-line">
+        <span class="ato-airfield-meta-key">${escapeHtml(row.label)}</span>
+        <span class="ato-airfield-meta-value">${escapeHtml(row.value)}</span>
+      </div>
+    `).join("")
+    : `<div class="ato-airfield-meta-line">Aucune donnée.</div>`;
+}
+
+function formatAirfieldDetailValue(value, prefix = "") {
+  const text = String(value || "").trim();
+  if (!text) return "--";
+  return prefix ? `${prefix} ${text}` : text;
+}
+
+function formatAirfieldIlsDisplay(airfield = {}, separator = " · ") {
+  return [
+    airfield.ilsRunway ? `RWY ${airfield.ilsRunway}` : "",
+    airfield.ilsFreq || "",
+    airfield.ilsCourse ? `${airfield.ilsCourse}°` : ""
+  ].filter(Boolean).join(separator);
+}
+
+function createAirfieldCard(airfieldData = {}) {
+  const airfield = normalizeAirfieldData(airfieldData);
+  const card = document.createElement("article");
+  card.className = "airfield-card is-collapsed";
+  card.dataset.airfieldId = airfield.id;
+  card.innerHTML = `
+    <div class="airfield-card-head">
+      <button class="airfield-card-toggle" data-airfield-action="toggle" type="button" aria-expanded="false">
+        <div>
+          <div class="airfield-card-kicker">Airfield</div>
+          <div class="airfield-card-title" data-airfield-view="icao">----</div>
+        </div>
+      </button>
+      <div class="airfield-card-actions">
+        <button class="mini-action-btn package-delete-btn" data-airfield-action="delete" type="button">Retirer</button>
+      </div>
+    </div>
+    <div class="airfield-card-grid">
+      <label class="airfield-field airfield-field-icao">
+        <span class="data-label">ICAO</span>
+        <div class="airfield-field-value" data-airfield-view="icaoDetail">----</div>
+        <div class="edit-field"><input class="field-input" data-airfield-input="icao" type="text" placeholder="LTFM" /></div>
+      </label>
+      <label class="airfield-field">
+        <span class="data-label">Runway</span>
+        <div class="airfield-field-value" data-airfield-view="runway">--</div>
+        <div class="edit-field"><input class="field-input" data-airfield-input="runway" type="text" placeholder="04/22" /></div>
+      </label>
+      <label class="airfield-field">
+        <span class="data-label">VHF</span>
+        <div class="airfield-field-value" data-airfield-view="vhf">--</div>
+        <div class="edit-field"><input class="field-input" data-airfield-input="vhf" type="text" placeholder="123.000" /></div>
+      </label>
+      <label class="airfield-field">
+        <span class="data-label">UHF</span>
+        <div class="airfield-field-value" data-airfield-view="uhf">--</div>
+        <div class="edit-field"><input class="field-input" data-airfield-input="uhf" type="text" placeholder="250.000" /></div>
+      </label>
+      <label class="airfield-field airfield-field-wide">
+        <span class="data-label">ILS</span>
+        <div class="airfield-field-value" data-airfield-view="ils">--</div>
+        <div class="airfield-inline-grid edit-field">
+          <input class="field-input" data-airfield-input="ilsFreq" type="text" placeholder="110.30" />
+          <input class="field-input field-input-time" data-airfield-input="ilsCourse" type="text" inputmode="numeric" maxlength="3" placeholder="044" />
+          <input class="field-input" data-airfield-input="ilsRunway" type="text" placeholder="RWY 04" />
+        </div>
+      </label>
+      <label class="airfield-field">
+        <span class="data-label">Beacon</span>
+        <div class="airfield-field-value" data-airfield-view="beacon">--</div>
+        <div class="edit-field"><input class="field-input" data-airfield-input="beacon" type="text" placeholder="TACAN / NDB / VOR" /></div>
+      </label>
+      <label class="airfield-field airfield-field-wide">
+        <span class="data-label">Notes</span>
+        <div class="airfield-field-value airfield-field-value-muted" data-airfield-view="notes">--</div>
+        <div class="edit-field"><input class="field-input" data-airfield-input="notes" type="text" placeholder="Infos utiles" /></div>
+      </label>
+    </div>
+  `;
+
+  const inputs = Array.from(card.querySelectorAll("[data-airfield-input]"));
+  const title = card.querySelector('[data-airfield-view="icao"]');
+  const viewFields = {
+    icaoDetail: card.querySelector('[data-airfield-view="icaoDetail"]'),
+    runway: card.querySelector('[data-airfield-view="runway"]'),
+    vhf: card.querySelector('[data-airfield-view="vhf"]'),
+    uhf: card.querySelector('[data-airfield-view="uhf"]'),
+    ils: card.querySelector('[data-airfield-view="ils"]'),
+    beacon: card.querySelector('[data-airfield-view="beacon"]'),
+    notes: card.querySelector('[data-airfield-view="notes"]')
+  };
+
+  const refresh = () => {
+    const current = normalizeAirfieldData({
+      id: card.dataset.airfieldId,
+      icao: card.querySelector('[data-airfield-input="icao"]')?.value,
+      vhf: card.querySelector('[data-airfield-input="vhf"]')?.value,
+      uhf: card.querySelector('[data-airfield-input="uhf"]')?.value,
+      runway: card.querySelector('[data-airfield-input="runway"]')?.value,
+      ilsFreq: card.querySelector('[data-airfield-input="ilsFreq"]')?.value,
+      ilsCourse: card.querySelector('[data-airfield-input="ilsCourse"]')?.value,
+      ilsRunway: card.querySelector('[data-airfield-input="ilsRunway"]')?.value,
+      beacon: card.querySelector('[data-airfield-input="beacon"]')?.value,
+      notes: card.querySelector('[data-airfield-input="notes"]')?.value
+    });
+
+    card.dataset.airfieldId = current.id;
+    inputs.forEach((input) => {
+      const key = input.dataset.airfieldInput;
+      input.value = current[key] || "";
+    });
+
+    if (title) title.textContent = current.icao || "----";
+    if (viewFields.icaoDetail) viewFields.icaoDetail.textContent = current.icao || "----";
+    if (viewFields.runway) viewFields.runway.textContent = formatAirfieldDetailValue(current.runway, "RWY");
+    if (viewFields.vhf) viewFields.vhf.textContent = formatAirfieldDetailValue(current.vhf);
+    if (viewFields.uhf) viewFields.uhf.textContent = formatAirfieldDetailValue(current.uhf);
+    if (viewFields.ils) {
+      viewFields.ils.textContent = formatAirfieldIlsDisplay(current, " · ") || "--";
+    }
+    if (viewFields.beacon) viewFields.beacon.textContent = formatAirfieldDetailValue(current.beacon);
+    if (viewFields.notes) viewFields.notes.textContent = current.notes || "--";
+    refreshAirfieldDependentUi();
+    saveCurrentMission();
+  };
+
+  inputs.forEach((input) => {
+    input.value = airfield[input.dataset.airfieldInput] || "";
+    if (input.dataset.airfieldInput === "icao") {
+      input.addEventListener("input", () => {
+        input.value = sanitizeUpperText(input.value, 8);
+      });
+    }
+    if (input.dataset.airfieldInput === "ilsCourse") {
+      input.addEventListener("input", () => {
+        input.value = sanitizeDigits(input.value, 3);
+      });
+    }
+    input.addEventListener("change", refresh);
+    input.addEventListener("blur", refresh);
+  });
+
+  card.querySelector('[data-airfield-action="delete"]')?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    card.remove();
+    if (airfieldEmptyState) {
+      airfieldEmptyState.style.display = airfieldGrid?.children.length ? "none" : "";
+    }
+    refreshAirfieldDependentUi();
+    saveCurrentMission();
+  });
+
+  card.querySelector('[data-airfield-action="toggle"]')?.addEventListener("click", (event) => {
+    event.preventDefault();
+
+    const cards = airfieldGrid ? Array.from(airfieldGrid.querySelectorAll(".airfield-card")) : [card];
+    const currentIndex = cards.indexOf(card);
+    const pairStartIndex = currentIndex >= 0 ? currentIndex - (currentIndex % 2) : -1;
+    const pairedCards = pairStartIndex >= 0 ? cards.slice(pairStartIndex, pairStartIndex + 2) : [card];
+    const willExpand = card.classList.contains("is-collapsed");
+
+    pairedCards.forEach((pairedCard) => {
+      pairedCard.classList.toggle("is-collapsed", !willExpand);
+      pairedCard
+        .querySelector('[data-airfield-action="toggle"]')
+        ?.setAttribute("aria-expanded", String(willExpand));
+    });
+  });
+
+  if (title) title.textContent = airfield.icao || "----";
+  if (viewFields.icaoDetail) viewFields.icaoDetail.textContent = airfield.icao || "----";
+  if (viewFields.runway) viewFields.runway.textContent = formatAirfieldDetailValue(airfield.runway, "RWY");
+  if (viewFields.vhf) viewFields.vhf.textContent = formatAirfieldDetailValue(airfield.vhf);
+  if (viewFields.uhf) viewFields.uhf.textContent = formatAirfieldDetailValue(airfield.uhf);
+  if (viewFields.ils) {
+    viewFields.ils.textContent = formatAirfieldIlsDisplay(airfield, " · ") || "--";
+  }
+  if (viewFields.beacon) viewFields.beacon.textContent = formatAirfieldDetailValue(airfield.beacon);
+  if (viewFields.notes) viewFields.notes.textContent = airfield.notes || "--";
+  return card;
+}
+
+function renderAirfields(airfields = []) {
+  if (!airfieldGrid) return;
+  airfieldGrid.innerHTML = "";
+  const normalized = normalizeAirfieldsArray(airfields);
+  normalized.forEach((airfield) => airfieldGrid.appendChild(createAirfieldCard(airfield)));
+  if (airfieldEmptyState) {
+    airfieldEmptyState.style.display = normalized.length ? "none" : "";
+  }
+}
+
+function addAirfield() {
+  if (!airfieldGrid) return;
+  airfieldGrid.appendChild(createAirfieldCard(createDefaultAirfield()));
+  if (airfieldEmptyState) {
+    airfieldEmptyState.style.display = "none";
+  }
+  refreshAirfieldDependentUi();
+  saveCurrentMission();
+}
+
 function extractImportedWeather(mission) {
   const weather = getNested(mission, ["weather"], {});
   const qnhMmHg = weather?.qnh || "";
@@ -2011,11 +2359,7 @@ function buildImportedAtoFromPackage(pkg, importedGroup, importedOverview) {
   ato.loadoutNote = sanitizeFreeText(importedGroup.loadoutNote || "", 120);
   ato.route = importedGroup.route.map((row) => sanitizeAtoRouteRow(row));
   ato.comm = getDefaultAtoComm().map((row) => ({ ...row }));
-
-  if (ato.comm[2]) {
-    ato.comm[2].freq = sanitizeFreeText(importedGroup.intra || "", 16);
-    ato.comm[2].name = "PACKAGE";
-  }
+  ato.supportTiles = getDefaultAtoSupportTiles().map((tile) => ({ ...tile }));
 
   return normalizeAtoData(ato);
 }
@@ -2047,7 +2391,7 @@ function importSelectedMizGroups() {
     startTime: parsed.startTime || "",
     totTime: overviewTot,
     endTime: importedGroups.find((group) => group.recoveryTime)?.recoveryTime || "",
-    status: "Planned",
+    status: "PLANNED",
     weatherArea: sanitizeUpperText(parsed.theatre || "DCS", 24),
     weatherValidTime: parsed.weatherValidTime || ""
   };
@@ -2166,7 +2510,7 @@ function collectOverviewDataFromInputs() {
     startTime: sanitizeTimeInput(fieldDefinitions.startTime.input.value),
     totTime: sanitizeTimeInput(fieldDefinitions.totTime.input.value),
     endTime: sanitizeTimeInput(fieldDefinitions.endTime.input.value),
-    status: fieldDefinitions.status.input.value.trim() || "Draft",
+    status: normalizeMissionStatus(fieldDefinitions.status.input.value),
     weatherArea: fieldDefinitions.weatherArea.input.value.trim() || "ICAO CODE",
     weatherValidTime: sanitizeTimeInput(fieldDefinitions.weatherValidTime.input.value)
   };
@@ -2180,7 +2524,7 @@ function applyOverviewDataToInputs(data) {
   fieldDefinitions.startTime.input.value = data.startTime || "";
   fieldDefinitions.totTime.input.value = data.totTime || "";
   fieldDefinitions.endTime.input.value = data.endTime || "";
-  fieldDefinitions.status.input.value = data.status || "Draft";
+  fieldDefinitions.status.input.value = normalizeMissionStatus(data.status || "DRAFT");
   fieldDefinitions.weatherArea.input.value = data.weatherArea || "ICAO CODE";
   fieldDefinitions.weatherValidTime.input.value = sanitizeTimeInput(data.weatherValidTime || "");
 }
@@ -2189,12 +2533,19 @@ function updateViewField(config) {
   const viewEl = config.viewElement;
   if (!viewEl || !config.input) return;
 
-  const rawValue = config.input.value.trim();
+  const rawValue = config === fieldDefinitions.status
+    ? normalizeMissionStatus(config.input.value)
+    : config.input.value.trim();
   const displayValue = rawValue
     ? (typeof config.formatter === "function" ? config.formatter(rawValue) : rawValue)
     : config.fallback;
 
   viewEl.textContent = displayValue;
+
+  if (config === fieldDefinitions.status) {
+    viewEl.classList.toggle("status-value-draft", displayValue === "DRAFT");
+    viewEl.classList.toggle("status-value-planned", displayValue === "PLANNED");
+  }
 }
 
 function refreshAllViewFields() {
@@ -2468,6 +2819,18 @@ function getPackageFieldValue(card, fieldName) {
     return packageNameSelect ? packageNameSelect.value : "";
   }
 
+  if (fieldName === "departure") {
+    const departureSelect = fields?.departureSelect || card.querySelector('[data-package-input="departureSelect"]');
+    const departureView = fields?.departureView || card.querySelector('[data-package-view="departure"]');
+    return departureSelect ? departureSelect.value : (departureView ? (departureView.textContent || "").trim() : "");
+  }
+
+  if (fieldName === "destination") {
+    const destinationSelect = fields?.destinationSelect || card.querySelector('[data-package-input="destinationSelect"]');
+    const destinationView = fields?.destinationView || card.querySelector('[data-package-view="destination"]');
+    return destinationSelect ? destinationSelect.value : (destinationView ? (destinationView.textContent || "").trim() : "");
+  }
+
   if (fieldName === "wingmen") {
     const wingmenBuilder = fields?.wingmenBuilder || card.querySelector('[data-package-input="wingmenBuilder"]');
     const wingmenView = fields?.wingmenView || card.querySelector('[data-package-view="wingmen"]');
@@ -2551,9 +2914,6 @@ function sanitizePackageFieldElement(fieldName, element) {
     case "aircraftType":
       element.textContent = sanitizeUpperText(element.textContent, 24);
       break;
-    case "departure":
-      element.textContent = sanitizeUpperText(element.textContent, 24);
-      break;
     case "leader":
       element.textContent = sanitizeFreeText(element.textContent, 40);
       break;
@@ -2562,9 +2922,6 @@ function sanitizePackageFieldElement(fieldName, element) {
       break;
     case "intra":
       element.textContent = sanitizeFreeText(element.textContent, 20);
-      break;
-    case "destination":
-      element.textContent = sanitizeUpperText(element.textContent, 24);
       break;
     default:
       break;
@@ -2587,7 +2944,7 @@ function bindPackageEditableBehavior(card, fieldName, element) {
     return;
   }
 
-  const liveUpperFields = new Set(["callsign", "packageName", "aircraftType", "departure", "destination"]);
+  const liveUpperFields = new Set(["callsign", "packageName", "aircraftType"]);
   const liveDigitFields = new Set(["aircraftCount"]);
 
   if (liveUpperFields.has(fieldName)) {
@@ -2704,12 +3061,14 @@ function createPackageCard(packageData) {
     missionView: card.querySelector('[data-package-view="mission"]'),
     aircraftCount: card.querySelector('[data-package-input="aircraftCount"]'),
     aircraftType: card.querySelector('[data-package-input="aircraftType"]'),
-    departure: card.querySelector('[data-package-input="departure"]'),
+    departureView: card.querySelector('[data-package-view="departure"]'),
+    departureSelect: card.querySelector('[data-package-input="departureSelect"]'),
     leader: card.querySelector('[data-package-input="leader"]'),
     wingmenView: card.querySelector('[data-package-view="wingmen"]'),
     wingmenBuilder: card.querySelector('[data-package-input="wingmenBuilder"]'),
     intra: card.querySelector('[data-package-input="intra"]'),
-    destination: card.querySelector('[data-package-input="destination"]')
+    destinationView: card.querySelector('[data-package-view="destination"]'),
+    destinationSelect: card.querySelector('[data-package-input="destinationSelect"]')
   };
   card._packageFields = fields;
 
@@ -2720,12 +3079,14 @@ function createPackageCard(packageData) {
     if (fields.missionSelect) fields.missionSelect.value = normalizedPkg.mission;
     if (fields.aircraftCount) fields.aircraftCount.textContent = normalizedPkg.aircraftCount;
     if (fields.aircraftType) fields.aircraftType.textContent = normalizedPkg.aircraftType;
-    if (fields.departure) fields.departure.textContent = normalizedPkg.departure;
+    if (fields.departureView) fields.departureView.textContent = normalizedPkg.departure || "LOCATION";
+    populateAirfieldSelect(fields.departureSelect, normalizedPkg.departure, getCurrentAirfieldsFromDom(), "Departure");
     if (fields.leader) fields.leader.textContent = normalizedPkg.leader;
     if (fields.wingmenView) fields.wingmenView.textContent = normalizedPkg.wingmen;
     renderWingmenBuilder(card, normalizedPkg.wingmen);
     if (fields.intra) fields.intra.textContent = normalizedPkg.intra;
-    if (fields.destination) fields.destination.textContent = normalizedPkg.destination;
+    if (fields.destinationView) fields.destinationView.textContent = normalizedPkg.destination || "DESTINATION";
+    populateAirfieldSelect(fields.destinationSelect, normalizedPkg.destination, getCurrentAirfieldsFromDom(), "Destination");
 
     syncPackageNameView(card);
     syncPackageTaskView(card);
@@ -2738,12 +3099,34 @@ function createPackageCard(packageData) {
     ["callsign", fields.callsign],
     ["aircraftCount", fields.aircraftCount],
     ["aircraftType", fields.aircraftType],
-    ["departure", fields.departure],
     ["leader", fields.leader],
-    ["intra", fields.intra],
-    ["destination", fields.destination]
+    ["intra", fields.intra]
   ].forEach(([fieldName, element]) => {
     bindPackageEditableBehavior(card, fieldName, element);
+  });
+
+  [fields.departureSelect, fields.destinationSelect].forEach((select) => {
+    if (!select) return;
+    const sync = () => {
+      const normalized = normalizePackageData({
+        id: card.dataset.packageId,
+        color: getPackageFieldValue(card, "color"),
+        callsign: getPackageFieldValue(card, "callsign"),
+        packageName: getPackageFieldValue(card, "packageName"),
+        mission: getPackageFieldValue(card, "mission"),
+        aircraftCount: getPackageFieldValue(card, "aircraftCount"),
+        aircraftType: getPackageFieldValue(card, "aircraftType"),
+        departure: getPackageFieldValue(card, "departure"),
+        leader: getPackageFieldValue(card, "leader"),
+        wingmen: getPackageFieldValue(card, "wingmen"),
+        intra: getPackageFieldValue(card, "intra"),
+        destination: getPackageFieldValue(card, "destination")
+      });
+      applyCardData(normalized);
+      saveCurrentMission();
+    };
+    select.addEventListener("change", sync);
+    select.addEventListener("blur", sync);
   });
 
   const addWingmanBtn = card.querySelector('[data-package-action="add-wingman"]');
@@ -2870,9 +3253,10 @@ function getDefaultAtoComm() {
 function getDefaultAtoSupportTiles() {
   return [
     { title: "C2", description: "", freq: "" },
+    { title: "AWACS", description: "", freq: "" },
+    { title: "TANKER", description: "", freq: "" },
     { title: "ESCORT", description: "", freq: "" },
     { title: "SEAD", description: "", freq: "" },
-    { title: "TANKER", description: "", freq: "" },
     { title: "PACKAGE", description: "", freq: "" }
   ];
 }
@@ -2910,6 +3294,7 @@ function createDefaultAto(packageData = {}) {
     packageSupport: "",
     targetName: "",
     targetDetails: "",
+    stepTime: "",
     launchTime: "",
     totTime: "",
     recoveryTime: "",
@@ -2922,6 +3307,7 @@ function createDefaultAto(packageData = {}) {
     loadout: "",
     loadoutNote: "",
     divert: "",
+    diverts: [],
     divertNote: "",
     threats: "",
     roe: "",
@@ -2929,6 +3315,8 @@ function createDefaultAto(packageData = {}) {
     abortCriteria: "",
     pushTime: "",
     pushNote: "",
+    pushNet: "",
+    pushNlt: "",
     totNote: "",
     totNet: "",
     totNlt: "",
@@ -2981,7 +3369,7 @@ function sanitizeAtoValue(fieldName, value) {
     return sanitizeDigits(text, 3);
   }
 
-  if (["launchTime", "totTime", "recoveryTime", "pushTime", "totNet", "totNlt"].includes(fieldName)) {
+  if (["stepTime", "launchTime", "totTime", "recoveryTime", "pushTime", "pushNet", "pushNlt", "totNet", "totNlt"].includes(fieldName)) {
     return sanitizeAtoTime(text);
   }
 
@@ -3016,6 +3404,8 @@ function sanitizeAtoValue(fieldName, value) {
     "loadoutNote",
     "divertNote",
     "pushNote",
+    "pushNet",
+    "pushNlt",
     "totNote",
     "totNet",
     "totNlt",
@@ -3050,6 +3440,16 @@ function sanitizeAtoValue(fieldName, value) {
   }
 
   return sanitizeFreeText(text, 120);
+}
+
+function normalizeAtoDiverts(diverts = [], legacyDivert = "") {
+  const source = Array.isArray(diverts) && diverts.length
+    ? diverts
+    : (legacyDivert ? [legacyDivert] : []);
+
+  return source
+    .map((entry) => sanitizeUpperText(entry || "", 8))
+    .filter(Boolean);
 }
 
 function sanitizeAtoRouteRow(row = {}, fallback = {}) {
@@ -3256,7 +3656,83 @@ function sanitizeAtoCommRow(row = {}, fallback = {}) {
   return {
     name: sanitizeUpperText(row.name || fallback.name || "", 24),
     description: sanitizeFreeText(row.description || fallback.description || "", 60),
-    freq: sanitizeFreeText(row.freq || fallback.freq || "", 16)
+    freq: sanitizeFreeText(row.freq || fallback.freq || "", 40)
+  };
+}
+
+function getAirfieldCommFrequency(code = "", airfields = getCurrentAirfieldsFromDom()) {
+  const normalizedCode = sanitizeUpperText(code || "", 8);
+  if (!normalizedCode) return "";
+
+  const airfield = getAirfieldMap(airfields).get(normalizedCode);
+  if (!airfield) return "";
+
+  return [
+    airfield.vhf ? `VHF ${airfield.vhf}` : "",
+    airfield.uhf ? `UHF ${airfield.uhf}` : ""
+  ].filter(Boolean).join(" · ");
+}
+
+function formatCommFrequencyDisplay(value = "") {
+  const text = String(value || "").trim();
+  if (!text) return "--";
+  return text.split("·").map((part) => part.trim()).filter(Boolean).join("\n");
+}
+
+function isDerivedAtoCommName(name = "") {
+  const normalized = sanitizeUpperText(name || "", 24);
+  return normalized === "DEPART"
+    || normalized === "ARRIVAL"
+    || /^DIVERT(?:\s+\d+)?$/.test(normalized);
+}
+
+function buildDerivedAtoCommRows(atoData, airfields = getCurrentAirfieldsFromDom()) {
+  const ato = normalizeAtoData(atoData);
+  const departureCode = ato.launchDetails || ato.inherited.departure || "";
+  const arrivalCode = ato.recoveryDetails || ato.inherited.destination || "";
+  const divertCodes = ato.diverts.filter(Boolean);
+
+  const rows = [
+    sanitizeAtoCommRow({
+      name: "DEPART",
+      description: departureCode || "Departure",
+      freq: getAirfieldCommFrequency(departureCode, airfields)
+    }),
+    sanitizeAtoCommRow({
+      name: "ARRIVAL",
+      description: arrivalCode || "Arrival",
+      freq: getAirfieldCommFrequency(arrivalCode, airfields)
+    })
+  ];
+
+  divertCodes.forEach((code, index) => {
+    rows.push(sanitizeAtoCommRow({
+      name: divertCodes.length > 1 ? `DIVERT ${index + 1}` : "DIVERT",
+      description: code || "Divert",
+      freq: getAirfieldCommFrequency(code, airfields)
+    }));
+  });
+
+  if (!divertCodes.length) {
+    rows.push(sanitizeAtoCommRow({
+      name: "DIVERT",
+      description: "Divert",
+      freq: ""
+    }));
+  }
+
+  return rows;
+}
+
+function syncAtoCommWithAirfields(atoData, airfields = getCurrentAirfieldsFromDom()) {
+  const ato = normalizeAtoData(atoData);
+  const extras = ato.comm.filter((row) => !isDerivedAtoCommName(row?.name || ""));
+  return {
+    ...ato,
+    comm: [
+      ...buildDerivedAtoCommRows(ato, airfields),
+      ...extras
+    ]
   };
 }
 
@@ -3268,13 +3744,27 @@ function sanitizeAtoSupportTile(tile = {}, fallback = {}) {
   };
 }
 
+function ensurePrimarySupportTiles(tiles = []) {
+  const normalizedTiles = Array.isArray(tiles) ? tiles.map((tile) => sanitizeAtoSupportTile(tile)) : [];
+  const existingTitles = new Set(normalizedTiles.map((tile) => tile.title).filter(Boolean));
+  const completed = [...normalizedTiles];
+
+  ATO_SUPPORT_PRIMARY_ORDER.forEach((title) => {
+    if (!existingTitles.has(title)) {
+      completed.push(sanitizeAtoSupportTile({ title, description: "", freq: "" }));
+    }
+  });
+
+  return completed;
+}
+
 function getLegacyAtoSupportTiles(ato = {}) {
   return [
     ato.supportC2 || ato.supportC2Note ? { title: "C2", description: ato.supportC2Note || "", freq: ato.supportC2 || "" } : null,
+    ato.supportAwacs || ato.supportAwacsNote ? { title: "AWACS", description: ato.supportAwacsNote || "", freq: ato.supportAwacs || "" } : null,
     ato.supportEscort || ato.supportEscortNote ? { title: "ESCORT", description: ato.supportEscortNote || "", freq: ato.supportEscort || "" } : null,
     ato.supportSead || ato.supportSeadNote ? { title: "SEAD", description: ato.supportSeadNote || "", freq: ato.supportSead || "" } : null,
-    ato.supportTanker || ato.supportTankerNote ? { title: "TANKER", description: ato.supportTankerNote || "", freq: ato.supportTanker || "" } : null,
-    ato.packageSupport ? { title: "PACKAGE", description: ato.packageSupport, freq: "" } : null
+    ato.supportTanker || ato.supportTankerNote ? { title: "TANKER", description: ato.supportTankerNote || "", freq: ato.supportTanker || "" } : null
   ]
     .filter(Boolean)
     .map((tile) => sanitizeAtoSupportTile(tile));
@@ -3359,6 +3849,7 @@ function normalizeAtoData(ato = {}) {
     packageSupport: sanitizeAtoValue("packageSupport", ato.packageSupport),
     targetName: sanitizeAtoValue("targetName", ato.targetName),
     targetDetails: sanitizeAtoValue("targetDetails", ato.targetDetails),
+    stepTime: sanitizeAtoValue("stepTime", ato.stepTime),
     launchTime: sanitizeAtoValue("launchTime", ato.launchTime),
     totTime: sanitizeAtoValue("totTime", ato.totTime),
     recoveryTime: sanitizeAtoValue("recoveryTime", ato.recoveryTime),
@@ -3371,6 +3862,7 @@ function normalizeAtoData(ato = {}) {
     loadout: sanitizeAtoValue("loadout", ato.loadout),
     loadoutNote: sanitizeAtoValue("loadoutNote", ato.loadoutNote),
     divert: sanitizeAtoValue("divert", ato.divert),
+    diverts: normalizeAtoDiverts(ato.diverts, ato.divert),
     divertNote: sanitizeAtoValue("divertNote", ato.divertNote),
     threats: sanitizeAtoValue("threats", ato.threats),
     roe: sanitizeAtoValue("roe", ato.roe),
@@ -3378,6 +3870,8 @@ function normalizeAtoData(ato = {}) {
     abortCriteria: sanitizeAtoValue("abortCriteria", ato.abortCriteria),
     pushTime: sanitizeAtoValue("pushTime", ato.pushTime),
     pushNote: sanitizeAtoValue("pushNote", ato.pushNote),
+    pushNet: sanitizeAtoValue("pushNet", ato.pushNet),
+    pushNlt: sanitizeAtoValue("pushNlt", ato.pushNlt),
     totNote: sanitizeAtoValue("totNote", ato.totNote),
     totNet: sanitizeAtoValue("totNet", ato.totNet),
     totNlt: sanitizeAtoValue("totNlt", ato.totNlt),
@@ -3404,13 +3898,13 @@ function normalizeAtoData(ato = {}) {
         ? ato.comm
         : defaults.comm
     ).map((row, index) => sanitizeAtoCommRow(row, defaults.comm[index] || { name: `NET ${index + 1}`, description: "", freq: "" })),
-    supportTiles: (
+    supportTiles: ensurePrimarySupportTiles((
       Array.isArray(ato.supportTiles) && ato.supportTiles.length
         ? ato.supportTiles
         : getLegacyAtoSupportTiles(ato).length
           ? getLegacyAtoSupportTiles(ato)
           : defaults.supportTiles
-    ).map((tile) => sanitizeAtoSupportTile(tile)),
+    )).map((tile) => sanitizeAtoSupportTile(tile)),
     route: routeSource.map((row, index) => sanitizeAtoRouteRow(row, { wp: `WP${index + 1}`, desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" })),
     pilotNotes: sanitizeAtoValue("pilotNotes", ato.pilotNotes),
     commanderNotes: sanitizeAtoValue("commanderNotes", ato.commanderNotes)
@@ -3442,6 +3936,146 @@ function buildAtoCardsFromPackages(existingAtos = []) {
   return getCurrentPackagesFromDom().map((pkg) => syncSingleAtoFromPackage(existingByPackageId.get(pkg.id), pkg));
 }
 
+function buildAtoAirfieldSummaryLines(atoData, airfields = getCurrentAirfieldsFromDom()) {
+  const ato = normalizeAtoData(atoData);
+  const lines = [];
+
+  if (ato.launchDetails || ato.inherited.departure) {
+    lines.push(`DEP  ${formatAirfieldLine(ato.launchDetails || ato.inherited.departure, airfields)}`);
+  }
+
+  if (ato.recoveryDetails || ato.inherited.destination) {
+    lines.push(`ARR  ${formatAirfieldLine(ato.recoveryDetails || ato.inherited.destination, airfields)}`);
+  }
+
+  if (ato.diverts.length) {
+    ato.diverts.forEach((code, index) => {
+      lines.push(`DIV${String(index + 1).padStart(2, "0")}  ${formatAirfieldLine(code, airfields)}`);
+    });
+  }
+
+  return lines;
+}
+
+function createAtoDivertRow(card, value = "", airfields = getCurrentAirfieldsFromDom()) {
+  const row = document.createElement("div");
+  row.className = "ato-divert-row";
+  row.innerHTML = `
+    <select class="field-input field-select" data-role="divert-select"></select>
+    <button class="mini-action-btn package-delete-btn" type="button">Retirer</button>
+  `;
+
+  const select = row.querySelector('[data-role="divert-select"]');
+  const removeBtn = row.querySelector(".package-delete-btn");
+
+  populateAirfieldSelect(select, value, airfields, "Divert");
+
+  const sync = () => {
+    card._atoData = collectAtoDataFromCard(card);
+    updateAtoCardViews(card);
+    saveCurrentMission();
+  };
+
+  select.addEventListener("change", sync);
+  select.addEventListener("blur", sync);
+  removeBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    row.remove();
+    sync();
+  });
+
+  return row;
+}
+
+function renderAtoDivertRows(card, airfields = getCurrentAirfieldsFromDom()) {
+  const builder = card?._atoFields?.statics?.divertBuilder;
+  if (!builder) return;
+
+  const values = normalizeAtoData(card._atoData || {}).diverts;
+  builder.innerHTML = "";
+  const rows = values.length ? values : [""];
+  rows.forEach((value) => builder.appendChild(createAtoDivertRow(card, value, airfields)));
+}
+
+function bindAtoAirfieldCardControls(card, airfields = getCurrentAirfieldsFromDom()) {
+  if (!card) return;
+
+  const data = normalizeAtoData(card._atoData || {});
+  Array.from(card.querySelectorAll('[data-role="ato-airfield-select"]')).forEach((select) => {
+    const kind = select.dataset.kind || "";
+    const index = Number(select.dataset.index || -1);
+    const currentValue = kind === "launchDetails"
+      ? (data.launchDetails || data.inherited.departure)
+      : kind === "recoveryDetails"
+        ? (data.recoveryDetails || data.inherited.destination)
+        : (Number.isInteger(index) && index >= 0 ? (data.diverts[index] || "") : "");
+
+    populateAirfieldSelect(select, currentValue, airfields, kind === "launchDetails" ? "Departure" : kind === "recoveryDetails" ? "Arrival" : "Divert");
+
+    if (select.dataset.bound === "true") return;
+    const commit = () => {
+      card._atoData = collectAtoDataFromCard(card);
+      updateAtoCardViews(card);
+      saveCurrentMission();
+    };
+    select.addEventListener("change", commit);
+    select.addEventListener("blur", commit);
+    select.dataset.bound = "true";
+  });
+
+  Array.from(card.querySelectorAll('[data-role="remove-divert-card"]')).forEach((button) => {
+    if (button.dataset.bound === "true") return;
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      button.closest(".ato-airfield-card")?.remove();
+      card._atoData = collectAtoDataFromCard(card);
+      updateAtoCardViews(card);
+      saveCurrentMission();
+    });
+    button.dataset.bound = "true";
+  });
+}
+
+function refreshPackageAirfieldControls(card, airfields = getCurrentAirfieldsFromDom()) {
+  if (!card?._packageFields) return;
+  const departure = getPackageFieldValue(card, "departure");
+  const destination = getPackageFieldValue(card, "destination");
+  populateAirfieldSelect(card._packageFields.departureSelect, departure, airfields, "Departure");
+  populateAirfieldSelect(card._packageFields.destinationSelect, destination, airfields, "Destination");
+  if (card._packageFields.departureView) {
+    card._packageFields.departureView.textContent = departure || "LOCATION";
+  }
+  if (card._packageFields.destinationView) {
+    card._packageFields.destinationView.textContent = destination || "DESTINATION";
+  }
+}
+
+function refreshAtoAirfieldControls(card, airfields = getCurrentAirfieldsFromDom()) {
+  if (!card?._atoFields) return;
+  bindAtoAirfieldCardControls(card, airfields);
+}
+
+function refreshAirfieldDependentUi() {
+  const airfields = getCurrentAirfieldsFromDom();
+
+  if (packageGrid) {
+    Array.from(packageGrid.querySelectorAll(".package-card")).forEach((card) => {
+      refreshPackageAirfieldControls(card, airfields);
+    });
+  }
+
+  if (atoGrid) {
+    Array.from(atoGrid.querySelectorAll(".ato-card")).forEach((card) => {
+      if (!card._atoData) return;
+      card._atoData = collectAtoDataFromCard(card);
+      refreshAtoAirfieldControls(card, airfields);
+      updateAtoCardViews(card);
+    });
+  }
+}
+
 function createAtoCardTemplate() {
   const template = document.createElement("template");
 
@@ -3450,37 +4084,19 @@ function createAtoCardTemplate() {
       <div class="ato-card-toggle" role="button" tabindex="0" aria-expanded="false">
         <div class="ato-card-head">
           <div class="ato-eyebrow">Air Tasking Order · Flight Card</div>
-          <div class="ato-title-row">
-            <h3 class="ato-title" data-ato-static="callsign">FLIGHT</h3>
-            <span class="ato-pill ato-pill-primary" data-ato-static="mission">TASK</span>
-            <span class="ato-pill ato-pill-warning" data-ato-static="totTime">TOT --:--Z</span>
-            <span class="ato-pill" data-ato-view="totalDistance">DIST --</span>
-            <span class="ato-pill" data-ato-view="estFlightTime">EFT --</span>
-          </div>
+          <h3 class="ato-title" data-ato-static="callsign">FLIGHT</h3>
           <div class="ato-subtitle" data-ato-static="subtitle"></div>
         </div>
-        <div class="ato-summary-grid ato-summary-grid--header">
+        <div class="ato-summary-grid ato-summary-grid--header ato-summary-grid--header-compact">
           <div class="ato-head-box">
-            <div class="ato-head-label">Aircraft</div>
-            <div class="ato-head-value" data-ato-static="aircraft"></div>
-            <div class="ato-head-sub" data-ato-static="lead"></div>
+            <div class="ato-head-label">Task</div>
+            <div class="ato-head-value" data-ato-static="mission">TASK</div>
+            <div class="ato-head-sub" data-ato-static="departureHeader">DEP --</div>
           </div>
           <div class="ato-head-box">
-            <div class="ato-head-label">Launch / Recovery</div>
-            <div class="ato-head-value" data-ato-static="launchRecovery"></div>
-            <div class="ato-head-sub" data-ato-static="launchRecoverySub"></div>
-            <div class="ato-edit-field ato-edit-field-stack">
-              <input class="field-input field-input-time" data-ato-input="launchTime" type="text" inputmode="numeric" maxlength="4" placeholder="Launch HHMM" />
-              <input class="field-input" data-ato-input="launchDetails" type="text" placeholder="Launch detail" />
-            </div>
-          </div>
-          <div class="ato-head-box">
-            <div class="ato-head-label">Package Frequency</div>
+            <div class="ato-head-label">Primary Freq</div>
             <div class="ato-head-value" data-ato-static="packageFreq"></div>
-            <div class="ato-head-sub" data-ato-static="packageFreqSub"></div>
-            <div class="ato-edit-field">
-              <input class="field-input" data-ato-input="packageFrequencyNote" type="text" placeholder="Secondary Freq" />
-            </div>
+            <div class="ato-head-sub ato-head-sub-stack" data-ato-static="packageFreqSub"></div>
           </div>
         </div>
         <div class="ato-card-actions">
@@ -3490,56 +4106,46 @@ function createAtoCardTemplate() {
 
       <div class="ato-card-body">
         <div class="ato-board">
-          <section class="ato-section">
-            <div class="ato-section-header"><h4 class="ato-section-title">Execution Summary</h4><span class="ato-mini-tag">Mission Core</span></div>
-            <div class="ato-kv-grid">
-              <div class="ato-kv"><div class="ato-k">Primary Task</div><div class="ato-v ato-editable-view" data-ato-view="primaryTask">--</div><div class="ato-s ato-editable-view" data-ato-view="primaryTaskNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="primaryTask" type="text" placeholder="Primary task" /><input class="field-input" data-ato-input="primaryTaskNote" type="text" placeholder="Task note" /></div></div>
-              <div class="ato-kv"><div class="ato-k">Secondary Task</div><div class="ato-v ato-editable-view" data-ato-view="secondaryTask">--</div><div class="ato-s ato-editable-view" data-ato-view="secondaryTaskNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="secondaryTask" type="text" placeholder="Secondary task" /><input class="field-input" data-ato-input="secondaryTaskNote" type="text" placeholder="Task note" /></div></div>
-              <div class="ato-kv"><div class="ato-k">Package</div><div class="ato-v ato-editable-view" data-ato-view="packageSupport">--</div><div class="ato-s">Inherited package data</div><div class="ato-edit-field"><input class="field-input" data-ato-input="packageSupport" type="text" placeholder="Support detail" /></div></div>
-              <div class="ato-kv"><div class="ato-k">Target</div><div class="ato-v ato-editable-view" data-ato-view="targetName">--</div><div class="ato-s ato-editable-view" data-ato-view="targetDetails">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="targetName" type="text" placeholder="Target" /><input class="field-input" data-ato-input="targetDetails" type="text" placeholder="Target detail" /></div></div>
-            </div>
-          </section>
+          <div class="ato-overview-layout">
+            <div class="ato-overview-column">
+              <section class="ato-section">
+                <div class="ato-section-header"><h4 class="ato-section-title">Infos Package</h4><span class="ato-mini-tag">Mission Core</span></div>
+                <div class="ato-kv-grid">
+                  <div class="ato-kv"><div class="ato-k">Leader</div><div class="ato-v" data-ato-static="lead">--</div></div>
+                  <div class="ato-kv ato-kv-tot"><div class="ato-k">TOT</div><div class="ato-s ato-s-micro" data-ato-static="totNetHeader">NET --:--</div><div class="ato-v" data-ato-static="totTime">--:--Z</div><div class="ato-s ato-s-muted" data-ato-static="totNltHeader">NLT --:--</div></div>
+                  <div class="ato-kv"><div class="ato-k">Target</div><div class="ato-v ato-editable-view" data-ato-view="targetName">--</div><div class="ato-s ato-editable-view" data-ato-view="targetDetails">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="targetName" type="text" placeholder="Target" /><input class="field-input" data-ato-input="targetDetails" type="text" placeholder="Target detail" /></div></div>
+                  <div class="ato-kv"><div class="ato-k">Fuel Mngmt</div><div class="ato-v ato-editable-view" data-ato-view="fuelPlan">Joker --</div><div class="ato-s ato-editable-view" data-ato-view="fuelNote">Bingo --</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="fuelPlan" type="text" placeholder="Joker" /><input class="field-input" data-ato-input="fuelNote" type="text" placeholder="Bingo" /></div></div>
+                </div>
+              </section>
 
-          <section class="ato-section">
-            <div class="ato-section-header"><h4 class="ato-section-title">Flight / Loadout</h4><span class="ato-mini-tag">Platform</span></div>
-            <div class="ato-kv-grid">
-              <div class="ato-kv"><div class="ato-k">Configuration</div><div class="ato-v" data-ato-static="configuration"></div><div class="ato-s ato-editable-view" data-ato-view="configNote">--</div><div class="ato-edit-field"><input class="field-input" data-ato-input="configNote" type="text" placeholder="Configuration note" /></div></div>
-              <div class="ato-kv"><div class="ato-k">Fuel</div><div class="ato-v ato-editable-view" data-ato-view="fuelPlan">--</div><div class="ato-s ato-editable-view" data-ato-view="fuelNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="fuelPlan" type="text" placeholder="Joker" /><input class="field-input" data-ato-input="fuelNote" type="text" placeholder="Bingo" /></div></div>
-              <div class="ato-kv"><div class="ato-k">Loadout</div><div class="ato-v ato-editable-view" data-ato-view="loadout">--</div><div class="ato-s ato-editable-view" data-ato-view="loadoutNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="loadout" type="text" placeholder="Loadout" /><input class="field-input" data-ato-input="loadoutNote" type="text" placeholder="Loadout note" /></div></div>
-              <div class="ato-kv"><div class="ato-k">Divert</div><div class="ato-v ato-editable-view" data-ato-view="divert">--</div><div class="ato-s ato-editable-view" data-ato-view="divertNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="divert" type="text" placeholder="Divert" /><input class="field-input" data-ato-input="divertNote" type="text" placeholder="Divert note" /></div></div>
+              <section class="ato-section">
+                <div class="ato-section-header"><h4 class="ato-section-title">Ident</h4><span class="ato-mini-tag">Codes / IDs</span></div>
+                <div class="ato-mission-data-grid">
+                  <div class="ato-mission-tile"><div class="ato-k">IFF</div><div class="ato-v" data-ato-static="iffModesBlock">MODE 1 --\nMODE 3 --</div><div class="ato-edit-field ato-edit-field-stack ato-ident-input-grid"><label class="ato-ident-input-row"><span class="ato-ident-input-label">MODE 1</span><input class="field-input" data-role="iff-mode1-input" type="text" placeholder="4012" /></label><label class="ato-ident-input-row"><span class="ato-ident-input-label">MODE 3</span><input class="field-input" data-role="iff-mode3-input" type="text" placeholder="1254" /></label></div></div>
+                  <div class="ato-mission-tile"><div class="ato-k">Datalink</div><div class="ato-v ato-editable-view" data-ato-view="datalink">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="datalink" type="text" placeholder="Datalink" /></div></div>
+                  <div class="ato-mission-tile"><div class="ato-k">Laser Code</div><div class="ato-v ato-editable-view" data-ato-view="laser">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="laser" type="text" placeholder="Laser code" /></div></div>
+                </div>
+              </section>
             </div>
-          </section>
 
-          <section class="ato-section">
+            <section class="ato-section ato-section-airfield">
+              <div class="ato-section-header"><h4 class="ato-section-title">Airfield</h4><span class="ato-mini-tag">DEP / ARR / DIVERT</span></div>
+              <div class="ato-airfield-grid" data-ato-static="airfieldCards"></div>
+              <div class="ato-route-toolbar ato-route-toolbar-airfield">
+                <button class="mini-action-btn" data-ato-action="add-divert" type="button">Add Divert</button>
+              </div>
+            </section>
+          </div>
+
+          <section class="ato-section ato-section-full">
             <div class="ato-section-header"><h4 class="ato-section-title">Timeline</h4><span class="ato-mini-tag">Critical Times</span></div>
             <div class="ato-kv-grid ato-kv-grid-5">
-              <div class="ato-kv"><div class="ato-k">Start</div><div class="ato-v" data-ato-static="startTime"></div><div class="ato-s" data-ato-static="startIcao">--</div></div>
-              <div class="ato-kv"><div class="ato-k">T/O</div><div class="ato-v" data-ato-static="takeoffTime"></div><div class="ato-s" data-ato-static="takeoffIcao">--</div></div>
-              <div class="ato-kv"><div class="ato-k">Push</div><div class="ato-v ato-editable-view" data-ato-view="pushTime">--</div><div class="ato-s ato-editable-view" data-ato-view="pushNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input field-input-time" data-ato-input="pushTime" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /><input class="field-input" data-ato-input="pushNote" type="text" placeholder="Push note" /></div></div>
-              <div class="ato-kv ato-kv-tot"><div class="ato-k">TOT</div><div class="ato-s ato-s-micro ato-editable-view" data-ato-view="totNet">--</div><div class="ato-v ato-editable-view" data-ato-view="totTime">--</div><div class="ato-s ato-s-muted ato-editable-view" data-ato-view="totNlt">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input field-input-time" data-ato-input="totTime" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /><input class="field-input" data-ato-input="totNet" type="text" placeholder="NET" /><input class="field-input" data-ato-input="totNlt" type="text" placeholder="NLT" /></div></div>
-              <div class="ato-kv"><div class="ato-k">LAND</div><div class="ato-v ato-editable-view" data-ato-view="recoveryTime">--</div><div class="ato-s" data-ato-static="arrivalIcao">ARR --</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input field-input-time" data-ato-input="recoveryTime" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /><input class="field-input" data-ato-input="recoveryDetails" type="text" placeholder="Arrival ICAO" /></div></div>
+              <div class="ato-kv ato-kv-timeline ato-kv-timeline-step"><div class="ato-k">STEP</div><div class="ato-v ato-editable-view" data-ato-view="stepTime">--</div><div class="ato-edit-field"><input class="field-input field-input-time" data-ato-input="stepTime" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /></div></div>
+              <div class="ato-kv ato-kv-timeline ato-kv-timeline-mid"><div class="ato-k">T/O</div><div class="ato-v ato-editable-view" data-ato-view="launchTime">--</div><div class="ato-s" data-ato-static="takeoffIcao">DEP --</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input field-input-time" data-ato-input="launchTime" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /></div></div>
+              <div class="ato-kv ato-kv-tot ato-kv-timeline ato-kv-timeline-stack"><div class="ato-k">PUSH</div><div class="ato-s ato-s-micro ato-editable-view" data-ato-view="pushNet">--</div><div class="ato-v ato-editable-view" data-ato-view="pushTime">--</div><div class="ato-s ato-s-muted ato-editable-view" data-ato-view="pushNlt">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input field-input-time" data-ato-input="pushTime" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /><input class="field-input field-input-time" data-ato-input="pushNet" type="text" inputmode="numeric" maxlength="4" placeholder="NET" /><input class="field-input field-input-time" data-ato-input="pushNlt" type="text" inputmode="numeric" maxlength="4" placeholder="NLT" /></div></div>
+              <div class="ato-kv ato-kv-tot ato-kv-timeline ato-kv-timeline-stack"><div class="ato-k">TOT</div><div class="ato-s ato-s-micro ato-editable-view" data-ato-view="totNet">--</div><div class="ato-v ato-editable-view" data-ato-view="totTime">--</div><div class="ato-s ato-s-muted ato-editable-view" data-ato-view="totNlt">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input field-input-time" data-ato-input="totTime" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /><input class="field-input field-input-time" data-ato-input="totNet" type="text" inputmode="numeric" maxlength="4" placeholder="NET" /><input class="field-input field-input-time" data-ato-input="totNlt" type="text" inputmode="numeric" maxlength="4" placeholder="NLT" /></div></div>
+              <div class="ato-kv ato-kv-timeline ato-kv-timeline-mid"><div class="ato-k">LAND</div><div class="ato-v ato-editable-view" data-ato-view="recoveryTime">--</div><div class="ato-s" data-ato-static="arrivalIcao">ARR --</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input field-input-time" data-ato-input="recoveryTime" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" /></div></div>
             </div>
-          </section>
-
-          <section class="ato-section">
-            <div class="ato-section-header"><h4 class="ato-section-title">Mission Data</h4><span class="ato-mini-tag">Codes / IDs</span></div>
-            <div class="ato-mission-data-grid">
-              <div class="ato-mission-tile"><div class="ato-k">IFF / Mode 1-3</div><div class="ato-v ato-editable-view" data-ato-view="iffModes">--</div><div class="ato-s ato-editable-view" data-ato-view="iffNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="iffModes" type="text" placeholder="IFF" /><input class="field-input" data-ato-input="iffNote" type="text" placeholder="IFF note" /></div></div>
-              <div class="ato-mission-tile"><div class="ato-k">Datalink</div><div class="ato-v ato-editable-view" data-ato-view="datalink">--</div><div class="ato-s ato-editable-view" data-ato-view="datalinkNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="datalink" type="text" placeholder="Datalink" /><input class="field-input" data-ato-input="datalinkNote" type="text" placeholder="Datalink note" /></div></div>
-              <div class="ato-mission-tile"><div class="ato-k">Laser</div><div class="ato-v ato-editable-view" data-ato-view="laser">--</div><div class="ato-s ato-editable-view" data-ato-view="laserNote">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="laser" type="text" placeholder="Laser" /><input class="field-input" data-ato-input="laserNote" type="text" placeholder="Laser note" /></div></div>
-              <div class="ato-mission-tile"><div class="ato-k">AUTH</div><div class="ato-v ato-editable-view" data-ato-view="authentication">--</div><div class="ato-s ato-editable-view" data-ato-view="authenticationReply">--</div><div class="ato-edit-field ato-edit-field-stack"><input class="field-input" data-ato-input="authentication" type="text" placeholder="Challenge" /><input class="field-input" data-ato-input="authenticationReply" type="text" placeholder="Reply" /></div></div>
-            </div>
-          </section>
-
-          <section class="ato-section">
-            <div class="ato-section-header"><h4 class="ato-section-title">Flight Composition</h4><span class="ato-mini-tag">Players</span></div>
-            <div class="ato-crew-list" data-ato-static="crewList"></div>
-          </section>
-
-          <section class="ato-section">
-            <div class="ato-section-header"><h4 class="ato-section-title">Pilot Notes</h4><span class="ato-mini-tag">Focus Items</span></div>
-            <div class="ato-notes-body ato-editable-view" data-ato-view="pilotNotes">--</div>
-            <div class="ato-edit-field"><textarea class="ato-textarea" data-ato-input="pilotNotes" placeholder="Pilot notes"></textarea></div>
           </section>
 
           <section class="ato-section ato-section-full">
@@ -3579,11 +4185,14 @@ function createAtoCardTemplate() {
             <div class="ato-section-header"><h4 class="ato-section-title">Comm Plan</h4><span class="ato-mini-tag">C2 / Radios</span></div>
             <div class="ato-comm-grid">
               <div class="ato-comm-card ato-comm-card-primary">
-                <div>
+                <div class="ato-editable-view">
                   <div class="ato-comm-name">INTRA-FLIGHT</div>
-                  <div class="ato-comm-desc" data-ato-static="intraFreqSub">PRI -- · SEC --</div>
+                  <div class="ato-comm-desc ato-comm-desc-empty" data-ato-static="intraFreqMeta"></div>
+                  <div class="ato-comm-freq" data-ato-static="intraFreqRows">PFREQ --</div>
                 </div>
-                <div class="ato-comm-freq" data-ato-static="intraFreq"></div>
+                <div class="ato-edit-field" style="margin-top:10px;">
+                  <input class="field-input" data-ato-input="packageFrequencyNote" type="text" placeholder="Secondary freq" />
+                </div>
               </div>
               <div class="ato-comm-grid-host" data-ato-static="commList"></div>
             </div>
@@ -3640,6 +4249,53 @@ function getAtoCrewMembers(inherited) {
 
 function getAtoTakeoffTime(data) {
   return data.launchTime || data.inherited.startTime || "";
+}
+
+function getAtoStepTime(data) {
+  return data.stepTime || data.inherited.startTime || "";
+}
+
+function parseAtoIffModes(value = "") {
+  const text = String(value || "").trim();
+  if (!text) return { mode1: "--", mode3: "--" };
+
+  const compact = text.replace(/\s+/g, " ");
+  const mode1Match = compact.match(/(?:M1|MODE\s*1)\s*[:/-]?\s*([A-Z0-9]+)/i);
+  const mode3Match = compact.match(/(?:M3|MODE\s*3)\s*[:/-]?\s*([A-Z0-9]+)/i);
+  const slashParts = compact.split(/[|/]/).map((part) => part.trim()).filter(Boolean);
+
+  return {
+    mode1: mode1Match?.[1] || slashParts[0] || "--",
+    mode3: mode3Match?.[1] || slashParts[1] || "--"
+  };
+}
+
+function buildAtoAirfieldCardsMarkup(atoData, airfields = getCurrentAirfieldsFromDom()) {
+  const ato = normalizeAtoData(atoData);
+  const depCode = ato.launchDetails || ato.inherited.departure || "";
+  const arrCode = ato.recoveryDetails || ato.inherited.destination || "";
+  const divertCodes = ato.diverts.filter(Boolean);
+  const cards = [
+    { label: "DEP", code: depCode, kind: "launchDetails" },
+    { label: "ARR", code: arrCode, kind: "recoveryDetails" },
+    ...divertCodes.map((code, index) => ({ label: `DIVERT ${index + 1}`, code, kind: "divert", index }))
+  ];
+
+  return cards.length
+    ? cards.map((entry) => `
+      <div class="ato-airfield-card">
+        <div class="ato-airfield-card-top">
+          <div class="ato-airfield-card-label">${escapeHtml(entry.label)}</div>
+          ${entry.kind === "divert" ? '<button class="mini-action-btn package-delete-btn" data-role="remove-divert-card" type="button">Retirer</button>' : ""}
+        </div>
+        <div class="ato-airfield-card-title">${escapeHtml(entry.code || "--")}</div>
+        <div class="ato-airfield-card-meta">${buildAirfieldMetaMarkup(entry.code, airfields)}</div>
+        <div class="edit-field" style="margin-top:10px;">
+          <select class="field-input field-select" data-role="ato-airfield-select" data-kind="${escapeHtml(entry.kind)}" data-index="${entry.index ?? ""}"></select>
+        </div>
+      </div>
+    `).join("")
+    : `<div class="ato-airfield-card"><div class="ato-airfield-card-label">AIRFIELD</div><div class="ato-airfield-card-title">--</div><div class="ato-airfield-card-meta">Aucune donnée.</div></div>`;
 }
 
 function getAtoRouteDisplayZuluTime(startTime, row = {}) {
@@ -3761,7 +4417,7 @@ function renderAtoRouteRows(card) {
       routeRow,
       index,
       card._atoData.route,
-      card._atoData.inherited.startTime,
+      getAtoStepTime(card._atoData),
       () => {
         card._atoData = collectAtoDataFromCard(card);
         updateAtoCardViews(card);
@@ -3837,7 +4493,7 @@ function createAtoCommTileElement(tile, index, onChange, onRemove) {
     <div class="ato-editable-view">
       <div class="ato-comm-name">${item.name || "--"}</div>
       <div class="ato-comm-desc">${item.description || "--"}</div>
-      <div class="ato-comm-freq">${item.freq || "--"}</div>
+      <div class="ato-comm-freq">${escapeHtml(formatCommFrequencyDisplay(item.freq || "--"))}</div>
     </div>
     <div class="ato-edit-field ato-edit-field-stack">
       <input class="field-input" data-role="name-input" type="text" placeholder="Name" value="${item.name}" />
@@ -3878,10 +4534,23 @@ function renderAtoCommTiles(card) {
   const commList = card._atoFields?.statics?.commList;
   if (!commList) return;
 
+  card._atoData = syncAtoCommWithAirfields(card._atoData, getCurrentAirfieldsFromDom());
   commList.innerHTML = "";
   card._atoCommRows = [];
+  const supportNames = new Set(ATO_SUPPORT_PRIMARY_ORDER);
+  const orderedComm = [...card._atoData.comm]
+    .filter((tile) => !supportNames.has(sanitizeUpperText(tile?.name || "", 24)))
+    .sort((left, right) => {
+      const leftName = sanitizeUpperText(left?.name || "", 24);
+      const rightName = sanitizeUpperText(right?.name || "", 24);
+      const leftIndex = ATO_COMM_PRIMARY_ORDER.indexOf(leftName);
+      const rightIndex = ATO_COMM_PRIMARY_ORDER.indexOf(rightName);
+      const leftRank = leftIndex === -1 ? 999 : leftIndex;
+      const rightRank = rightIndex === -1 ? 999 : rightIndex;
+      return leftRank - rightRank || leftName.localeCompare(rightName);
+    });
 
-  card._atoData.comm.forEach((tile, index) => {
+  orderedComm.forEach((tile, index) => {
     const element = createAtoCommTileElement(
       tile,
       index,
@@ -3891,7 +4560,10 @@ function renderAtoCommTiles(card) {
         saveCurrentMission();
       },
       () => {
-        card._atoData.comm.splice(index, 1);
+        const removeIndex = card._atoData.comm.indexOf(tile);
+        if (removeIndex >= 0) {
+          card._atoData.comm.splice(removeIndex, 1);
+        }
         renderAtoCommTiles(card);
         card._atoData = collectAtoDataFromCard(card);
         updateAtoCardViews(card);
@@ -3910,8 +4582,17 @@ function renderAtoSupportTiles(card) {
 
   supportList.innerHTML = "";
   card._atoSupportRows = [];
+  const orderedSupport = [...card._atoData.supportTiles].sort((left, right) => {
+    const leftName = sanitizeUpperText(left?.title || "", 24);
+    const rightName = sanitizeUpperText(right?.title || "", 24);
+    const leftIndex = ATO_SUPPORT_PRIMARY_ORDER.indexOf(leftName);
+    const rightIndex = ATO_SUPPORT_PRIMARY_ORDER.indexOf(rightName);
+    const leftRank = leftIndex === -1 ? 999 : leftIndex;
+    const rightRank = rightIndex === -1 ? 999 : rightIndex;
+    return leftRank - rightRank || leftName.localeCompare(rightName);
+  });
 
-  card._atoData.supportTiles.forEach((tile, index) => {
+  orderedSupport.forEach((tile, index) => {
     const element = createAtoSupportTileElement(
       tile,
       index,
@@ -3921,7 +4602,10 @@ function renderAtoSupportTiles(card) {
         saveCurrentMission();
       },
       () => {
-        card._atoData.supportTiles.splice(index, 1);
+        const removeIndex = card._atoData.supportTiles.indexOf(tile);
+        if (removeIndex >= 0) {
+          card._atoData.supportTiles.splice(removeIndex, 1);
+        }
         renderAtoSupportTiles(card);
         card._atoData = collectAtoDataFromCard(card);
         updateAtoCardViews(card);
@@ -3940,6 +4624,8 @@ function updateAtoCardViews(card) {
   const data = normalizeAtoData(card._atoData || {});
   const { views, statics } = card._atoFields;
   const inherited = data.inherited;
+  const airfields = getCurrentAirfieldsFromDom();
+  const iffModes = parseAtoIffModes(data.iffModes);
 
   card._atoData = data;
   card.style.setProperty("--ato-accent", inherited.color || getRandomPackageColor());
@@ -3951,63 +4637,70 @@ function updateAtoCardViews(card) {
 
   setText(statics.callsign, inherited.callsign || "FLIGHT");
   setText(statics.mission, inherited.mission || "TASK");
-  setText(statics.totTime, `TOT ${formatZuluTime(data.totTime)}`);
-  setText(statics.subtitle, `Package ${inherited.packageName || "--"} · Mission ${inherited.operationName || inherited.mission || "--"}`);
-  setText(statics.aircraft, `${inherited.aircraftCount || "--"} × ${inherited.aircraftType || "--"}`);
-  setText(statics.lead, `Lead: ${inherited.leader || "--"}`);
-  setText(statics.launchRecovery, `T/O ${formatZuluTime(getAtoTakeoffTime(data))}`);
+  setText(statics.totTime, formatZuluTime(data.totTime));
   setText(
-    statics.launchRecoverySub,
-    `${data.launchDetails || inherited.departure || "--"} · RTB ${formatZuluTime(data.recoveryTime)} · ${data.recoveryDetails || inherited.destination || "--"}`
+    statics.subtitle,
+    `${inherited.packageName || "--"} · ${inherited.aircraftCount || "--"} aircraft · ${inherited.aircraftType || "--"}`
   );
+  setText(statics.lead, inherited.leader || "--");
+  setText(statics.departureHeader, `DEP ${data.launchDetails || inherited.departure || "--"}`);
   setText(statics.packageFreq, inherited.intra || "--");
-  setText(statics.packageFreqSub, data.packageFrequencyNote || "Sec freq.");
-  setText(statics.configuration, `${inherited.aircraftCount || "--"} × ${inherited.aircraftType || "--"}`);
-  setText(statics.startTime, formatZuluTime(inherited.startTime));
-  setText(statics.startIcao, inherited.departure || "--");
-  setText(statics.takeoffTime, formatZuluTime(getAtoTakeoffTime(data)));
-  setText(statics.takeoffIcao, inherited.departure || "--");
+  setText(statics.packageFreqSub, `SEC FREQ\n${data.packageFrequencyNote || "--"}`);
+  setText(statics.takeoffIcao, `DEP ${data.launchDetails || inherited.departure || "--"}`);
   setText(statics.arrivalIcao, `ARR ${data.recoveryDetails || inherited.destination || "--"}`);
-  setText(statics.intraFreq, inherited.intra || "--");
-  setText(statics.intraFreqSub, `PRI ${inherited.intra || "--"} · SEC ${data.packageFrequencyNote || "--"}`);
+  setText(statics.intraFreqMeta, " ");
+  if (statics.intraFreqRows) {
+    statics.intraFreqRows.innerHTML = [
+      `<div class="ato-comm-radio-line"><span class="ato-comm-radio-key ato-comm-radio-key-primary">PFREQ</span><span class="ato-comm-radio-value ato-comm-radio-value-primary">${escapeHtml(inherited.intra || "--")}</span></div>`,
+      `<div class="ato-comm-radio-line"><span class="ato-comm-radio-key">SFREQ</span><span class="ato-comm-radio-value">${escapeHtml(data.packageFrequencyNote || "--")}</span></div>`
+    ].join("");
+  }
+  setText(statics.totNetHeader, `NET ${formatShortTime(data.totNet)}`);
+  setText(statics.totNltHeader, `NLT ${formatShortTime(data.totNlt)}`);
+  setText(statics.iffModesBlock, `MODE 1 ${iffModes.mode1}\nMODE 3 ${iffModes.mode3}`);
   setText(statics.chevron, data.collapsed ? "+" : "−");
   renderAtoCommTiles(card);
   renderAtoRouteRows(card);
   renderAtoSupportTiles(card);
+  if (statics.airfieldCards) {
+    statics.airfieldCards.innerHTML = buildAtoAirfieldCardsMarkup(data, airfields);
+  }
+  refreshAtoAirfieldControls(card, airfields);
 
   const crewMembers = getAtoCrewMembers(inherited);
-  statics.crewList.innerHTML = crewMembers.length
-    ? crewMembers.map((member) => `
-      <div class="ato-crew-row">
-        <div class="ato-crew-role">${member.role}</div>
-        <div>
-          <div class="ato-v">${member.name}</div>
-          <div class="ato-s">${member.meta}</div>
+  if (statics.crewList) {
+    statics.crewList.innerHTML = crewMembers.length
+      ? crewMembers.map((member) => `
+        <div class="ato-crew-row">
+          <div class="ato-crew-role">${member.role}</div>
+          <div>
+            <div class="ato-v">${member.name}</div>
+            <div class="ato-s">${member.meta}</div>
+          </div>
         </div>
-      </div>
-    `).join("")
-    : `<div class="ato-crew-row"><div class="ato-crew-role">Flight</div><div><div class="ato-v">Aucun équipage</div><div class="ato-s">Complète le package pour alimenter cet ATO.</div></div></div>`;
+      `).join("")
+      : `<div class="ato-crew-row"><div class="ato-crew-role">Flight</div><div><div class="ato-v">Aucun équipage</div><div class="ato-s">Complète le package pour alimenter cet ATO.</div></div></div>`;
+  }
 
   Object.entries(views).forEach(([fieldName, node]) => {
     if (!node) return;
 
-    if (["launchTime", "totTime", "recoveryTime", "pushTime"].includes(fieldName)) {
+    if (["stepTime", "launchTime", "totTime", "recoveryTime", "pushTime"].includes(fieldName)) {
+      if (fieldName === "stepTime") {
+        setText(node, formatZuluTime(getAtoStepTime(data)));
+        return;
+      }
       setText(node, formatZuluTime(data[fieldName]));
       return;
     }
 
-    if (["totNet", "totNlt"].includes(fieldName)) {
+    if (["pushNet", "pushNlt", "totNet", "totNlt"].includes(fieldName)) {
       setText(node, formatShortTime(data[fieldName]));
       return;
     }
 
-    if (fieldName === "totalDistance") {
-      setText(node, `DIST ${formatDistanceNm(getAtoTotalDistanceNm(data))}`);
-      return;
-    }
-
-    if (fieldName === "estFlightTime") {
-      setText(node, `EFT ${formatFlightDuration(data.estFlightTime)}`);
+    if (fieldName === "divertSummary") {
+      setText(node, data.diverts.join("\n") || "--");
       return;
     }
 
@@ -4018,6 +4711,16 @@ function updateAtoCardViews(card) {
 
     if (fieldName === "estFlightTimeDetail") {
       setText(node, formatFlightDuration(data.estFlightTime));
+      return;
+    }
+
+    if (fieldName === "fuelPlan") {
+      setText(node, `Joker ${data.fuelPlan || "--"}`);
+      return;
+    }
+
+    if (fieldName === "fuelNote") {
+      setText(node, `Bingo ${data.fuelNote || "--"}`);
       return;
     }
 
@@ -4033,6 +4736,24 @@ function collectAtoDataFromCard(card) {
     if (!input) return;
     data[fieldName] = sanitizeAtoValue(fieldName, input.value);
   });
+
+  const iffMode1Input = card.querySelector('[data-role="iff-mode1-input"]');
+  const iffMode3Input = card.querySelector('[data-role="iff-mode3-input"]');
+  if (iffMode1Input || iffMode3Input) {
+    const mode1 = sanitizeUpperText(iffMode1Input?.value || "", 12);
+    const mode3 = sanitizeUpperText(iffMode3Input?.value || "", 12);
+    data.iffModes = [mode1 ? `M1 ${mode1}` : "", mode3 ? `M3 ${mode3}` : ""].filter(Boolean).join(" / ");
+  }
+
+  const depSelect = card.querySelector('[data-role="ato-airfield-select"][data-kind="launchDetails"]');
+  const arrSelect = card.querySelector('[data-role="ato-airfield-select"][data-kind="recoveryDetails"]');
+  if (depSelect) data.launchDetails = sanitizeUpperText(depSelect.value || "", 8);
+  if (arrSelect) data.recoveryDetails = sanitizeUpperText(arrSelect.value || "", 8);
+
+  data.diverts = Array.from(card.querySelectorAll('[data-role="ato-airfield-select"][data-kind="divert"], [data-role="divert-select"]'))
+    .map((select) => sanitizeUpperText(select.value || "", 8))
+    .filter(Boolean);
+  data.divert = data.diverts[0] || "";
 
   data.route = (card._atoRouteRows || []).map((rowElement, index) => sanitizeAtoRouteRow({
     wp: rowElement.querySelector('[data-role="wp-input"]')?.value,
@@ -4064,10 +4785,13 @@ function collectAtoDataFromCard(card) {
 
 function atoShouldSanitizeOnInput(fieldName) {
   return [
+    "stepTime",
     "launchTime",
     "totTime",
     "recoveryTime",
     "pushTime",
+    "pushNet",
+    "pushNlt",
     "totNet",
     "totNlt",
     "atoDay",
@@ -4096,25 +4820,23 @@ function createAtoCard(atoData) {
       mission: card.querySelector('[data-ato-static="mission"]'),
       totTime: card.querySelector('[data-ato-static="totTime"]'),
       subtitle: card.querySelector('[data-ato-static="subtitle"]'),
-      meta: card.querySelector('[data-ato-static="meta"]'),
-      aircraft: card.querySelector('[data-ato-static="aircraft"]'),
       lead: card.querySelector('[data-ato-static="lead"]'),
-      launchRecovery: card.querySelector('[data-ato-static="launchRecovery"]'),
-      launchRecoverySub: card.querySelector('[data-ato-static="launchRecoverySub"]'),
+      departureHeader: card.querySelector('[data-ato-static="departureHeader"]'),
       packageFreq: card.querySelector('[data-ato-static="packageFreq"]'),
       packageFreqSub: card.querySelector('[data-ato-static="packageFreqSub"]'),
-      configuration: card.querySelector('[data-ato-static="configuration"]'),
-      startTime: card.querySelector('[data-ato-static="startTime"]'),
-      startIcao: card.querySelector('[data-ato-static="startIcao"]'),
       takeoffTime: card.querySelector('[data-ato-static="takeoffTime"]'),
       takeoffIcao: card.querySelector('[data-ato-static="takeoffIcao"]'),
       arrivalIcao: card.querySelector('[data-ato-static="arrivalIcao"]'),
       commList: card.querySelector('[data-ato-static="commList"]'),
       routeList: card.querySelector('[data-ato-static="routeList"]'),
       crewList: card.querySelector('[data-ato-static="crewList"]'),
-      intraFreq: card.querySelector('[data-ato-static="intraFreq"]'),
-      intraFreqSub: card.querySelector('[data-ato-static="intraFreqSub"]'),
+      intraFreqMeta: card.querySelector('[data-ato-static="intraFreqMeta"]'),
+      intraFreqRows: card.querySelector('[data-ato-static="intraFreqRows"]'),
       supportList: card.querySelector('[data-ato-static="supportList"]'),
+      airfieldCards: card.querySelector('[data-ato-static="airfieldCards"]'),
+      totNetHeader: card.querySelector('[data-ato-static="totNetHeader"]'),
+      totNltHeader: card.querySelector('[data-ato-static="totNltHeader"]'),
+      iffModesBlock: card.querySelector('[data-ato-static="iffModesBlock"]'),
       chevron: card.querySelector('[data-ato-static="chevron"]')
     }
   };
@@ -4139,6 +4861,28 @@ function createAtoCard(atoData) {
     input.addEventListener("change", commit);
     input.addEventListener("blur", commit);
   });
+
+  const iffMode1Input = card.querySelector('[data-role="iff-mode1-input"]');
+  const iffMode3Input = card.querySelector('[data-role="iff-mode3-input"]');
+  const iffModes = parseAtoIffModes(ato.iffModes);
+  if (iffMode1Input) iffMode1Input.value = iffModes.mode1 === "--" ? "" : iffModes.mode1;
+  if (iffMode3Input) iffMode3Input.value = iffModes.mode3 === "--" ? "" : iffModes.mode3;
+  [iffMode1Input, iffMode3Input].forEach((input) => {
+    if (!input) return;
+    const commit = () => {
+      input.value = sanitizeUpperText(input.value, 12);
+      card._atoData = collectAtoDataFromCard(card);
+      updateAtoCardViews(card);
+      saveCurrentMission();
+    };
+    input.addEventListener("input", () => {
+      input.value = sanitizeUpperText(input.value, 12);
+    });
+    input.addEventListener("change", commit);
+    input.addEventListener("blur", commit);
+  });
+
+  refreshAtoAirfieldControls(card, getCurrentAirfieldsFromDom());
 
   const toggleCard = () => {
     card._atoData = { ...collectAtoDataFromCard(card), collapsed: !card._atoData.collapsed };
@@ -4194,6 +4938,31 @@ function createAtoCard(atoData) {
       card._atoData = collectAtoDataFromCard(card);
       updateAtoCardViews(card);
       saveCurrentMission();
+    });
+  }
+
+  const addDivertBtn = card.querySelector('[data-ato-action="add-divert"]');
+  if (addDivertBtn) {
+    addDivertBtn.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const host = card._atoFields?.statics?.airfieldCards;
+      if (!host) return;
+      const wrapper = document.createElement("div");
+      wrapper.className = "ato-airfield-card";
+      wrapper.innerHTML = `
+        <div class="ato-airfield-card-top">
+          <div class="ato-airfield-card-label">DIVERT</div>
+          <button class="mini-action-btn package-delete-btn" data-role="remove-divert-card" type="button">Retirer</button>
+        </div>
+        <div class="ato-airfield-card-title">--</div>
+        <div class="ato-airfield-card-meta">Sélectionne un ICAO.</div>
+        <div class="edit-field" style="margin-top:10px;">
+          <select class="field-input field-select" data-role="ato-airfield-select" data-kind="divert"></select>
+        </div>
+      `;
+      host.appendChild(wrapper);
+      bindAtoAirfieldCardControls(card, getCurrentAirfieldsFromDom());
     });
   }
 
@@ -5165,6 +5934,7 @@ function buildMissionPayload() {
     briefing: {
       ...collectOverviewDataFromInputs(),
       weather: collectWeatherDataFromInputs(),
+      airfields: getCurrentAirfieldsFromDom(),
       packages: getCurrentPackagesFromDom(),
       atos: getCurrentAtosFromDom(),
       acos: getCurrentAcosFromDom(),
@@ -5184,6 +5954,7 @@ function saveCurrentMission() {
   currentMissionData = {
     ...collectOverviewDataFromInputs(),
     weather: collectWeatherDataFromInputs(),
+    airfields: getCurrentAirfieldsFromDom(),
     packages: getCurrentPackagesFromDom(),
     atos: getCurrentAtosFromDom(),
     acos: getCurrentAcosFromDom(),
@@ -5245,6 +6016,7 @@ function applyStoredMissionPayload(payload, missionId) {
     ...deepClone(defaultMissionData),
     ...briefing,
     weather: normalizeWeatherData(briefing.weather),
+    airfields: normalizeAirfieldsArray(briefing.airfields),
     packages: normalizePackagesArray(briefing.packages),
     atos: normalizeAtosArray(briefing.atos),
     acos: normalizeAcosArray(briefing.acos),
@@ -5253,6 +6025,7 @@ function applyStoredMissionPayload(payload, missionId) {
 
   applyOverviewDataToInputs(currentMissionData);
   applyWeatherDataToInputs(currentMissionData.weather);
+  renderAirfields(currentMissionData.airfields);
   renderPackages(currentMissionData.packages);
   renderAtos(currentMissionData.atos);
   renderAcos(currentMissionData.acos);
@@ -5304,6 +6077,7 @@ function applyBriefingPayload(briefing, missionId = "") {
     ...deepClone(defaultMissionData),
     ...(briefing || {}),
     weather: normalizeWeatherData(briefing?.weather),
+    airfields: normalizeAirfieldsArray(briefing?.airfields),
     packages: normalizePackagesArray(briefing?.packages),
     atos: normalizeAtosArray(briefing?.atos),
     acos: normalizeAcosArray(briefing?.acos),
@@ -5312,6 +6086,7 @@ function applyBriefingPayload(briefing, missionId = "") {
 
   applyOverviewDataToInputs(currentMissionData);
   applyWeatherDataToInputs(currentMissionData.weather);
+  renderAirfields(currentMissionData.airfields);
   renderPackages(currentMissionData.packages);
   renderAtos(currentMissionData.atos);
   renderAcos(currentMissionData.acos);
@@ -5344,6 +6119,7 @@ function createNewMission() {
 
   applyOverviewDataToInputs(currentMissionData);
   applyWeatherDataToInputs(currentMissionData.weather);
+  renderAirfields(currentMissionData.airfields);
   renderPackages(currentMissionData.packages);
   renderAtos(currentMissionData.atos);
   renderAcos(currentMissionData.acos);
@@ -5701,30 +6477,55 @@ function drawKneeboardKeyValueList(ctx, items, x, y, width, accentColor) {
   });
 }
 
-function drawKneeboardTwoColumnKeyValueList(ctx, items, x, y, width, accentColor) {
-  const gap = 26;
+function drawKneeboardTwoColumnKeyValueList(ctx, items, x, y, width, accentColor, options = {}) {
+  const {
+    gap = 26,
+    rowHeight = 68,
+    rowGap = 0,
+    keyFont = '800 17px "Segoe UI", Arial, sans-serif',
+    valueFont = '600 18px "Segoe UI", Arial, sans-serif',
+    valueLineHeight = 20,
+    valueMaxLines = 2,
+    keyValueGap = 24
+  } = options;
   const columnWidth = Math.max((width - gap) / 2, 120);
-  const rowHeight = 68;
+  const rows = [];
 
-  items.forEach(({ key, value }, index) => {
-    const column = index % 2;
-    const row = Math.floor(index / 2);
-    const itemX = x + (column * (columnWidth + gap));
-    const itemY = y + (row * rowHeight);
+  for (let index = 0; index < items.length; index += 2) {
+    rows.push(items.slice(index, index + 2));
+  }
 
-    ctx.save();
-    ctx.font = '800 17px "Segoe UI", Arial, sans-serif';
-    ctx.fillStyle = accentColor;
-    ctx.textBaseline = "top";
-    ctx.fillText(key, itemX, itemY);
-    ctx.restore();
+  let cursorY = y;
 
-    drawCanvasTextBlock(ctx, value || "--", itemX, itemY + 24, columnWidth, {
-      font: '600 18px "Segoe UI", Arial, sans-serif',
-      color: "#e8f3ff",
-      lineHeight: 20,
-      maxLines: 2
+  rows.forEach((rowItems) => {
+    const rowHeights = rowItems.map(({ value }) => {
+      ctx.save();
+      ctx.font = valueFont;
+      const lines = wrapCanvasText(ctx, value || "--", columnWidth, valueMaxLines);
+      ctx.restore();
+      return Math.max(rowHeight, keyValueGap + (lines.length * valueLineHeight));
     });
+    const effectiveRowHeight = Math.max(...rowHeights, rowHeight);
+
+    rowItems.forEach(({ key, value }, column) => {
+      const itemX = x + (column * (columnWidth + gap));
+
+      ctx.save();
+      ctx.font = keyFont;
+      ctx.fillStyle = accentColor;
+      ctx.textBaseline = "top";
+      ctx.fillText(key, itemX, cursorY);
+      ctx.restore();
+
+      drawCanvasTextBlock(ctx, value || "--", itemX, cursorY + keyValueGap, columnWidth, {
+        font: valueFont,
+        color: "#e8f3ff",
+        lineHeight: valueLineHeight,
+        maxLines: valueMaxLines
+      });
+    });
+
+    cursorY += effectiveRowHeight + rowGap;
   });
 }
 
@@ -5758,15 +6559,16 @@ function drawKneeboardMultiColumnList(ctx, items, x, y, width, options = {}) {
 }
 
 function drawKneeboardCommPlanTiles(ctx, items, x, y, width, accentColor) {
-  const count = Math.max(items.length, 1);
-  const columns = count >= 10 ? 4 : count >= 5 ? 3 : 2;
-  const gap = count >= 10 ? 14 : 18;
-  const tileHeight = count >= 10 ? 56 : count >= 7 ? 62 : 68;
-  const titleFont = count >= 10 ? '800 12px "Segoe UI", Arial, sans-serif' : '800 13px "Segoe UI", Arial, sans-serif';
-  const bodyFont = count >= 10 ? '500 12px "Segoe UI", Arial, sans-serif' : '500 13px "Segoe UI", Arial, sans-serif';
-  const lineHeight = count >= 10 ? 14 : 16;
-  const safeColumns = Math.max(columns, 1);
-  const tileWidth = Math.max((width - (gap * (safeColumns - 1))) / safeColumns, 140);
+  const {
+    columns,
+    gap,
+    tileHeight,
+    titleFont,
+    bodyFont,
+    lineHeight,
+    tileWidth,
+    safeColumns
+  } = getKneeboardCommPlanLayout(items.length, width);
 
   items.forEach((item, index) => {
     const column = index % safeColumns;
@@ -5793,6 +6595,69 @@ function drawKneeboardCommPlanTiles(ctx, items, x, y, width, accentColor) {
       maxLines: 2
     });
   });
+}
+
+function getKneeboardTwoColumnListHeight(itemCount = 0, options = {}) {
+  const {
+    rowHeight = 68,
+    rowGap = 0,
+    columns = 2
+  } = options;
+  const safeCount = Math.max(itemCount, 1);
+  const safeColumns = Math.max(columns, 1);
+  const rows = Math.ceil(safeCount / safeColumns);
+  return (rows * rowHeight) + (Math.max(0, rows - 1) * rowGap);
+}
+
+function measureKneeboardTwoColumnListHeight(ctx, items, width, options = {}) {
+  const {
+    gap = 26,
+    rowHeight = 68,
+    rowGap = 0,
+    valueFont = '600 18px "Segoe UI", Arial, sans-serif',
+    valueLineHeight = 20,
+    valueMaxLines = 2,
+    keyValueGap = 24
+  } = options;
+  const columnWidth = Math.max((width - gap) / 2, 120);
+  let totalHeight = 0;
+
+  for (let index = 0; index < items.length; index += 2) {
+    const rowItems = items.slice(index, index + 2);
+    const effectiveRowHeight = Math.max(
+      ...rowItems.map(({ value }) => {
+        ctx.save();
+        ctx.font = valueFont;
+        const lines = wrapCanvasText(ctx, value || "--", columnWidth, valueMaxLines);
+        ctx.restore();
+        return Math.max(rowHeight, keyValueGap + (lines.length * valueLineHeight));
+      }),
+      rowHeight
+    );
+
+    totalHeight += effectiveRowHeight;
+    if (index + 2 < items.length) {
+      totalHeight += rowGap;
+    }
+  }
+
+  return totalHeight || rowHeight;
+}
+
+function getKneeboardCommPlanLayout(count = 0, width = 0) {
+  const safeCount = Math.max(count, 1);
+  const columns = 4;
+  const gap = 14;
+  const tileHeight = 56;
+  const titleFont = '800 12px "Segoe UI", Arial, sans-serif';
+  const bodyFont = '500 12px "Segoe UI", Arial, sans-serif';
+  const lineHeight = 14;
+  const safeColumns = Math.max(columns, 1);
+  const tileWidth = Math.max((width - (gap * (safeColumns - 1))) / safeColumns, 140);
+  const rows = Math.ceil(safeCount / safeColumns);
+  const contentHeight = rows * tileHeight + Math.max(0, rows - 1) * gap;
+
+  return { columns, gap, tileHeight, titleFont, bodyFont, lineHeight, tileWidth, safeColumns, rows, contentHeight };
 }
 
 function getKneeboardRouteTableMetrics(width) {
@@ -5920,15 +6785,15 @@ function getAtoRouteDisplayDistanceForExport(route = [], index = 0, row = {}) {
 }
 
 function buildKneeboardCommPlanItems(atoData = {}) {
-  const ato = normalizeAtoData(atoData);
+  const ato = syncAtoCommWithAirfields(normalizeAtoData(atoData), getCurrentAirfieldsFromDom());
   const items = [];
   const primary = ato.inherited.intra || "--";
   const secondary = ato.packageFrequencyNote || "--";
 
   items.push({
     title: "INTRA-FLIGHT",
-    description: `PRI ${primary}`,
-    freq: `SEC ${secondary}`
+    description: `PFREQ ${primary}`,
+    freq: `SFREQ ${secondary}`
   });
 
   ato.comm
@@ -5952,6 +6817,165 @@ function buildKneeboardCommPlanItems(atoData = {}) {
     });
 
   return items;
+}
+
+function formatKneeboardIffValue(atoData = {}) {
+  const iff = parseAtoIffModes(normalizeAtoData(atoData).iffModes);
+  return `MODE 1 ${iff.mode1} · MODE 3 ${iff.mode3}`;
+}
+
+function formatKneeboardAirfieldNotes(atoData = {}) {
+  const ato = normalizeAtoData(atoData);
+  const airfields = getCurrentAirfieldsFromDom();
+  const rows = [];
+
+  const pushRow = (label, code) => {
+    if (!code) return;
+    rows.push(`${label} ${code}`);
+    const details = formatAirfieldLine(code, airfields)
+      .replace(new RegExp(`^${sanitizeUpperText(code, 8)}\\s*·?\\s*`), "")
+      .split(" · ")
+      .filter(Boolean);
+    details.forEach((detail) => rows.push(`- ${detail}`));
+  };
+
+  pushRow("DEP", ato.launchDetails || ato.inherited.departure || "");
+  pushRow("ARR", ato.recoveryDetails || ato.inherited.destination || "");
+  ato.diverts.forEach((code, index) => pushRow(`DIVERT ${index + 1}`, code));
+
+  return rows.join("\n") || "--";
+}
+
+function buildKneeboardAirfieldTileItems(atoData = {}) {
+  const ato = normalizeAtoData(atoData);
+  const airfields = getCurrentAirfieldsFromDom();
+  const airfieldMap = getAirfieldMap(airfields);
+  const items = [];
+
+  const pushItem = (title, code) => {
+    if (!code) return;
+    const normalizedCode = sanitizeUpperText(code, 8);
+    const airfield = airfieldMap.get(normalizedCode);
+    const details = airfield
+      ? [
+          airfield.runway ? `RWY ${airfield.runway}` : "",
+          airfield.ilsFreq || airfield.ilsCourse || airfield.ilsRunway
+            ? `ILS ${formatAirfieldIlsDisplay(airfield, " / ")}`
+            : "",
+          airfield.beacon ? `BCN ${airfield.beacon}` : "",
+          airfield.notes || ""
+        ].filter(Boolean).join(" · ")
+      : "";
+    items.push({
+      title,
+      code: normalizedCode,
+      details: details || "--"
+    });
+  };
+
+  pushItem("DEP", ato.launchDetails || ato.inherited.departure || "");
+  pushItem("ARR", ato.recoveryDetails || ato.inherited.destination || "");
+  ato.diverts.forEach((code, index) => pushItem(`DIVERT ${index + 1}`, code));
+
+  return items;
+}
+
+function drawKneeboardAirfieldTiles(ctx, items, x, y, width, accentColor) {
+  const { columns, gap, safeColumns, tileWidth, tileHeight } = getKneeboardAirfieldLayout(items.length, width);
+
+  items.forEach((item, index) => {
+    const column = index % safeColumns;
+    const row = Math.floor(index / safeColumns);
+    const tileX = x + (column * (tileWidth + gap));
+    const tileY = y + (row * (tileHeight + gap));
+
+    fillRoundedRect(ctx, tileX, tileY, tileWidth, tileHeight, 16, "rgba(255,255,255,0.035)");
+    strokeRoundedRect(ctx, tileX, tileY, tileWidth, tileHeight, 16, "rgba(160,205,255,0.12)", 1);
+
+    ctx.save();
+    ctx.font = '800 13px "Segoe UI", Arial, sans-serif';
+    ctx.fillStyle = accentColor;
+    ctx.textBaseline = "top";
+    ctx.fillText(trimCanvasText(ctx, item.title || "--", tileWidth - 24), tileX + 12, tileY + 10);
+    ctx.font = '800 16px "Segoe UI", Arial, sans-serif';
+    ctx.fillStyle = "#eef6ff";
+    ctx.fillText(trimCanvasText(ctx, item.code || "--", tileWidth - 24), tileX + 12, tileY + 30);
+    ctx.restore();
+
+    drawCanvasTextBlock(ctx, item.details || "--", tileX + 12, tileY + 52, tileWidth - 24, {
+      font: '500 11px "Segoe UI", Arial, sans-serif',
+      color: "#d7e6f8",
+      lineHeight: 13,
+      maxLines: 5
+    });
+  });
+}
+
+function getKneeboardAirfieldLayout(count = 0, width = 0) {
+  const safeCount = Math.max(count, 1);
+  const columns = 2;
+  const gap = 16;
+  const safeColumns = Math.max(columns, 1);
+  const tileWidth = Math.max((width - (gap * (safeColumns - 1))) / safeColumns, 120);
+  const tileHeight = 116;
+  const rows = Math.ceil(safeCount / safeColumns);
+  const contentHeight = rows * tileHeight + Math.max(0, rows - 1) * gap;
+
+  return { columns, gap, safeColumns, tileWidth, tileHeight, rows, contentHeight };
+}
+
+function getKneeboardLayoutMetrics({
+  canvasHeight,
+  margin,
+  contentWidth,
+  airfieldItemCount,
+  commPlanItemCount,
+  missionDataItemCount = 6,
+  executionItemCount = 6,
+  topListContentHeight = null
+}) {
+  const topSectionY = 268;
+  const topSectionContentY = 352;
+  const sectionHeaderOffset = topSectionContentY - topSectionY;
+  const topSectionBaseHeight = 324;
+  const topListHeight = Math.max(
+    Number.isFinite(topListContentHeight)
+      ? topListContentHeight
+      : getKneeboardTwoColumnListHeight(missionDataItemCount, { rowHeight: 62 }),
+    Number.isFinite(topListContentHeight)
+      ? topListContentHeight
+      : getKneeboardTwoColumnListHeight(executionItemCount, { rowHeight: 62 })
+  );
+  const airfieldLayout = getKneeboardAirfieldLayout(airfieldItemCount, 376);
+  const topSectionContentHeight = Math.max(topListHeight, airfieldLayout.contentHeight);
+  const topSectionHeight = Math.max(topSectionBaseHeight, sectionHeaderOffset + topSectionContentHeight + 28);
+
+  const commPlanLayout = getKneeboardCommPlanLayout(commPlanItemCount, contentWidth - 56);
+  const commSectionBaseHeight = 302;
+  const commSectionHeight = Math.max(commSectionBaseHeight, 84 + commPlanLayout.contentHeight + 28);
+  const commSectionY = canvasHeight - margin - commSectionHeight + 2;
+
+  const routeSectionY = topSectionY + topSectionHeight + 32;
+  const routeSectionHeight = Math.max(420, commSectionY - 32 - routeSectionY);
+  const routeContentTop = routeSectionY + 84;
+  const routeContentBottom = routeSectionY + routeSectionHeight - 24;
+  const routeAvailableHeight = Math.max(120, routeContentBottom - routeContentTop);
+  const routeHeaderHeight = 72;
+  const routeFooterHeight = 44;
+  const routeRowStride = 50;
+  const routeRowsHeight = Math.max(0, routeAvailableHeight - routeHeaderHeight - routeFooterHeight);
+  const routePageSize = Math.max(1, Math.floor(routeRowsHeight / routeRowStride));
+
+  return {
+    topSectionY,
+    topSectionHeight,
+    routeSectionY,
+    routeSectionHeight,
+    routeContentTop,
+    routePageSize,
+    commSectionY,
+    commSectionHeight
+  };
 }
 
 function getAtoRouteCoordinateForFormat(row = {}, coordFormat = "lldm") {
@@ -6014,6 +7038,31 @@ function renderKneeboardToCanvas(atoData, options = {}) {
   const routeStart = routePageIndex * routePageSize;
   const visibleRouteRows = routeRows.slice(routeStart, routeStart + routePageSize);
   const commPlanItems = buildKneeboardCommPlanItems(ato);
+  const airfieldTileItems = buildKneeboardAirfieldTileItems(ato);
+  const missionDataItems = [
+    { key: "LEADER", value: ato.inherited.leader || "--" },
+    { key: "AIRCRAFT", value: `${ato.inherited.aircraftCount || "--"} x ${ato.inherited.aircraftType || "--"}` },
+    { key: "TARGET", value: [ato.targetName, ato.targetDetails].filter(Boolean).join(" · ") || "--" },
+    { key: "IFF", value: formatKneeboardIffValue(ato).replace(" · ", "\n") },
+    { key: "DATALINK", value: ato.datalink || "--" },
+    { key: "LASER", value: ato.laser || "--" }
+  ];
+  const executionItems = [
+    { key: "STEP", value: formatZuluTime(getAtoStepTime(ato)) },
+    { key: "TAKEOFF", value: formatZuluTime(ato.launchTime) },
+    { key: "PUSH", value: `${formatZuluTime(ato.pushTime)}\nNET ${formatShortTime(ato.pushNet)}\nNLT ${formatShortTime(ato.pushNlt)}` },
+    { key: "TOT", value: `${formatZuluTime(ato.totTime)}\nNET ${formatShortTime(ato.totNet)}\nNLT ${formatShortTime(ato.totNlt)}` },
+    { key: "LAND", value: formatZuluTime(ato.recoveryTime) },
+    { key: "FUEL", value: `BINGO ${ato.fuelNote || "--"}\nJOKER ${ato.fuelPlan || "--"}` }
+  ];
+  const topListOptions = {
+    rowHeight: 62,
+    keyFont: '800 16px "Segoe UI", Arial, sans-serif',
+    valueFont: '600 16px "Segoe UI", Arial, sans-serif',
+    valueLineHeight: 18,
+    valueMaxLines: 3,
+    rowGap: 10
+  };
 
   const bgGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
   bgGradient.addColorStop(0, "#08131f");
@@ -6083,33 +7132,33 @@ function renderKneeboardToCanvas(atoData, options = {}) {
   ctx.fillText(overview.mapName || "--", margin + contentWidth - 32, 162);
   ctx.restore();
 
-  drawKneeboardSection(ctx, margin, 268, 448, 292, "MISSION DATA", accentColor);
-  drawKneeboardSection(ctx, margin + 472, 268, 448, 292, "EXECUTION", accentColor);
-  drawKneeboardSection(ctx, margin + 944, 268, 448, 292, "NOTES", accentColor);
-  drawKneeboardSection(ctx, margin, 592, contentWidth, 1052, "ROUTE", accentColor);
-  drawKneeboardSection(ctx, margin, 1676, contentWidth, 302, "COMM PLAN", accentColor);
+  const layoutMetrics = getKneeboardLayoutMetrics({
+    canvasHeight: canvas.height,
+    margin,
+    contentWidth,
+    airfieldItemCount: airfieldTileItems.length,
+    commPlanItemCount: commPlanItems.length,
+    missionDataItemCount: missionDataItems.length,
+    executionItemCount: executionItems.length,
+    topListContentHeight: Math.max(
+      measureKneeboardTwoColumnListHeight(ctx, missionDataItems, 400, topListOptions),
+      measureKneeboardTwoColumnListHeight(ctx, executionItems, 400, topListOptions)
+    )
+  });
 
-  drawKneeboardTwoColumnKeyValueList(ctx, [
-    { key: "PACKAGE", value: ato.inherited.packageName || "--" },
-    { key: "AIRCRAFT", value: `${ato.inherited.aircraftCount || "--"} x ${ato.inherited.aircraftType || "--"}` },
-    { key: "IFF", value: [ato.iffModes, ato.iffNote].filter(Boolean).join(" · ") || "--" },
-    { key: "DATALINK", value: [ato.datalink, ato.datalinkNote].filter(Boolean).join(" · ") || "--" },
-    { key: "LASER", value: [ato.laser, ato.laserNote].filter(Boolean).join(" · ") || "--" },
-    { key: "AUTH", value: [ato.authentication, ato.authenticationReply].filter(Boolean).join(" / ") || "--" }
-  ], margin + 24, 352, 400, accentColor);
+  drawKneeboardSection(ctx, margin, layoutMetrics.topSectionY, 448, layoutMetrics.topSectionHeight, "MISSION DATA", accentColor);
+  drawKneeboardSection(ctx, margin + 472, layoutMetrics.topSectionY, 448, layoutMetrics.topSectionHeight, "EXECUTION", accentColor);
+  drawKneeboardSection(ctx, margin + 944, layoutMetrics.topSectionY, 448, layoutMetrics.topSectionHeight, "AIRFIELD", accentColor);
+  drawKneeboardSection(ctx, margin, layoutMetrics.routeSectionY, contentWidth, layoutMetrics.routeSectionHeight, "ROUTE", accentColor);
+  drawKneeboardSection(ctx, margin, layoutMetrics.commSectionY, contentWidth, layoutMetrics.commSectionHeight, "COMM PLAN", accentColor);
 
-  drawKneeboardTwoColumnKeyValueList(ctx, [
-    { key: "STEP", value: formatTimeLocal(ato.inherited.startTime) },
-    { key: "TAKEOFF", value: formatTimeLocal(ato.launchTime) },
-    { key: "TOT", value: formatZuluTime(ato.totTime) },
-    { key: "RECOVERY", value: formatZuluTime(ato.recoveryTime) },
-    { key: "NET", value: formatShortTime(ato.totNet) },
-    { key: "NLT", value: formatShortTime(ato.totNlt) }
-  ], margin + 496, 352, 400, accentColor);
+  drawKneeboardTwoColumnKeyValueList(ctx, missionDataItems, margin + 24, layoutMetrics.topSectionY + 84, 400, accentColor, topListOptions);
+
+  drawKneeboardTwoColumnKeyValueList(ctx, executionItems, margin + 496, layoutMetrics.topSectionY + 84, 400, accentColor, topListOptions);
 
   drawCanvasTextBlock(
     ctx,
-    `PRI ${ato.inherited.intra || "--"} · SEC ${ato.packageFrequencyNote || "--"}`,
+    `PRIMARY ${ato.inherited.intra || "--"} · SEC ${ato.packageFrequencyNote || "--"}`,
     margin + 32,
     204,
     860,
@@ -6122,7 +7171,7 @@ function renderKneeboardToCanvas(atoData, options = {}) {
   );
 
   const tableX = margin + 24;
-  const tableY = 676;
+  const tableY = layoutMetrics.routeContentTop;
   const tableWidth = contentWidth - 48;
   const routeTableMetrics = getKneeboardRouteTableMetrics(tableWidth);
   const rowHeight = 50;
@@ -6183,30 +7232,28 @@ function renderKneeboardToCanvas(atoData, options = {}) {
     );
   }
 
-  const notesText = [
-    ato.threats ? `THREATS\n${ato.threats}` : "",
-    ato.abortCriteria ? `ABORT\n${ato.abortCriteria}` : "",
-    ato.pilotNotes ? `PILOT NOTES\n${ato.pilotNotes}` : ""
-  ].filter(Boolean).join("\n\n");
-
-  drawCanvasTextBlock(
-    ctx,
-    notesText || "Aucune note specifique.",
-    margin + 968,
-    352,
-    376,
-    {
-      font: '500 15px "Segoe UI", Arial, sans-serif',
-      color: "#e8f2ff",
-      lineHeight: 19,
-      maxLines: 10
-    }
-  );
+  if (airfieldTileItems.length) {
+    drawKneeboardAirfieldTiles(ctx, airfieldTileItems, margin + 968, layoutMetrics.topSectionY + 84, 376, accentColor);
+  } else {
+    drawCanvasTextBlock(
+      ctx,
+      "Aucun airfield specifique.",
+      margin + 968,
+      layoutMetrics.topSectionY + 84,
+      376,
+      {
+        font: '500 15px "Segoe UI", Arial, sans-serif',
+        color: "#e8f2ff",
+        lineHeight: 19,
+        maxLines: 6
+      }
+    );
+  }
 
   if (commPlanItems.length) {
-    drawKneeboardCommPlanTiles(ctx, commPlanItems, margin + 28, 1768, contentWidth - 56, accentColor);
+    drawKneeboardCommPlanTiles(ctx, commPlanItems, margin + 28, layoutMetrics.commSectionY + 92, contentWidth - 56, accentColor);
   } else {
-    drawCanvasTextBlock(ctx, "Aucun comm plan declare.", margin + 28, 1768, contentWidth - 56, {
+    drawCanvasTextBlock(ctx, "Aucun comm plan declare.", margin + 28, layoutMetrics.commSectionY + 92, contentWidth - 56, {
       font: '500 16px "Segoe UI", Arial, sans-serif',
       color: "#e8f2ff",
       lineHeight: 21,
@@ -6232,13 +7279,57 @@ function exportSelectedKneeboard() {
   }
 
   const coordFormat = kneeboardCoordsFormatSelect?.value || "lldm";
-  const routeRows = ato.route.filter(isMeaningfulAtoRouteRow);
-  const routePageSize = 15;
+  const normalizedAto = normalizeAtoData(ato);
+  const routeRows = normalizedAto.route.filter(isMeaningfulAtoRouteRow);
+  const commPlanItems = buildKneeboardCommPlanItems(normalizedAto);
+  const airfieldTileItems = buildKneeboardAirfieldTileItems(normalizedAto);
+  const missionDataItems = [
+    { key: "LEADER", value: normalizedAto.inherited.leader || "--" },
+    { key: "AIRCRAFT", value: `${normalizedAto.inherited.aircraftCount || "--"} x ${normalizedAto.inherited.aircraftType || "--"}` },
+    { key: "TARGET", value: [normalizedAto.targetName, normalizedAto.targetDetails].filter(Boolean).join(" · ") || "--" },
+    { key: "IFF", value: formatKneeboardIffValue(normalizedAto).replace(" · ", "\n") },
+    { key: "DATALINK", value: normalizedAto.datalink || "--" },
+    { key: "LASER", value: normalizedAto.laser || "--" }
+  ];
+  const executionItems = [
+    { key: "STEP", value: formatZuluTime(getAtoStepTime(normalizedAto)) },
+    { key: "TAKEOFF", value: formatZuluTime(normalizedAto.launchTime) },
+    { key: "PUSH", value: `${formatZuluTime(normalizedAto.pushTime)}\nNET ${formatShortTime(normalizedAto.pushNet)}\nNLT ${formatShortTime(normalizedAto.pushNlt)}` },
+    { key: "TOT", value: `${formatZuluTime(normalizedAto.totTime)}\nNET ${formatShortTime(normalizedAto.totNet)}\nNLT ${formatShortTime(normalizedAto.totNlt)}` },
+    { key: "LAND", value: formatZuluTime(normalizedAto.recoveryTime) },
+    { key: "FUEL", value: `BINGO ${normalizedAto.fuelNote || "--"}\nJOKER ${normalizedAto.fuelPlan || "--"}` }
+  ];
+  const topListOptions = {
+    rowHeight: 62,
+    keyFont: '800 16px "Segoe UI", Arial, sans-serif',
+    valueFont: '600 16px "Segoe UI", Arial, sans-serif',
+    valueLineHeight: 18,
+    valueMaxLines: 3,
+    rowGap: 10
+  };
+  const measureCanvas = document.createElement("canvas");
+  const measureCtx = measureCanvas.getContext("2d");
+  const layoutMetrics = getKneeboardLayoutMetrics({
+    canvasHeight: KNEEBOARD_EXPORT_HEIGHT,
+    margin: 72,
+    contentWidth: KNEEBOARD_EXPORT_WIDTH - (72 * 2),
+    airfieldItemCount: airfieldTileItems.length,
+    commPlanItemCount: commPlanItems.length,
+    missionDataItemCount: missionDataItems.length,
+    executionItemCount: executionItems.length,
+    topListContentHeight: measureCtx
+      ? Math.max(
+          measureKneeboardTwoColumnListHeight(measureCtx, missionDataItems, 400, topListOptions),
+          measureKneeboardTwoColumnListHeight(measureCtx, executionItems, 400, topListOptions)
+        )
+      : null
+  });
+  const routePageSize = layoutMetrics.routePageSize;
   const routePageCount = Math.max(1, Math.ceil(routeRows.length / routePageSize));
-  const baseFilename = `${sanitizeUpperText(ato.inherited.callsign || "PACKAGE", 24).replace(/\s+/g, "_")}_KNEEBOARD`;
+  const baseFilename = `${sanitizeUpperText(normalizedAto.inherited.callsign || "PACKAGE", 24).replace(/\s+/g, "_")}_KNEEBOARD`;
 
   for (let pageIndex = 0; pageIndex < routePageCount; pageIndex += 1) {
-    const canvas = renderKneeboardToCanvas(ato, {
+    const canvas = renderKneeboardToCanvas(normalizedAto, {
       coordFormat,
       routePageIndex: pageIndex,
       routePageSize,
@@ -6257,7 +7348,7 @@ function exportSelectedKneeboard() {
 }
 
 function shouldUseCompactTopbarActions() {
-  return false;
+  return window.innerWidth <= 980;
 }
 
 function closeTopbarActionsMenu() {
@@ -6279,6 +7370,16 @@ function toggleTopbarActionsMenu() {
   const willOpen = topbarActionsDropdown.hidden;
   topbarActionsDropdown.hidden = !willOpen;
   topbarActionsBtn.setAttribute("aria-expanded", String(willOpen));
+}
+
+function triggerActionFeedback(element) {
+  if (!element) return;
+  element.classList.remove("is-feedback");
+  void element.offsetWidth;
+  element.classList.add("is-feedback");
+  window.setTimeout(() => {
+    element.classList.remove("is-feedback");
+  }, 700);
 }
 
 function handleTopbarAction(action) {
@@ -6482,7 +7583,6 @@ function setupCollapsibleSection({
 function syncTopbarScrolledState() {
   const topbar = document.querySelector(".topbar");
   if (!topbar) return;
-  topbar.classList.toggle("is-scrolled", window.scrollY > 24);
   if (!shouldUseCompactTopbarActions()) {
     closeTopbarActionsMenu();
   }
@@ -6590,8 +7690,23 @@ topbarActionsBtn?.addEventListener("click", (event) => {
 
 topbarActionItems.forEach((button) => {
   button.addEventListener("click", () => {
+    triggerActionFeedback(button);
     handleTopbarAction(button.dataset.topbarAction || "");
     closeTopbarActionsMenu();
+  });
+});
+
+[
+  newMissionBtn,
+  loadMizBtn,
+  exportKneeboardBtn,
+  copyUrlBtn,
+  copyMissionIdBtn,
+  pasteMissionIdBtn,
+  topbarActionsBtn
+].forEach((button) => {
+  button?.addEventListener("click", () => {
+    triggerActionFeedback(button);
   });
 });
 
@@ -6632,6 +7747,14 @@ if (addPackageBtn) {
   });
 }
 
+if (addAirfieldBtn) {
+  addAirfieldBtn.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    addAirfield();
+  });
+}
+
 if (updateAtoBtn) {
   updateAtoBtn.addEventListener("click", (event) => {
     event.preventDefault();
@@ -6661,6 +7784,13 @@ setupCollapsibleSection({
   toggleId: "weatherToggle",
   chevronId: "weatherChevron",
   contentId: "weatherContent"
+});
+
+setupCollapsibleSection({
+  panelId: "airfieldPanel",
+  toggleId: "airfieldToggle",
+  chevronId: "airfieldChevron",
+  contentId: "airfieldContent"
 });
 
 setupCollapsibleSection({
