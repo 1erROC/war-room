@@ -9,14 +9,14 @@
 <body>
   <div class="app-shell mode-briefing" id="appShell">
     <header class="topbar">
-      <div class="title-wrap">
-        <p class="subtitle">Mission Planning Interface</p>
-        <h1 class="title">WAR ROOM</h1>
-      </div>
+      <div class="topbar-shell">
+        <div class="title-wrap">
+          <p class="subtitle">Mission Planning Interface</p>
+          <h1 class="title">WAR ROOM</h1>
+        </div>
 
-      <div class="topbar-right">
-        <div class="mode-panel">
-          <div class="mode-panel-row mode-panel-row-primary">
+        <div class="topbar-right">
+          <div class="mode-panel">
             <div class="mode-control">
               <div class="mode-text">
                 <span class="mode-label">Mode actif</span>
@@ -35,42 +35,42 @@
               </button>
             </div>
 
-            <button id="newMissionBtn" class="topbar-btn" type="button">NEW</button>
-            <button id="loadMizBtn" class="topbar-btn" type="button">LOAD</button>
-            <button id="exportKneeboardBtn" class="topbar-btn" type="button">KNBRD</button>
-          </div>
+            <div class="topbar-actions-inline">
+              <button id="newMissionBtn" class="topbar-btn" type="button">NEW</button>
+              <button id="loadMizBtn" class="topbar-btn" type="button">LOAD</button>
+              <button id="exportKneeboardBtn" class="topbar-btn" type="button">KNBRD</button>
+              <button id="copyUrlBtn" class="topbar-btn" type="button">URL</button>
+              <button id="copyMissionIdBtn" class="topbar-btn" type="button">COPIER ID</button>
+              <button id="pasteMissionIdBtn" class="topbar-btn" type="button">COLLER ID</button>
+              <a class="topbar-btn topbar-link" href="../index.html">Menu</a>
+            </div>
 
-          <div class="mode-panel-row mode-panel-row-secondary">
-            <button id="copyUrlBtn" class="topbar-btn" type="button">URL</button>
-            <button id="copyMissionIdBtn" class="topbar-btn" type="button">COPIER ID</button>
-            <button id="pasteMissionIdBtn" class="topbar-btn" type="button">COLLER ID</button>
-            <a class="topbar-btn topbar-link" href="../index.html">Menu</a>
-          </div>
+            <div class="topbar-actions-menu">
+              <button
+                id="topbarActionsBtn"
+                class="topbar-btn topbar-actions-trigger"
+                type="button"
+                aria-expanded="false"
+                aria-controls="topbarActionsDropdown"
+                aria-label="Ouvrir le menu des actions"
+              >
+                <span class="topbar-burger" aria-hidden="true"><span></span><span></span><span></span></span>
+              </button>
 
-          <div class="topbar-actions-menu">
-            <button
-              id="topbarActionsBtn"
-              class="topbar-btn topbar-actions-trigger"
-              type="button"
-              aria-expanded="false"
-              aria-controls="topbarActionsDropdown"
-            >
-              ACTIONS
-            </button>
-
-            <div id="topbarActionsDropdown" class="topbar-actions-dropdown" hidden>
-              <button class="topbar-actions-item" type="button" data-topbar-action="new">NEW</button>
-              <button class="topbar-actions-item" type="button" data-topbar-action="load">LOAD</button>
-              <button class="topbar-actions-item" type="button" data-topbar-action="kneeboard">KNBRD</button>
-              <button class="topbar-actions-item" type="button" data-topbar-action="url">URL</button>
-              <button class="topbar-actions-item" type="button" data-topbar-action="copy-id">COPIER ID</button>
-              <button class="topbar-actions-item" type="button" data-topbar-action="paste-id">COLLER ID</button>
-              <button class="topbar-actions-item" type="button" data-topbar-action="menu">MENU</button>
+              <div id="topbarActionsDropdown" class="topbar-actions-dropdown" hidden>
+                <button class="topbar-actions-item" type="button" data-topbar-action="new">NEW</button>
+                <button class="topbar-actions-item" type="button" data-topbar-action="load">LOAD</button>
+                <button class="topbar-actions-item" type="button" data-topbar-action="kneeboard">KNBRD</button>
+                <button class="topbar-actions-item" type="button" data-topbar-action="url">URL</button>
+                <button class="topbar-actions-item" type="button" data-topbar-action="copy-id">COPIER ID</button>
+                <button class="topbar-actions-item" type="button" data-topbar-action="paste-id">COLLER ID</button>
+                <button class="topbar-actions-item" type="button" data-topbar-action="menu">MENU</button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div class="author-line">By [1eROC] Seluj</div>
+          <div class="author-line">By [1eROC] Seluj</div>
+        </div>
       </div>
     </header>
 
@@ -193,17 +193,13 @@
               </div>
             </article>
 
-            <article class="data-card">
+            <article class="data-card data-card-status">
               <span class="data-label">Statut</span>
-              <div class="view-value status-value" data-field="status">Draft</div>
+              <div class="view-value status-value status-value-draft" data-field="status">DRAFT</div>
               <div class="edit-field">
                 <select id="statusInput" class="field-input field-select">
-                  <option value="Draft" selected>Draft</option>
-                  <option value="Planned">Planned</option>
-                  <option value="Fragged">Fragged</option>
-                  <option value="Active">Active</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Abort">Abort</option>
+                  <option value="DRAFT" selected>DRAFT</option>
+                  <option value="PLANNED">PLANNED</option>
                 </select>
               </div>
             </article>
@@ -522,6 +518,39 @@
         </div>
       </section>
 
+      <section class="panel panel--collapsible is-collapsed" id="airfieldPanel">
+        <div
+          id="airfieldToggle"
+          class="panel-header panel-header--collapsible"
+          role="button"
+          tabindex="0"
+          aria-expanded="false"
+          aria-controls="airfieldContent"
+        >
+          <div class="panel-header-main">
+            <div class="panel-kicker">Mission Environment · Airfield Reference</div>
+            <div class="panel-title-row">
+              <h2 class="panel-title">Airfield</h2>
+            </div>
+            <p class="panel-subtitle">
+              Référence centralisée des aérodromes utilisés par la mission, avec radios, piste active, ILS et balises.
+            </p>
+          </div>
+
+          <div class="panel-header-actions">
+            <button id="addAirfieldBtn" class="topbar-btn panel-action-btn" type="button">Ajouter</button>
+            <span id="airfieldChevron" class="panel-chevron">+</span>
+          </div>
+        </div>
+
+        <div id="airfieldContent" class="panel-content">
+          <div id="airfieldEmptyState" class="airfield-empty-state">
+            Aucun airfield pour le moment. Passe en mode édition puis ajoute les terrains utiles au package.
+          </div>
+          <div id="airfieldGrid" class="airfield-grid"></div>
+        </div>
+      </section>
+
       <!-- PACKAGE -->
       <section class="panel panel--collapsible is-collapsed" id="packagePanel">
         <div
@@ -538,7 +567,7 @@
               <h2 class="panel-title">Package</h2>
             </div>
             <p class="panel-subtitle">
-              Construction des packages mission, composition des vols, leadership, fréquences intra-flight et destinations.
+              Construction des packages mission, composition des vols, leadership et fréquences intra-flight.
             </p>
           </div>
 
@@ -1063,13 +1092,12 @@
             spellcheck="false"
           >TYPE</span>
           <span class="package-meta-dot">•</span>
-          <span
-            class="package-editable"
-            data-package-input="departure"
-            data-placeholder="LOCATION"
-            contenteditable="false"
-            spellcheck="false"
-          >LOCATION</span>
+          <span class="package-airfield-inline">
+            <span class="package-airfield-view" data-package-view="departure">LOCATION</span>
+            <span class="edit-field package-inline-edit">
+              <select class="field-input field-select package-inline-select" data-package-input="departureSelect"></select>
+            </span>
+          </span>
         </div>
 
         <div class="package-leader-line">
@@ -1111,18 +1139,6 @@
             >FREQ</span>
           </span>
 
-          <span class="package-meta-dot">•</span>
-
-          <span class="package-footer-item">
-            <span class="package-label-inline">Destination :</span>
-            <span
-              class="package-editable"
-              data-package-input="destination"
-              data-placeholder="DESTINATION"
-              contenteditable="false"
-              spellcheck="false"
-            >DESTINATION</span>
-          </span>
         </div>
       </div>
     </article>
