@@ -464,6 +464,13 @@ a{
   display:block;
 }
 
+.panel--overview .panel-header--static{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto;
+  gap:18px;
+  align-items:center;
+}
+
 .panel-header--collapsible{
   display:grid;
   grid-template-columns:minmax(0, 1fr) auto;
@@ -534,6 +541,92 @@ a{
   line-height:1;
   font-weight:700;
   flex:0 0 auto;
+}
+
+#editOverviewBtn{
+  display:none;
+  min-width:108px;
+  min-height:42px;
+  justify-content:center;
+  padding:0 20px;
+  font-size:.82rem;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+
+.mode-edition #editOverviewBtn{
+  display:inline-flex;
+}
+
+#editWeatherBtn{
+  display:none;
+  min-width:108px;
+  min-height:42px;
+  justify-content:center;
+  padding:0 20px;
+  font-size:.82rem;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+
+.mode-edition #editWeatherBtn{
+  display:inline-flex;
+}
+
+#editAirfieldBtn{
+  display:none;
+  min-width:108px;
+  min-height:42px;
+  justify-content:center;
+  padding:0 20px;
+  font-size:.82rem;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+
+.mode-edition #editAirfieldBtn{
+  display:inline-flex;
+}
+
+#editPackageBtn{
+  display:none;
+  min-width:108px;
+  min-height:42px;
+  justify-content:center;
+  padding:0 20px;
+  font-size:.82rem;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+
+.mode-edition #editPackageBtn{
+  display:inline-flex;
+}
+
+#editAtoBtn{
+  display:none;
+  min-width:108px;
+  min-height:42px;
+  justify-content:center;
+  padding:0 20px;
+  font-size:.82rem;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+
+.mode-edition #editAtoBtn{
+  display:inline-flex;
+}
+
+.ato-header-actions-stack{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:10px;
+}
+
+.ato-header-actions-stack .panel-action-btn{
+  width:100%;
 }
 
 /* =========================================
@@ -739,8 +832,63 @@ a{
   display:none;
 }
 
+.mode-edition .panel--overview .view-value{
+  display:block;
+}
+
+.mode-edition #weatherPanel .view-value,
+.mode-edition #weatherPanel .view-value-inline,
+.mode-edition #weatherPanel .weather-wind-view,
+.mode-edition #weatherPanel .weather-info-sub{
+  display:block;
+}
+
+.mode-edition #weatherPanel .view-value-inline{
+  display:inline-flex;
+}
+
+.mode-edition #weatherPanel .weather-info-card{
+  min-height:96px;
+}
+
+.mode-edition #airfieldPanel .airfield-field-value{
+  display:block;
+}
+
+.mode-edition #airfieldPanel .edit-field{
+  display:none;
+}
+
+.mode-edition #airfieldPanel .airfield-card-actions{
+  display:none;
+}
+
+.mode-edition #packagePanel .edit-field,
+.mode-edition #packagePanel .edit-field-inline,
+.mode-edition #packagePanel .package-color-tools,
+.mode-edition #packagePanel .package-task-edit,
+.mode-edition #packagePanel .package-wingmen-edit,
+.mode-edition #packagePanel .package-delete-btn{
+  display:none;
+}
+
+.mode-edition #packagePanel .view-mode-task,
+.mode-edition #packagePanel .package-wingmen [data-package-view="wingmen"]{
+  display:block;
+}
+
 .mode-edition .edit-field{
   display:block;
+}
+
+.mode-edition .panel--overview .edit-field{
+  display:none;
+}
+
+.mode-edition #weatherPanel .edit-field,
+.mode-edition #weatherPanel .edit-field-inline,
+.mode-edition #weatherPanel .weather-wind-edit{
+  display:none;
 }
 
 .mode-edition .panel-inline-meta .edit-field-inline{
@@ -1156,6 +1304,182 @@ a{
   gap:10px;
   flex-wrap:wrap;
   margin-top:18px;
+}
+
+.overview-modal-dialog{
+  width:min(760px, calc(100vw - 32px));
+  height:auto;
+  max-height:min(88vh, 860px);
+}
+
+.overview-modal-body{
+  padding:24px;
+  overflow:auto;
+}
+
+.overview-modal-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:18px;
+}
+
+.weather-modal-dialog{
+  width:min(920px, calc(100vw - 32px));
+  height:auto;
+  max-height:min(88vh, 920px);
+}
+
+.weather-modal-body{
+  padding:24px;
+  overflow:auto;
+}
+
+.weather-modal-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:18px;
+}
+
+.weather-modal-layer-grid{
+  grid-column:1 / -1;
+  display:grid;
+  grid-template-columns:160px repeat(3, minmax(0, 1fr));
+  gap:14px;
+  align-items:end;
+  padding:18px;
+  border:1px solid rgba(140,190,255,.14);
+  border-radius:18px;
+  background:rgba(255,255,255,.03);
+}
+
+.weather-modal-layer-title{
+  color:#f2f6ff;
+  font-size:.84rem;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+.airfield-modal-dialog{
+  width:min(860px, calc(100vw - 32px));
+  height:auto;
+  max-height:min(88vh, 900px);
+}
+
+.airfield-modal-toolbar{
+  padding:0 24px 18px;
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.airfield-modal-select-wrap{
+  min-width:min(320px, 100%);
+}
+
+.airfield-modal-toolbar-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.airfield-modal-body{
+  padding:0 24px 24px;
+  overflow:auto;
+}
+
+.airfield-modal-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:18px;
+}
+
+.airfield-modal-field-wide{
+  grid-column:1 / -1;
+}
+
+.package-modal-dialog{
+  width:min(920px, calc(100vw - 32px));
+  height:auto;
+  max-height:min(88vh, 920px);
+}
+
+.package-modal-toolbar{
+  padding:0 24px 18px;
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:14px;
+  flex-wrap:wrap;
+}
+
+.package-modal-select-wrap{
+  min-width:min(320px, 100%);
+}
+
+.package-modal-toolbar-actions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.package-modal-body{
+  padding:0 24px 24px;
+  overflow:auto;
+}
+
+.package-modal-grid{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0, 1fr));
+  gap:18px;
+}
+
+.package-modal-field-wide{
+  grid-column:1 / -1;
+}
+
+.package-modal-color-row{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto;
+  gap:10px;
+  align-items:center;
+}
+
+.package-modal-color-input{
+  min-height:48px;
+  padding:6px;
+}
+
+.package-modal-wingmen-builder{
+  display:grid;
+  gap:10px;
+}
+
+.package-modal-wingman-row{
+  display:grid;
+  grid-template-columns:52px minmax(0, 1fr) auto;
+  gap:10px;
+  align-items:center;
+}
+
+.package-modal-wingman-index{
+  color:#9cb8d9;
+  font-family:var(--mono);
+  font-size:.84rem;
+  font-weight:800;
+  text-align:right;
+}
+
+.package-modal-wingman-input{
+  width:100%;
+}
+
+.package-modal-wingmen-actions{
+  display:flex;
+  justify-content:flex-start;
+  margin-top:10px;
 }
 
 .export-modal-dialog{
@@ -1663,6 +1987,13 @@ a{
   letter-spacing:.08em;
 }
 
+.airfield-card-subtitle{
+  margin-top:4px;
+  color:var(--muted);
+  font-size:.88rem;
+  line-height:1.35;
+}
+
 .airfield-card-grid{
   display:grid;
   grid-template-columns:repeat(2, minmax(0, 1fr));
@@ -2159,10 +2490,12 @@ a{
    ATO
 ========================================= */
 
+#editAtoBtn,
 #updateAtoBtn{
   display:none;
 }
 
+.mode-edition #editAtoBtn,
 .mode-edition #updateAtoBtn{
   display:inline-flex;
 }
@@ -2654,7 +2987,6 @@ a{
 .ato-route-alt,
 .ato-route-spd,
 .ato-route-time,
-.ato-route-dist,
 .ato-route-hdg,
 .ato-route-beacon,
 .ato-comm-freq{
@@ -2668,6 +3000,36 @@ a{
 .ato-route-desc{
   min-width:0;
   text-align:center;
+}
+
+.ato-route-dist-editor{
+  display:grid;
+  grid-template-columns:minmax(0, 1fr) auto minmax(0, 1fr);
+  gap:8px;
+  align-items:end;
+}
+
+.ato-route-dist-editor-field{
+  display:grid;
+  gap:6px;
+  min-width:0;
+}
+
+.ato-route-dist-editor-label{
+  color:var(--muted);
+  font-size:.68rem;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+
+.ato-route-dist-editor-sep{
+  align-self:end;
+  padding-bottom:12px;
+  color:#8fb6df;
+  font-family:var(--mono);
+  font-size:1rem;
+  font-weight:800;
 }
 
 .ato-comm-card,
@@ -2953,16 +3315,149 @@ a{
   display:block !important;
 }
 
+.mode-edition #atoPanel .ato-edit-field{
+  display:none;
+}
+
+.mode-edition #atoPanel .edit-field{
+  display:none;
+}
+
+.mode-edition #atoPanel .ato-editable-view{
+  display:block;
+}
+
+.mode-edition #atoPanel .ato-comm-card-primary .ato-editable-view{
+  display:block;
+}
+
+.mode-edition #atoPanel .ato-route-toolbar{
+  display:none;
+}
+
+.mode-edition #atoPanel [data-role="remove-divert-card"]{
+  display:none;
+}
+
+.ato-modal-dialog{
+  width:min(1520px, calc(100vw - 40px));
+}
+
+.ato-modal-toolbar{
+  padding:0 24px 18px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:flex-start;
+  gap:12px;
+  margin-top:18px;
+}
+
+.ato-modal-select-wrap{
+  min-width:min(320px, 100%);
+  width:min(420px, 100%);
+}
+
+.ato-modal-body{
+  margin-top:0;
+  padding:0 24px 24px;
+  overflow:auto;
+}
+
+.ato-modal-editor{
+  display:grid;
+  gap:18px;
+}
+
+.ato-modal-editor .ato-card{
+  margin:0;
+}
+
+.ato-modal-editor .ato-card.is-collapsed .ato-card-body{
+  display:grid;
+}
+
+.ato-modal-editor .ato-edit-field{
+  display:block !important;
+}
+
+.ato-modal-editor .edit-field{
+  display:block !important;
+}
+
+.ato-modal-editor .ato-editable-view{
+  display:none !important;
+}
+
+.ato-modal-editor .ato-airfield-card .edit-field{
+  display:block !important;
+}
+
+.ato-modal-editor .ato-comm-card .ato-editable-view{
+  display:block !important;
+}
+
+.ato-modal-editor .ato-comm-card-primary .ato-editable-view{
+  display:block !important;
+}
+
+.ato-modal-editor .ato-comm-card .ato-edit-field{
+  display:none !important;
+}
+
+.ato-modal-editor .ato-support-card .ato-editable-view{
+  display:none !important;
+}
+
+.ato-modal-editor .ato-support-card .ato-edit-field{
+  display:grid !important;
+}
+
+.ato-modal-editor [data-ato-action="add-comm"]{
+  display:none !important;
+}
+
+.ato-modal-editor [data-ato-action="add-support"]{
+  display:flex !important;
+}
+
+.ato-modal-editor .ato-route-toolbar{
+  display:flex !important;
+  justify-content:flex-end;
+}
+
 /* =========================================
    ACO
 ========================================= */
 
+#editAcoBtn,
 #updateAcoBtn{
   display:none;
 }
 
+.mode-edition #editAcoBtn,
 .mode-edition #updateAcoBtn{
   display:inline-flex;
+}
+
+#editAcoBtn{
+  min-width:108px;
+  min-height:42px;
+  justify-content:center;
+  padding:0 20px;
+  font-size:.82rem;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+
+.aco-header-actions-stack{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:10px;
+}
+
+.aco-header-actions-stack .panel-action-btn{
+  width:100%;
 }
 
 .aco-empty-state{
@@ -3081,11 +3576,12 @@ a{
 .aco-overview-band{
   position:absolute;
   left:0;
-  right:0;
   display:flex;
-  align-items:center;
-  gap:12px;
-  padding:0 10px 0 12px;
+  flex-direction:column;
+  align-items:flex-start;
+  justify-content:center;
+  gap:4px;
+  padding:8px 10px 8px 12px;
   border:1px solid color-mix(in srgb, var(--aco-band-color, var(--accent)) 60%, white 16%);
   border-radius:12px;
   background:linear-gradient(90deg, color-mix(in srgb, var(--aco-band-color, var(--accent)) 52%, rgba(255,255,255,.08)), rgba(255,255,255,.04));
@@ -3099,7 +3595,7 @@ a{
   font-weight:900;
   letter-spacing:.06em;
   text-transform:uppercase;
-  white-space:nowrap;
+  white-space:normal;
 }
 
 .aco-overview-band-range{
@@ -3107,7 +3603,7 @@ a{
   font-family:var(--mono);
   font-size:.82rem;
   font-weight:700;
-  white-space:nowrap;
+  white-space:normal;
 }
 
 .aco-card{
@@ -3254,6 +3750,14 @@ a{
   display:none;
 }
 
+.mode-edition #acoPanel .aco-edit-field{
+  display:none;
+}
+
+.mode-edition #acoPanel .aco-editable-view{
+  display:block;
+}
+
 .app-shell.mode-briefing .aco-edit-field{
   display:none !important;
 }
@@ -3262,16 +3766,84 @@ a{
   display:block !important;
 }
 
+.aco-modal-dialog{
+  width:min(980px, calc(100vw - 40px));
+}
+
+.aco-modal-toolbar{
+  padding:0 24px 18px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:flex-start;
+  gap:12px;
+  margin-top:18px;
+}
+
+.aco-modal-select-wrap{
+  min-width:min(320px, 100%);
+  width:min(420px, 100%);
+}
+
+.aco-modal-body{
+  margin-top:0;
+  padding:0 24px 24px;
+  overflow:auto;
+}
+
+.aco-modal-editor{
+  display:grid;
+  gap:18px;
+}
+
+.aco-modal-editor .aco-card{
+  margin:0;
+}
+
+.aco-modal-editor .aco-card.is-collapsed .aco-card-body{
+  display:grid;
+}
+
+.aco-modal-editor .aco-edit-field{
+  display:block !important;
+}
+
+.aco-modal-editor .aco-editable-view{
+  display:none !important;
+}
+
 /* =========================================
    TIMELINE
 ========================================= */
 
+#editTimelineBtn,
 #updateTimelineBtn{
   display:none;
 }
 
+.mode-edition #editTimelineBtn,
 .mode-edition #updateTimelineBtn{
   display:inline-flex;
+}
+
+#editTimelineBtn{
+  min-width:108px;
+  min-height:42px;
+  justify-content:center;
+  padding:0 20px;
+  font-size:.82rem;
+  font-weight:900;
+  letter-spacing:.12em;
+}
+
+.timeline-header-actions-stack{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:10px;
+}
+
+.timeline-header-actions-stack .panel-action-btn{
+  width:100%;
 }
 
 .timeline-empty-state{
@@ -3743,12 +4315,71 @@ a{
   display:none;
 }
 
+.mode-edition #timelinePanel .timeline-package-add,
+.mode-edition #timelinePanel .timeline-package-row-edit{
+  display:none;
+}
+
+.mode-edition #timelinePanel .timeline-package-row-view{
+  display:grid;
+}
+
 .app-shell.mode-briefing .timeline-package-row-edit{
   display:none !important;
 }
 
 .app-shell.mode-briefing .timeline-package-row-view{
   display:grid !important;
+}
+
+.timeline-modal-dialog{
+  width:min(1080px, calc(100vw - 40px));
+}
+
+.timeline-modal-toolbar{
+  padding:0 24px 18px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:flex-start;
+  gap:12px;
+  margin-top:18px;
+}
+
+.timeline-modal-select-wrap{
+  min-width:min(320px, 100%);
+  width:min(420px, 100%);
+}
+
+.timeline-modal-body{
+  margin-top:0;
+  padding:0 24px 24px;
+  overflow:auto;
+}
+
+.timeline-modal-editor{
+  display:grid;
+  gap:18px;
+}
+
+.timeline-modal-editor .timeline-package-card{
+  margin:0;
+}
+
+.timeline-modal-editor .timeline-package-card.is-collapsed .timeline-package-body{
+  display:grid;
+}
+
+.timeline-modal-editor .timeline-package-add,
+.timeline-modal-editor .timeline-package-row-edit{
+  display:grid !important;
+}
+
+.timeline-modal-editor .timeline-package-add{
+  display:inline-flex !important;
+}
+
+.timeline-modal-editor .timeline-package-row-view{
+  display:none !important;
 }
 
 /* =========================================
@@ -3840,6 +4471,28 @@ a{
 
   .timeline-editor{
     grid-template-columns:repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width:760px){
+  .overview-modal-grid{
+    grid-template-columns:1fr;
+  }
+
+  .weather-modal-grid{
+    grid-template-columns:1fr;
+  }
+
+  .weather-modal-layer-grid{
+    grid-template-columns:1fr;
+  }
+
+  .airfield-modal-grid{
+    grid-template-columns:1fr;
+  }
+
+  .package-modal-grid{
+    grid-template-columns:1fr;
   }
 }
 
