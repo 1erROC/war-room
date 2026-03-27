@@ -15,6 +15,60 @@ const exportKneeboardBtn = document.getElementById("exportKneeboardBtn");
 const topbarActionsBtn = document.getElementById("topbarActionsBtn");
 const topbarActionsDropdown = document.getElementById("topbarActionsDropdown");
 const topbarActionItems = Array.from(document.querySelectorAll("[data-topbar-action]"));
+const editOverviewBtn = document.getElementById("editOverviewBtn");
+
+const overviewModal = document.getElementById("overviewModal");
+const overviewModalBackdrop = document.getElementById("overviewModalBackdrop");
+const overviewModalCloseBtn = document.getElementById("overviewModalCloseBtn");
+const overviewModalCancelBtn = document.getElementById("overviewModalCancelBtn");
+const overviewModalResetBtn = document.getElementById("overviewModalResetBtn");
+const overviewModalValidateBtn = document.getElementById("overviewModalValidateBtn");
+const overviewModalInputs = {
+  operationName: document.getElementById("overviewModalOperationNameInput"),
+  mapName: document.getElementById("overviewModalMapNameInput"),
+  dateInGame: document.getElementById("overviewModalDateInGameInput"),
+  dateIRL: document.getElementById("overviewModalDateIRLInput"),
+  startTime: document.getElementById("overviewModalStartTimeInput"),
+  totTime: document.getElementById("overviewModalTotTimeInput"),
+  endTime: document.getElementById("overviewModalEndTimeInput"),
+  status: document.getElementById("overviewModalStatusInput")
+};
+const editWeatherBtn = document.getElementById("editWeatherBtn");
+const weatherModal = document.getElementById("weatherModal");
+const weatherModalBackdrop = document.getElementById("weatherModalBackdrop");
+const weatherModalCloseBtn = document.getElementById("weatherModalCloseBtn");
+const weatherModalCancelBtn = document.getElementById("weatherModalCancelBtn");
+const weatherModalResetBtn = document.getElementById("weatherModalResetBtn");
+const weatherModalValidateBtn = document.getElementById("weatherModalValidateBtn");
+const weatherModalInputs = {
+  weatherArea: document.getElementById("weatherModalAreaInput"),
+  weatherValidTime: document.getElementById("weatherModalValidTimeInput"),
+  temperatureC: document.getElementById("weatherModalTempInput"),
+  qnhInHg: document.getElementById("weatherModalQnhInput"),
+  windDirection: document.getElementById("weatherModalWindDirInput"),
+  windSpeed: document.getElementById("weatherModalWindSpeedInput"),
+  windGust: document.getElementById("weatherModalWindGustInput"),
+  fogEnabled: document.getElementById("weatherModalFogEnabledInput"),
+  fogBase: document.getElementById("weatherModalFogBaseInput"),
+  fogTop: document.getElementById("weatherModalFogTopInput"),
+  layers: [
+    {
+      cover: document.getElementById("weatherModalLayer1CoverInput"),
+      base: document.getElementById("weatherModalLayer1BaseInput"),
+      top: document.getElementById("weatherModalLayer1TopInput")
+    },
+    {
+      cover: document.getElementById("weatherModalLayer2CoverInput"),
+      base: document.getElementById("weatherModalLayer2BaseInput"),
+      top: document.getElementById("weatherModalLayer2TopInput")
+    },
+    {
+      cover: document.getElementById("weatherModalLayer3CoverInput"),
+      base: document.getElementById("weatherModalLayer3BaseInput"),
+      top: document.getElementById("weatherModalLayer3TopInput")
+    }
+  ]
+};
 
 const mizImportModal = document.getElementById("mizImportModal");
 const mizImportBackdrop = document.getElementById("mizImportBackdrop");
@@ -47,24 +101,96 @@ const missionIdDisplay = document.getElementById("missionIdDisplay");
 const tokenOutput = document.getElementById("tokenOutput");
 
 const packageGrid = document.getElementById("packageGrid");
-const addPackageBtn = document.getElementById("addPackageBtn");
+const editPackageBtn = document.getElementById("editPackageBtn");
 const packageCardTemplate = document.getElementById("packageCardTemplate");
 const airfieldGrid = document.getElementById("airfieldGrid");
-const addAirfieldBtn = document.getElementById("addAirfieldBtn");
+const editAirfieldBtn = document.getElementById("editAirfieldBtn");
 const airfieldEmptyState = document.getElementById("airfieldEmptyState");
 const atoGrid = document.getElementById("atoGrid");
 const atoEmptyState = document.getElementById("atoEmptyState");
+const editAtoBtn = document.getElementById("editAtoBtn");
 const updateAtoBtn = document.getElementById("updateAtoBtn");
 const acoGrid = document.getElementById("acoGrid");
 const acoEmptyState = document.getElementById("acoEmptyState");
+const editAcoBtn = document.getElementById("editAcoBtn");
 const updateAcoBtn = document.getElementById("updateAcoBtn");
 const acoOverviewBands = document.getElementById("acoOverviewBands");
 const timelineEmptyState = document.getElementById("timelineEmptyState");
+const editTimelineBtn = document.getElementById("editTimelineBtn");
 const updateTimelineBtn = document.getElementById("updateTimelineBtn");
 const timelineVisual = document.getElementById("timelineVisual");
 const timelineChrono = document.getElementById("timelineChrono");
 const timelineEditor = document.getElementById("timelineEditor");
 const timelineSummary = document.getElementById("timelineSummary");
+const airfieldModal = document.getElementById("airfieldModal");
+const airfieldModalBackdrop = document.getElementById("airfieldModalBackdrop");
+const airfieldModalCloseBtn = document.getElementById("airfieldModalCloseBtn");
+const airfieldModalCancelBtn = document.getElementById("airfieldModalCancelBtn");
+const airfieldModalResetBtn = document.getElementById("airfieldModalResetBtn");
+const airfieldModalValidateBtn = document.getElementById("airfieldModalValidateBtn");
+const airfieldModalAddBtn = document.getElementById("airfieldModalAddBtn");
+const airfieldModalDeleteBtn = document.getElementById("airfieldModalDeleteBtn");
+const airfieldModalSelect = document.getElementById("airfieldModalSelect");
+const airfieldModalInputs = {
+  icao: document.getElementById("airfieldModalIcaoInput"),
+  name: document.getElementById("airfieldModalNameInput"),
+  runway: document.getElementById("airfieldModalRunwayInput"),
+  vhf: document.getElementById("airfieldModalVhfInput"),
+  uhf: document.getElementById("airfieldModalUhfInput"),
+  ilsFreq: document.getElementById("airfieldModalIlsFreqInput"),
+  ilsCourse: document.getElementById("airfieldModalIlsCourseInput"),
+  ilsRunway: document.getElementById("airfieldModalIlsRunwayInput"),
+  beacon: document.getElementById("airfieldModalBeaconInput"),
+  notes: document.getElementById("airfieldModalNotesInput")
+};
+const packageModal = document.getElementById("packageModal");
+const packageModalBackdrop = document.getElementById("packageModalBackdrop");
+const packageModalCloseBtn = document.getElementById("packageModalCloseBtn");
+const packageModalCancelBtn = document.getElementById("packageModalCancelBtn");
+const packageModalResetBtn = document.getElementById("packageModalResetBtn");
+const packageModalValidateBtn = document.getElementById("packageModalValidateBtn");
+const packageModalAddBtn = document.getElementById("packageModalAddBtn");
+const packageModalDeleteBtn = document.getElementById("packageModalDeleteBtn");
+const packageModalRandomColorBtn = document.getElementById("packageModalRandomColorBtn");
+const packageModalAddWingmanBtn = document.getElementById("packageModalAddWingmanBtn");
+const packageModalSelect = document.getElementById("packageModalSelect");
+const packageModalInputs = {
+  color: document.getElementById("packageModalColorInput"),
+  callsign: document.getElementById("packageModalCallsignInput"),
+  packageName: document.getElementById("packageModalPackageNameInput"),
+  mission: document.getElementById("packageModalMissionInput"),
+  aircraftCount: document.getElementById("packageModalAircraftCountInput"),
+  aircraftType: document.getElementById("packageModalAircraftTypeInput"),
+  departure: document.getElementById("packageModalDepartureInput"),
+  leader: document.getElementById("packageModalLeaderInput"),
+  intra: document.getElementById("packageModalIntraInput"),
+  secFreq: document.getElementById("packageModalSecFreqInput"),
+  wingmenBuilder: document.getElementById("packageModalWingmenBuilder")
+};
+const atoModal = document.getElementById("atoModal");
+const atoModalBackdrop = document.getElementById("atoModalBackdrop");
+const atoModalCloseBtn = document.getElementById("atoModalCloseBtn");
+const atoModalCancelBtn = document.getElementById("atoModalCancelBtn");
+const atoModalResetBtn = document.getElementById("atoModalResetBtn");
+const atoModalValidateBtn = document.getElementById("atoModalValidateBtn");
+const atoModalSelect = document.getElementById("atoModalSelect");
+const atoModalEditor = document.getElementById("atoModalEditor");
+const acoModal = document.getElementById("acoModal");
+const acoModalBackdrop = document.getElementById("acoModalBackdrop");
+const acoModalCloseBtn = document.getElementById("acoModalCloseBtn");
+const acoModalCancelBtn = document.getElementById("acoModalCancelBtn");
+const acoModalResetBtn = document.getElementById("acoModalResetBtn");
+const acoModalValidateBtn = document.getElementById("acoModalValidateBtn");
+const acoModalSelect = document.getElementById("acoModalSelect");
+const acoModalEditor = document.getElementById("acoModalEditor");
+const timelineModal = document.getElementById("timelineModal");
+const timelineModalBackdrop = document.getElementById("timelineModalBackdrop");
+const timelineModalCloseBtn = document.getElementById("timelineModalCloseBtn");
+const timelineModalCancelBtn = document.getElementById("timelineModalCancelBtn");
+const timelineModalResetBtn = document.getElementById("timelineModalResetBtn");
+const timelineModalValidateBtn = document.getElementById("timelineModalValidateBtn");
+const timelineModalSelect = document.getElementById("timelineModalSelect");
+const timelineModalEditor = document.getElementById("timelineModalEditor");
 
 const STORAGE_PREFIX = "warroom_mission_";
 const URL_PARAM_NAME = "mission";
@@ -306,6 +432,11 @@ const weatherView = {
 
 let currentMissionId = "";
 let currentMissionData = deepClone(defaultMissionData);
+let airfieldModalState = null;
+let packageModalState = null;
+let atoModalState = null;
+let acoModalState = null;
+let timelineModalState = null;
 const mizImportState = {
   step: 1,
   file: null,
@@ -1004,7 +1135,7 @@ function inferDestinationLabel(group, routeRows) {
   const helipadId = lastRawPoint?.helipadId || "";
 
   return sanitizeUpperText(
-    lastPoint?.name || (airdromeId ? `AB ${airdromeId}` : "") || (helipadId ? `FARP ${helipadId}` : "") || "RTB",
+    lastPoint?.name || (airdromeId ? `AB ${airdromeId}` : "") || (helipadId ? `FARP ${helipadId}` : "") || "ARR",
     24
   );
 }
@@ -1625,6 +1756,16 @@ function extractImportedWeatherFromMissionText(rawText, missionFallback = {}) {
   return extractImportedWeather(mergedMission);
 }
 
+function resolveImportedMissionTitle(sourceName = "", missionData = {}, rawText = "") {
+  const directName = sanitizeFreeText(missionData?.name || "", 80);
+  if (directName) return directName;
+
+  const rawMissionName = sanitizeFreeText(extractLuaTopLevelStringField(String(rawText || ""), "name"), 80);
+  if (rawMissionName) return rawMissionName;
+
+  return sanitizeFreeText(String(sourceName || "").replace(/\.(miz|lua|txt|json)$/i, ""), 80);
+}
+
 function buildImportedMissionModelFromLuaText(rawText, sourceName, missionFallback = {}) {
   const metadata = extractMissionTextMetadata(rawText);
   const startTimeSeconds = Number.isFinite(metadata.startTime) ? metadata.startTime : Number(missionFallback?.start_time);
@@ -1640,7 +1781,7 @@ function buildImportedMissionModelFromLuaText(rawText, sourceName, missionFallba
   return {
     mission: missionFallback,
     fileName: sourceName,
-    title: sanitizeFreeText(missionFallback?.name || sourceName.replace(/\.(miz|lua|txt|json)$/i, ""), 80),
+    title: resolveImportedMissionTitle(sourceName, missionFallback, rawText),
     theatre: metadata.theatre || sanitizeUpperText(missionFallback?.theatre || "", 24),
     dateInGame: metadata.dateInGame || formatMissionDate(missionFallback?.date),
     startTime: secondsToTimeDigits(startTimeSeconds),
@@ -1701,6 +1842,7 @@ function createDefaultAirfield() {
   return {
     id: generateUid("af"),
     icao: "",
+    name: "",
     vhf: "",
     uhf: "",
     runway: "",
@@ -1716,6 +1858,7 @@ function normalizeAirfieldData(airfield = {}) {
   return {
     id: airfield.id || generateUid("af"),
     icao: sanitizeUpperText(airfield.icao || "", 8),
+    name: sanitizeFreeText(airfield.name || "", 80),
     vhf: sanitizeFreeText(airfield.vhf || "", 20),
     uhf: sanitizeFreeText(airfield.uhf || "", 20),
     runway: sanitizeUpperText(airfield.runway || "", 20),
@@ -1737,6 +1880,7 @@ function getCurrentAirfieldsFromDom() {
   return cards.map((card) => normalizeAirfieldData({
     id: card.dataset.airfieldId,
     icao: card.querySelector('[data-airfield-input="icao"]')?.value,
+    name: card.querySelector('[data-airfield-input="name"]')?.value,
     vhf: card.querySelector('[data-airfield-input="vhf"]')?.value,
     uhf: card.querySelector('[data-airfield-input="uhf"]')?.value,
     runway: card.querySelector('[data-airfield-input="runway"]')?.value,
@@ -1756,6 +1900,14 @@ function getAirfieldMap(airfields = getCurrentAirfieldsFromDom()) {
   );
 }
 
+function formatAirfieldOptionLabel(airfield = {}, fallbackLabel = "") {
+  const normalized = normalizeAirfieldData(airfield);
+  if (normalized.icao && normalized.name) return `${normalized.icao} · ${normalized.name}`;
+  if (normalized.icao) return normalized.icao;
+  if (normalized.name) return normalized.name;
+  return fallbackLabel;
+}
+
 function populateAirfieldSelect(select, currentValue = "", options = getCurrentAirfieldsFromDom(), placeholder = "Select airfield") {
   if (!select) return;
 
@@ -1766,7 +1918,7 @@ function populateAirfieldSelect(select, currentValue = "", options = getCurrentA
   const rows = [`<option value="">${placeholder}</option>`];
   normalizedOptions.forEach((airfield) => {
     if (!airfield.icao) return;
-    rows.push(`<option value="${escapeHtml(airfield.icao)}">${escapeHtml(airfield.icao)}</option>`);
+    rows.push(`<option value="${escapeHtml(airfield.icao)}">${escapeHtml(formatAirfieldOptionLabel(airfield, airfield.icao))}</option>`);
   });
 
   if (normalizedValue && !optionValues.has(normalizedValue)) {
@@ -1785,6 +1937,7 @@ function formatAirfieldLine(code = "", options = getCurrentAirfieldsFromDom()) {
   if (!airfield) return normalizedCode;
 
   const parts = [
+    airfield.name || "",
     airfield.vhf ? `VHF ${airfield.vhf}` : "",
     airfield.uhf ? `UHF ${airfield.uhf}` : "",
     airfield.runway ? `RWY ${airfield.runway}` : "",
@@ -1810,6 +1963,7 @@ function buildAirfieldMetaMarkup(code = "", options = getCurrentAirfieldsFromDom
   }
 
   const rows = [
+    { label: "NAME", value: airfield.name || "" },
     { label: "RADIO", value: [airfield.vhf ? `VHF ${airfield.vhf}` : "", airfield.uhf ? `UHF ${airfield.uhf}` : ""].filter(Boolean).join(" · ") },
     { label: "RWY", value: airfield.runway || "" },
     { label: "ILS", value: formatAirfieldIlsDisplay(airfield, " / ") },
@@ -1852,6 +2006,7 @@ function createAirfieldCard(airfieldData = {}) {
         <div>
           <div class="airfield-card-kicker">Airfield</div>
           <div class="airfield-card-title" data-airfield-view="icao">----</div>
+          <div class="airfield-card-subtitle" data-airfield-view="name">--</div>
         </div>
       </button>
       <div class="airfield-card-actions">
@@ -1863,6 +2018,11 @@ function createAirfieldCard(airfieldData = {}) {
         <span class="data-label">ICAO</span>
         <div class="airfield-field-value" data-airfield-view="icaoDetail">----</div>
         <div class="edit-field"><input class="field-input" data-airfield-input="icao" type="text" placeholder="LTFM" /></div>
+      </label>
+      <label class="airfield-field airfield-field-wide">
+        <span class="data-label">Name</span>
+        <div class="airfield-field-value" data-airfield-view="nameDetail">--</div>
+        <div class="edit-field"><input class="field-input" data-airfield-input="name" type="text" placeholder="Incirlik Air Base" /></div>
       </label>
       <label class="airfield-field">
         <span class="data-label">Runway</span>
@@ -1904,7 +2064,9 @@ function createAirfieldCard(airfieldData = {}) {
   const inputs = Array.from(card.querySelectorAll("[data-airfield-input]"));
   const title = card.querySelector('[data-airfield-view="icao"]');
   const viewFields = {
+    name: card.querySelector('[data-airfield-view="name"]'),
     icaoDetail: card.querySelector('[data-airfield-view="icaoDetail"]'),
+    nameDetail: card.querySelector('[data-airfield-view="nameDetail"]'),
     runway: card.querySelector('[data-airfield-view="runway"]'),
     vhf: card.querySelector('[data-airfield-view="vhf"]'),
     uhf: card.querySelector('[data-airfield-view="uhf"]'),
@@ -1917,6 +2079,7 @@ function createAirfieldCard(airfieldData = {}) {
     const current = normalizeAirfieldData({
       id: card.dataset.airfieldId,
       icao: card.querySelector('[data-airfield-input="icao"]')?.value,
+      name: card.querySelector('[data-airfield-input="name"]')?.value,
       vhf: card.querySelector('[data-airfield-input="vhf"]')?.value,
       uhf: card.querySelector('[data-airfield-input="uhf"]')?.value,
       runway: card.querySelector('[data-airfield-input="runway"]')?.value,
@@ -1934,7 +2097,9 @@ function createAirfieldCard(airfieldData = {}) {
     });
 
     if (title) title.textContent = current.icao || "----";
+    if (viewFields.name) viewFields.name.textContent = current.name || "--";
     if (viewFields.icaoDetail) viewFields.icaoDetail.textContent = current.icao || "----";
+    if (viewFields.nameDetail) viewFields.nameDetail.textContent = current.name || "--";
     if (viewFields.runway) viewFields.runway.textContent = formatAirfieldDetailValue(current.runway, "RWY");
     if (viewFields.vhf) viewFields.vhf.textContent = formatAirfieldDetailValue(current.vhf);
     if (viewFields.uhf) viewFields.uhf.textContent = formatAirfieldDetailValue(current.uhf);
@@ -1992,7 +2157,9 @@ function createAirfieldCard(airfieldData = {}) {
   });
 
   if (title) title.textContent = airfield.icao || "----";
+  if (viewFields.name) viewFields.name.textContent = airfield.name || "--";
   if (viewFields.icaoDetail) viewFields.icaoDetail.textContent = airfield.icao || "----";
+  if (viewFields.nameDetail) viewFields.nameDetail.textContent = airfield.name || "--";
   if (viewFields.runway) viewFields.runway.textContent = formatAirfieldDetailValue(airfield.runway, "RWY");
   if (viewFields.vhf) viewFields.vhf.textContent = formatAirfieldDetailValue(airfield.vhf);
   if (viewFields.uhf) viewFields.uhf.textContent = formatAirfieldDetailValue(airfield.uhf);
@@ -2022,6 +2189,120 @@ function addAirfield() {
   }
   refreshAirfieldDependentUi();
   saveCurrentMission();
+}
+
+function collectAirfieldsForModal() {
+  return normalizeAirfieldsArray(getCurrentAirfieldsFromDom());
+}
+
+function getAirfieldModalSelectedItem() {
+  if (!airfieldModalState?.items?.length) return null;
+  return airfieldModalState.items.find((item) => item.id === airfieldModalState.selectedId) || airfieldModalState.items[0] || null;
+}
+
+function applyAirfieldModalItemToFields(airfield = {}) {
+  const normalized = normalizeAirfieldData(airfield);
+  airfieldModalInputs.icao.value = normalized.icao;
+  airfieldModalInputs.name.value = normalized.name;
+  airfieldModalInputs.runway.value = normalized.runway;
+  airfieldModalInputs.vhf.value = normalized.vhf;
+  airfieldModalInputs.uhf.value = normalized.uhf;
+  airfieldModalInputs.ilsFreq.value = normalized.ilsFreq;
+  airfieldModalInputs.ilsCourse.value = normalized.ilsCourse;
+  airfieldModalInputs.ilsRunway.value = normalized.ilsRunway;
+  airfieldModalInputs.beacon.value = normalized.beacon;
+  airfieldModalInputs.notes.value = normalized.notes;
+}
+
+function collectAirfieldModalFields(itemId = "") {
+  return normalizeAirfieldData({
+    id: itemId,
+    icao: airfieldModalInputs.icao.value,
+    name: airfieldModalInputs.name.value,
+    runway: airfieldModalInputs.runway.value,
+    vhf: airfieldModalInputs.vhf.value,
+    uhf: airfieldModalInputs.uhf.value,
+    ilsFreq: airfieldModalInputs.ilsFreq.value,
+    ilsCourse: airfieldModalInputs.ilsCourse.value,
+    ilsRunway: airfieldModalInputs.ilsRunway.value,
+    beacon: airfieldModalInputs.beacon.value,
+    notes: airfieldModalInputs.notes.value
+  });
+}
+
+function resetAirfieldModalFields() {
+  applyAirfieldModalItemToFields(createDefaultAirfield());
+}
+
+function syncAirfieldModalCurrentItem() {
+  if (!airfieldModalState?.items?.length || !airfieldModalState.selectedId) return;
+  const nextItem = collectAirfieldModalFields(airfieldModalState.selectedId);
+  airfieldModalState.items = airfieldModalState.items.map((item) => item.id === airfieldModalState.selectedId ? nextItem : item);
+}
+
+function renderAirfieldModalSelect() {
+  if (!airfieldModalSelect || !airfieldModalState) return;
+
+  airfieldModalSelect.innerHTML = "";
+
+  if (!airfieldModalState.items.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "Aucun airfield";
+    airfieldModalSelect.appendChild(option);
+    airfieldModalSelect.value = "";
+    airfieldModalDeleteBtn.disabled = true;
+    resetAirfieldModalFields();
+    return;
+  }
+
+  airfieldModalState.items.forEach((airfield, index) => {
+    const option = document.createElement("option");
+    option.value = airfield.id;
+    option.textContent = formatAirfieldOptionLabel(airfield, `AIRFIELD ${index + 1}`);
+    airfieldModalSelect.appendChild(option);
+  });
+
+  if (!airfieldModalState.selectedId) {
+    airfieldModalState.selectedId = airfieldModalState.items[0].id;
+  }
+
+  airfieldModalSelect.value = airfieldModalState.selectedId;
+  airfieldModalDeleteBtn.disabled = false;
+  applyAirfieldModalItemToFields(getAirfieldModalSelectedItem());
+}
+
+function openAirfieldModal() {
+  if (!airfieldModal || !appShell.classList.contains("mode-edition")) return;
+
+  airfieldModalState = {
+    items: collectAirfieldsForModal(),
+    selectedId: ""
+  };
+
+  if (airfieldModalState.items[0]) {
+    airfieldModalState.selectedId = airfieldModalState.items[0].id;
+  }
+
+  renderAirfieldModalSelect();
+  airfieldModal.classList.add("is-open");
+  airfieldModal.setAttribute("aria-hidden", "false");
+}
+
+function closeAirfieldModal() {
+  if (!airfieldModal) return;
+  airfieldModal.classList.remove("is-open");
+  airfieldModal.setAttribute("aria-hidden", "true");
+  airfieldModalState = null;
+}
+
+function validateAirfieldModal() {
+  if (!airfieldModalState) return;
+  syncAirfieldModalCurrentItem();
+  renderAirfields(airfieldModalState.items);
+  refreshAirfieldDependentUi();
+  saveCurrentMission();
+  closeAirfieldModal();
 }
 
 function extractImportedWeather(mission) {
@@ -2108,7 +2389,7 @@ function buildImportedMissionModel(mission, fileName) {
   return {
     mission,
     fileName,
-    title: sanitizeFreeText(mission?.name || fileName.replace(/\.(miz|lua|txt|json)$/i, ""), 80),
+    title: resolveImportedMissionTitle(fileName, mission),
     theatre: sanitizeUpperText(mission?.theatre || "", 24),
     dateInGame: formatMissionDate(mission?.date),
     startTime: secondsToTimeDigits(startTimeSeconds),
@@ -2243,9 +2524,7 @@ function renderMizGroupList() {
     meta.className = "miz-group-meta";
     meta.textContent = [
       group.task || "TASK --",
-      `${group.aircraftCount || "--"} x ${group.aircraftType || "TYPE --"}`,
-      group.departure ? `DEP ${group.departure}` : "",
-      group.destination ? `RTB ${group.destination}` : ""
+      `${group.aircraftCount || "--"} x ${group.aircraftType || "TYPE --"}`
     ].filter(Boolean).join(" · ");
 
     const submeta = document.createElement("div");
@@ -2333,7 +2612,7 @@ function buildImportedAcoFromPackage(pkg, importedGroup) {
   aco.notes = sanitizeMultilineText(
     [
       importedGroup.departure ? `DEP ${importedGroup.departure}` : "",
-      importedGroup.destination ? `RTB ${importedGroup.destination}` : ""
+      importedGroup.destination ? `ARR ${importedGroup.destination}` : ""
     ].filter(Boolean).join("\n"),
     400
   );
@@ -2353,8 +2632,6 @@ function buildImportedAtoFromPackage(pkg, importedGroup, importedOverview) {
   ato.totTime = sanitizeTimeInput(importedGroup.totTime || importedOverview.totTime || "");
   ato.recoveryTime = sanitizeTimeInput(importedGroup.recoveryTime || "");
   ato.pushTime = sanitizeTimeInput(importedGroup.pushTime || "");
-  ato.launchDetails = sanitizeFreeText(importedGroup.departure || "", 120);
-  ato.recoveryDetails = sanitizeFreeText(importedGroup.destination || "", 120);
   ato.loadout = sanitizeFreeText(importedGroup.loadout || "", 120);
   ato.loadoutNote = sanitizeFreeText(importedGroup.loadoutNote || "", 120);
   ato.route = importedGroup.route.map((row) => sanitizeAtoRouteRow(row));
@@ -2405,11 +2682,9 @@ function importSelectedMizGroups() {
       mission: group.task,
       aircraftCount: group.aircraftCount,
       aircraftType: group.aircraftType,
-      departure: group.departure,
       leader: group.leader,
       wingmen: group.wingmen,
-      intra: group.intra,
-      destination: group.destination
+      intra: group.intra
     });
 
     return pkg;
@@ -2552,9 +2827,172 @@ function refreshAllViewFields() {
   Object.values(fieldDefinitions).forEach(updateViewField);
 }
 
+function collectOverviewDataForModal() {
+  return {
+    operationName: fieldDefinitions.operationName.input.value.trim(),
+    mapName: fieldDefinitions.mapName.input.value.trim(),
+    dateInGame: fieldDefinitions.dateInGame.input.value.trim(),
+    dateIRL: fieldDefinitions.dateIRL.input.value.trim(),
+    startTime: sanitizeTimeInput(fieldDefinitions.startTime.input.value),
+    totTime: sanitizeTimeInput(fieldDefinitions.totTime.input.value),
+    endTime: sanitizeTimeInput(fieldDefinitions.endTime.input.value),
+    status: normalizeMissionStatus(fieldDefinitions.status.input.value)
+  };
+}
+
+function applyOverviewDataToModal(data = {}) {
+  overviewModalInputs.operationName.value = data.operationName || "";
+  overviewModalInputs.mapName.value = data.mapName || "";
+  overviewModalInputs.dateInGame.value = data.dateInGame || "";
+  overviewModalInputs.dateIRL.value = data.dateIRL || "";
+  overviewModalInputs.startTime.value = sanitizeTimeInput(data.startTime || "");
+  overviewModalInputs.totTime.value = sanitizeTimeInput(data.totTime || "");
+  overviewModalInputs.endTime.value = sanitizeTimeInput(data.endTime || "");
+  overviewModalInputs.status.value = normalizeMissionStatus(data.status || "DRAFT");
+}
+
+function collectOverviewDataFromModal() {
+  return {
+    operationName: overviewModalInputs.operationName.value.trim(),
+    mapName: overviewModalInputs.mapName.value.trim(),
+    dateInGame: overviewModalInputs.dateInGame.value.trim(),
+    dateIRL: overviewModalInputs.dateIRL.value.trim(),
+    startTime: sanitizeTimeInput(overviewModalInputs.startTime.value),
+    totTime: sanitizeTimeInput(overviewModalInputs.totTime.value),
+    endTime: sanitizeTimeInput(overviewModalInputs.endTime.value),
+    status: normalizeMissionStatus(overviewModalInputs.status.value)
+  };
+}
+
+function resetOverviewModalFields() {
+  applyOverviewDataToModal({
+    operationName: "",
+    mapName: "",
+    dateInGame: "",
+    dateIRL: "",
+    startTime: "",
+    totTime: "",
+    endTime: "",
+    status: "DRAFT"
+  });
+}
+
+function openOverviewModal() {
+  if (!overviewModal || !appShell.classList.contains("mode-edition")) return;
+
+  applyOverviewDataToModal(collectOverviewDataForModal());
+  overviewModal.classList.add("is-open");
+  overviewModal.setAttribute("aria-hidden", "false");
+}
+
+function closeOverviewModal() {
+  if (!overviewModal) return;
+
+  overviewModal.classList.remove("is-open");
+  overviewModal.setAttribute("aria-hidden", "true");
+}
+
+function validateOverviewModal() {
+  const nextOverview = collectOverviewDataFromModal();
+  applyOverviewDataToInputs({
+    ...collectOverviewDataFromInputs(),
+    ...nextOverview
+  });
+  refreshAllViewFields();
+  saveCurrentMission();
+  closeOverviewModal();
+}
+
 /* =========================================================
    WEATHER
 ========================================================= */
+
+function collectWeatherDataForModal() {
+  return {
+    weatherArea: fieldDefinitions.weatherArea.input.value.trim() || "ICAO CODE",
+    weatherValidTime: sanitizeTimeInput(fieldDefinitions.weatherValidTime.input.value),
+    weather: collectWeatherDataFromInputs()
+  };
+}
+
+function applyWeatherDataToModal(data = {}) {
+  const normalized = normalizeWeatherData(data.weather);
+  weatherModalInputs.weatherArea.value = data.weatherArea || "ICAO CODE";
+  weatherModalInputs.weatherValidTime.value = sanitizeTimeInput(data.weatherValidTime || "");
+  weatherModalInputs.temperatureC.value = normalized.temperatureC;
+  weatherModalInputs.qnhInHg.value = normalized.qnhInHg;
+  weatherModalInputs.windDirection.value = normalized.windDirection;
+  weatherModalInputs.windSpeed.value = normalized.windSpeed;
+  weatherModalInputs.windGust.value = normalized.windGust;
+  weatherModalInputs.fogEnabled.value = normalized.fogEnabled;
+  weatherModalInputs.fogBase.value = normalized.fogBase;
+  weatherModalInputs.fogTop.value = normalized.fogTop;
+
+  normalized.layers.forEach((layer, index) => {
+    const inputs = weatherModalInputs.layers[index];
+    if (!inputs) return;
+    inputs.cover.value = layer.cover;
+    inputs.base.value = layer.base;
+    inputs.top.value = layer.top;
+  });
+}
+
+function collectWeatherDataFromModal() {
+  return {
+    weatherArea: weatherModalInputs.weatherArea.value.trim() || "ICAO CODE",
+    weatherValidTime: sanitizeTimeInput(weatherModalInputs.weatherValidTime.value),
+    weather: normalizeWeatherData({
+      temperatureC: weatherModalInputs.temperatureC.value,
+      qnhInHg: weatherModalInputs.qnhInHg.value,
+      windDirection: weatherModalInputs.windDirection.value,
+      windSpeed: weatherModalInputs.windSpeed.value,
+      windGust: weatherModalInputs.windGust.value,
+      fogEnabled: weatherModalInputs.fogEnabled.value,
+      fogBase: weatherModalInputs.fogBase.value,
+      fogTop: weatherModalInputs.fogTop.value,
+      layers: weatherModalInputs.layers.map((layer) => ({
+        cover: layer.cover.value,
+        base: layer.base.value,
+        top: layer.top.value
+      }))
+    })
+  };
+}
+
+function resetWeatherModalFields() {
+  applyWeatherDataToModal({
+    weatherArea: "",
+    weatherValidTime: "",
+    weather: getDefaultWeather()
+  });
+}
+
+function openWeatherModal() {
+  if (!weatherModal || !appShell.classList.contains("mode-edition")) return;
+
+  applyWeatherDataToModal(collectWeatherDataForModal());
+  weatherModal.classList.add("is-open");
+  weatherModal.setAttribute("aria-hidden", "false");
+}
+
+function closeWeatherModal() {
+  if (!weatherModal) return;
+
+  weatherModal.classList.remove("is-open");
+  weatherModal.setAttribute("aria-hidden", "true");
+}
+
+function validateWeatherModal() {
+  const nextWeatherData = collectWeatherDataFromModal();
+  fieldDefinitions.weatherArea.input.value = nextWeatherData.weatherArea;
+  fieldDefinitions.weatherValidTime.input.value = nextWeatherData.weatherValidTime;
+  applyWeatherDataToInputs(nextWeatherData.weather);
+  updateViewField(fieldDefinitions.weatherArea);
+  updateViewField(fieldDefinitions.weatherValidTime);
+  updateWeatherVisuals();
+  saveCurrentMission();
+  closeWeatherModal();
+}
 
 function getDefaultWeather() {
   return deepClone(defaultMissionData.weather);
@@ -2780,7 +3218,7 @@ function createDefaultPackage() {
     leader: "",
     wingmen: "",
     intra: "",
-    destination: ""
+    secFreq: ""
   };
 }
 
@@ -2797,7 +3235,7 @@ function normalizePackageData(pkg = {}) {
     leader: sanitizeFreeText(pkg.leader || "", 40),
     wingmen: sanitizeMultilineText(pkg.wingmen || "", 400),
     intra: sanitizeFreeText(pkg.intra || "", 20),
-    destination: sanitizeUpperText(pkg.destination || "", 24)
+    secFreq: sanitizeFreeText(pkg.secFreq || "", 20)
   };
 }
 
@@ -2872,7 +3310,7 @@ function getCurrentPackagesFromDom() {
     leader: getPackageFieldValue(card, "leader"),
     wingmen: getPackageFieldValue(card, "wingmen"),
     intra: getPackageFieldValue(card, "intra"),
-    destination: getPackageFieldValue(card, "destination")
+    secFreq: getPackageFieldValue(card, "secFreq")
   }));
 }
 
@@ -2921,6 +3359,7 @@ function sanitizePackageFieldElement(fieldName, element) {
       element.textContent = sanitizeMultilineText(element.textContent, 400);
       break;
     case "intra":
+    case "secFreq":
       element.textContent = sanitizeFreeText(element.textContent, 20);
       break;
     default:
@@ -3067,8 +3506,7 @@ function createPackageCard(packageData) {
     wingmenView: card.querySelector('[data-package-view="wingmen"]'),
     wingmenBuilder: card.querySelector('[data-package-input="wingmenBuilder"]'),
     intra: card.querySelector('[data-package-input="intra"]'),
-    destinationView: card.querySelector('[data-package-view="destination"]'),
-    destinationSelect: card.querySelector('[data-package-input="destinationSelect"]')
+    secFreq: card.querySelector('[data-package-input="secFreq"]')
   };
   card._packageFields = fields;
 
@@ -3085,8 +3523,7 @@ function createPackageCard(packageData) {
     if (fields.wingmenView) fields.wingmenView.textContent = normalizedPkg.wingmen;
     renderWingmenBuilder(card, normalizedPkg.wingmen);
     if (fields.intra) fields.intra.textContent = normalizedPkg.intra;
-    if (fields.destinationView) fields.destinationView.textContent = normalizedPkg.destination || "DESTINATION";
-    populateAirfieldSelect(fields.destinationSelect, normalizedPkg.destination, getCurrentAirfieldsFromDom(), "Destination");
+    if (fields.secFreq) fields.secFreq.textContent = normalizedPkg.secFreq;
 
     syncPackageNameView(card);
     syncPackageTaskView(card);
@@ -3100,12 +3537,13 @@ function createPackageCard(packageData) {
     ["aircraftCount", fields.aircraftCount],
     ["aircraftType", fields.aircraftType],
     ["leader", fields.leader],
-    ["intra", fields.intra]
+    ["intra", fields.intra],
+    ["secFreq", fields.secFreq]
   ].forEach(([fieldName, element]) => {
     bindPackageEditableBehavior(card, fieldName, element);
   });
 
-  [fields.departureSelect, fields.destinationSelect].forEach((select) => {
+  [fields.departureSelect].forEach((select) => {
     if (!select) return;
     const sync = () => {
       const normalized = normalizePackageData({
@@ -3120,7 +3558,7 @@ function createPackageCard(packageData) {
         leader: getPackageFieldValue(card, "leader"),
         wingmen: getPackageFieldValue(card, "wingmen"),
         intra: getPackageFieldValue(card, "intra"),
-        destination: getPackageFieldValue(card, "destination")
+        secFreq: getPackageFieldValue(card, "secFreq")
       });
       applyCardData(normalized);
       saveCurrentMission();
@@ -3238,6 +3676,220 @@ function addPackage() {
   saveCurrentMission();
 }
 
+function collectPackagesForModal() {
+  return normalizePackagesArray(getCurrentPackagesFromDom());
+}
+
+function populatePackageModalStaticSelects() {
+  if (packageModalInputs.packageName) {
+    packageModalInputs.packageName.innerHTML = [
+      `<option value="">PACKAGE</option>`,
+      ...PACKAGE_NAME_OPTIONS.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)
+    ].join("");
+  }
+
+  if (packageModalInputs.mission) {
+    packageModalInputs.mission.innerHTML = [
+      `<option value="">TASK</option>`,
+      ...PACKAGE_TASK_OPTIONS.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`)
+    ].join("");
+  }
+}
+
+function populatePackageModalAirfieldSelects(selectedDeparture = "") {
+  populateAirfieldSelect(packageModalInputs.departure, selectedDeparture, getCurrentAirfieldsFromDom(), "Departure");
+}
+
+function getPackageModalSelectedItem() {
+  if (!packageModalState?.items?.length) return null;
+  return packageModalState.items.find((item) => item.id === packageModalState.selectedId) || packageModalState.items[0] || null;
+}
+
+function ensurePackageModalSelectedId() {
+  if (!packageModalState) return;
+
+  if (!packageModalState.items.length) {
+    packageModalState.selectedId = "";
+    return;
+  }
+
+  if (!packageModalState.items.some((item) => item.id === packageModalState.selectedId)) {
+    packageModalState.selectedId = packageModalState.items[0].id;
+  }
+}
+
+function getPackageModalWingmenValue() {
+  const builder = packageModalInputs.wingmenBuilder;
+  if (!builder) return "";
+
+  return Array.from(builder.querySelectorAll("[data-package-modal-wingman-input]"))
+    .map((input, index) => {
+      const name = sanitizeFreeText(input.value, 40);
+      return name ? `${index + 2}. ${name}` : "";
+    })
+    .filter(Boolean)
+    .join("\n");
+}
+
+function refreshPackageModalWingmenIndices() {
+  const builder = packageModalInputs.wingmenBuilder;
+  if (!builder) return;
+
+  Array.from(builder.querySelectorAll(".package-modal-wingman-row")).forEach((row, index) => {
+    const label = row.querySelector(".package-modal-wingman-index");
+    if (label) {
+      label.textContent = `${index + 2}.`;
+    }
+  });
+}
+
+function createPackageModalWingmanRow(name = "") {
+  const row = document.createElement("div");
+  row.className = "package-modal-wingman-row";
+  row.innerHTML = `
+    <span class="package-modal-wingman-index">2.</span>
+    <input class="field-input package-modal-wingman-input" data-package-modal-wingman-input type="text" placeholder="Wingman" value="${escapeHtml(sanitizeFreeText(name, 40))}" />
+    <button class="mini-action-btn package-delete-btn" type="button">Retirer</button>
+  `;
+
+  const input = row.querySelector("[data-package-modal-wingman-input]");
+  const removeBtn = row.querySelector(".package-delete-btn");
+
+  input?.addEventListener("input", () => {
+    input.value = sanitizeFreeText(input.value, 40);
+  });
+
+  removeBtn?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    row.remove();
+    const builder = packageModalInputs.wingmenBuilder;
+    if (builder && !builder.children.length) {
+      builder.appendChild(createPackageModalWingmanRow(""));
+    }
+    refreshPackageModalWingmenIndices();
+  });
+
+  return row;
+}
+
+function renderPackageModalWingmenBuilder(wingmenValue = "") {
+  const builder = packageModalInputs.wingmenBuilder;
+  if (!builder) return;
+
+  builder.innerHTML = "";
+  const names = parseWingmenList(wingmenValue);
+  const rows = names.length ? names : [""];
+  rows.forEach((name) => builder.appendChild(createPackageModalWingmanRow(name)));
+  refreshPackageModalWingmenIndices();
+}
+
+function applyPackageModalItemToFields(pkg = {}) {
+  const normalized = normalizePackageData(pkg);
+  packageModalInputs.color.value = normalized.color;
+  packageModalInputs.callsign.value = normalized.callsign;
+  packageModalInputs.packageName.value = normalized.packageName;
+  packageModalInputs.mission.value = normalized.mission;
+  packageModalInputs.aircraftCount.value = normalized.aircraftCount;
+  packageModalInputs.aircraftType.value = normalized.aircraftType;
+  packageModalInputs.leader.value = normalized.leader;
+  packageModalInputs.intra.value = normalized.intra;
+  packageModalInputs.secFreq.value = normalized.secFreq;
+  renderPackageModalWingmenBuilder(normalized.wingmen);
+  populatePackageModalAirfieldSelects(normalized.departure);
+}
+
+function collectPackageModalFields(itemId = "") {
+  return normalizePackageData({
+    id: itemId,
+    color: packageModalInputs.color.value,
+    callsign: packageModalInputs.callsign.value,
+    packageName: packageModalInputs.packageName.value,
+    mission: packageModalInputs.mission.value,
+    aircraftCount: packageModalInputs.aircraftCount.value,
+    aircraftType: packageModalInputs.aircraftType.value,
+    departure: packageModalInputs.departure.value,
+    leader: packageModalInputs.leader.value,
+    wingmen: getPackageModalWingmenValue(),
+    intra: packageModalInputs.intra.value,
+    secFreq: packageModalInputs.secFreq.value
+  });
+}
+
+function resetPackageModalFields() {
+  applyPackageModalItemToFields(createDefaultPackage());
+}
+
+function syncPackageModalCurrentItem() {
+  if (!packageModalState?.items?.length || !packageModalState.selectedId) return;
+  const nextItem = collectPackageModalFields(packageModalState.selectedId);
+  packageModalState.items = packageModalState.items.map((item) => item.id === packageModalState.selectedId ? nextItem : item);
+}
+
+function renderPackageModalSelect() {
+  if (!packageModalSelect || !packageModalState) return;
+
+  packageModalSelect.innerHTML = "";
+  ensurePackageModalSelectedId();
+
+  if (!packageModalState.items.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "Aucun package";
+    packageModalSelect.appendChild(option);
+    packageModalSelect.value = "";
+    packageModalDeleteBtn.disabled = true;
+    resetPackageModalFields();
+    return;
+  }
+
+  packageModalState.items.forEach((pkg, index) => {
+    const option = document.createElement("option");
+    option.value = pkg.id;
+    option.textContent = pkg.callsign || pkg.packageName || `PACKAGE ${index + 1}`;
+    packageModalSelect.appendChild(option);
+  });
+
+  packageModalSelect.value = packageModalState.selectedId;
+  packageModalDeleteBtn.disabled = false;
+  applyPackageModalItemToFields(getPackageModalSelectedItem());
+}
+
+function openPackageModal() {
+  if (!packageModal || !appShell.classList.contains("mode-edition")) return;
+
+  populatePackageModalStaticSelects();
+  packageModalState = {
+    items: collectPackagesForModal(),
+    selectedId: ""
+  };
+
+  if (packageModalState.items[0]) {
+    packageModalState.selectedId = packageModalState.items[0].id;
+  }
+
+  renderPackageModalSelect();
+  packageModal.classList.add("is-open");
+  packageModal.setAttribute("aria-hidden", "false");
+}
+
+function closePackageModal() {
+  if (!packageModal) return;
+  packageModal.classList.remove("is-open");
+  packageModal.setAttribute("aria-hidden", "true");
+  packageModalState = null;
+}
+
+function validatePackageModal() {
+  if (!packageModalState) return;
+  syncPackageModalCurrentItem();
+  packageModalState.items = normalizePackagesArray(packageModalState.items);
+  ensurePackageModalSelectedId();
+  renderPackages(packageModalState.items);
+  saveCurrentMission();
+  closePackageModal();
+}
+
 /* =========================================================
    ATO
 ========================================================= */
@@ -3278,6 +3930,7 @@ function createDefaultAto(packageData = {}) {
       leader: pkg.leader,
       wingmen: pkg.wingmen,
       intra: pkg.intra,
+      secFreq: pkg.secFreq,
       departure: pkg.departure,
       destination: pkg.destination,
       operationName: "",
@@ -3803,8 +4456,9 @@ function buildInheritedAtoData(packageData) {
     leader: pkg.leader,
     wingmen: pkg.wingmen,
     intra: pkg.intra,
+    secFreq: pkg.secFreq,
     departure: pkg.departure,
-    destination: pkg.destination,
+    destination: "",
     operationName: sanitizeUpperText(overview.operationName || "", 48),
     startTime: overview.startTime || "",
     totTime: overview.totTime || "",
@@ -3833,6 +4487,7 @@ function normalizeAtoData(ato = {}) {
       leader: sanitizeFreeText(inheritedSource.leader || "", 40),
       wingmen: sanitizeMultilineText(inheritedSource.wingmen || "", 400),
       intra: sanitizeFreeText(inheritedSource.intra || "", 20),
+      secFreq: sanitizeFreeText(inheritedSource.secFreq || "", 20),
       departure: sanitizeUpperText(inheritedSource.departure || "", 24),
       destination: sanitizeUpperText(inheritedSource.destination || "", 24),
       operationName: sanitizeUpperText(inheritedSource.operationName || "", 48),
@@ -3973,7 +4628,7 @@ function createAtoDivertRow(card, value = "", airfields = getCurrentAirfieldsFro
   const sync = () => {
     card._atoData = collectAtoDataFromCard(card);
     updateAtoCardViews(card);
-    saveCurrentMission();
+    persistAtoCardChanges(card);
   };
 
   select.addEventListener("change", sync);
@@ -4011,13 +4666,13 @@ function bindAtoAirfieldCardControls(card, airfields = getCurrentAirfieldsFromDo
         ? (data.recoveryDetails || data.inherited.destination)
         : (Number.isInteger(index) && index >= 0 ? (data.diverts[index] || "") : "");
 
-    populateAirfieldSelect(select, currentValue, airfields, kind === "launchDetails" ? "Departure" : kind === "recoveryDetails" ? "Arrival" : "Divert");
+    populateAirfieldSelect(select, currentValue, airfields, kind === "launchDetails" ? "Departure" : kind === "recoveryDetails" ? "Destination" : "ALTN");
 
     if (select.dataset.bound === "true") return;
     const commit = () => {
       card._atoData = collectAtoDataFromCard(card);
       updateAtoCardViews(card);
-      saveCurrentMission();
+      persistAtoCardChanges(card);
     };
     select.addEventListener("change", commit);
     select.addEventListener("blur", commit);
@@ -4032,7 +4687,7 @@ function bindAtoAirfieldCardControls(card, airfields = getCurrentAirfieldsFromDo
       button.closest(".ato-airfield-card")?.remove();
       card._atoData = collectAtoDataFromCard(card);
       updateAtoCardViews(card);
-      saveCurrentMission();
+      persistAtoCardChanges(card);
     });
     button.dataset.bound = "true";
   });
@@ -4129,10 +4784,10 @@ function createAtoCardTemplate() {
             </div>
 
             <section class="ato-section ato-section-airfield">
-              <div class="ato-section-header"><h4 class="ato-section-title">Airfield</h4><span class="ato-mini-tag">DEP / ARR / DIVERT</span></div>
+              <div class="ato-section-header"><h4 class="ato-section-title">Airfield</h4><span class="ato-mini-tag">DEP / DEST / ALTN</span></div>
               <div class="ato-airfield-grid" data-ato-static="airfieldCards"></div>
               <div class="ato-route-toolbar ato-route-toolbar-airfield">
-                <button class="mini-action-btn" data-ato-action="add-divert" type="button">Add Divert</button>
+                <button class="mini-action-btn" data-ato-action="add-divert" type="button">Add ALTN</button>
               </div>
             </section>
           </div>
@@ -4171,7 +4826,7 @@ function createAtoCardTemplate() {
               <div class="ato-kv">
                 <div class="ato-k">Distance</div>
                 <div class="ato-v ato-editable-view" data-ato-view="totalDistanceDetail">--</div>
-                <div class="ato-edit-field"><input class="field-input" data-ato-input="totalDistance" type="text" placeholder="Total distance" /></div>
+                <div class="ato-v" data-ato-static="totalDistanceAuto">--</div>
               </div>
               <div class="ato-kv">
                 <div class="ato-k">EST Flight Time</div>
@@ -4277,8 +4932,8 @@ function buildAtoAirfieldCardsMarkup(atoData, airfields = getCurrentAirfieldsFro
   const divertCodes = ato.diverts.filter(Boolean);
   const cards = [
     { label: "DEP", code: depCode, kind: "launchDetails" },
-    { label: "ARR", code: arrCode, kind: "recoveryDetails" },
-    ...divertCodes.map((code, index) => ({ label: `DIVERT ${index + 1}`, code, kind: "divert", index }))
+    { label: "DEST", code: arrCode, kind: "recoveryDetails" },
+    ...divertCodes.map((code, index) => ({ label: `ALTN ${index + 1}`, code, kind: "divert", index }))
   ];
 
   return cards.length
@@ -4290,9 +4945,11 @@ function buildAtoAirfieldCardsMarkup(atoData, airfields = getCurrentAirfieldsFro
         </div>
         <div class="ato-airfield-card-title">${escapeHtml(entry.code || "--")}</div>
         <div class="ato-airfield-card-meta">${buildAirfieldMetaMarkup(entry.code, airfields)}</div>
+        ${entry.kind === "launchDetails" ? "" : `
         <div class="edit-field" style="margin-top:10px;">
           <select class="field-input field-select" data-role="ato-airfield-select" data-kind="${escapeHtml(entry.kind)}" data-index="${entry.index ?? ""}"></select>
         </div>
+        `}
       </div>
     `).join("")
     : `<div class="ato-airfield-card"><div class="ato-airfield-card-label">AIRFIELD</div><div class="ato-airfield-card-title">--</div><div class="ato-airfield-card-meta">Aucune donnée.</div></div>`;
@@ -4330,9 +4987,19 @@ function getAtoRouteDisplayDistance(route = [], index = 0, row = {}) {
   return `${formatDistanceNmCompact(legDistance)}/${formatDistanceNmCompact(cumulativeDistance)}`;
 }
 
+function getAtoRouteDisplayDistanceParts(route = [], index = 0, row = {}) {
+  const legDistance = getAtoRouteLegDistanceNm(route, index, row);
+  const cumulativeDistance = getAtoRouteCumulativeDistanceNm(route, index);
+  return {
+    leg: formatDistanceNmCompact(legDistance),
+    total: formatDistanceNmCompact(cumulativeDistance)
+  };
+}
+
 function createAtoRouteRowElement(routeRow, index, route, startTime, onChange, onRemove) {
   const row = sanitizeAtoRouteRow(routeRow, { wp: `WP${index + 1}`, time: "", dist: "", desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" });
   const coordsDisplay = parseAtoRouteCoordinatesDisplay(row.coords);
+  const distanceDisplay = getAtoRouteDisplayDistanceParts(route, index, row);
   const wrapper = document.createElement("div");
   wrapper.className = "ato-route-row";
   wrapper.dataset.etaSeconds = Number.isFinite(row.etaSeconds) ? String(row.etaSeconds) : "";
@@ -4353,7 +5020,17 @@ function createAtoRouteRowElement(routeRow, index, route, startTime, onChange, o
     <div class="ato-edit-field ato-edit-field-stack ato-section-full">
       <input class="field-input" data-role="wp-input" type="text" placeholder="WP" value="${row.wp}" />
       <input class="field-input field-input-time" data-role="time-input" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" value="${getAtoRouteEditableTimeValue(startTime, row)}" />
-      <input class="field-input" data-role="dist-input" type="text" placeholder="Distance" value="${row.dist || ""}" />
+      <div class="ato-route-dist-editor">
+        <label class="ato-route-dist-editor-field">
+          <span class="ato-route-dist-editor-label">LEG</span>
+          <input class="field-input" data-role="dist-input" type="text" placeholder="--" value="${row.dist || ""}" />
+        </label>
+        <div class="ato-route-dist-editor-sep">/</div>
+        <label class="ato-route-dist-editor-field">
+          <span class="ato-route-dist-editor-label">TOTAL</span>
+          <input class="field-input" data-role="dist-total-output" type="text" value="${distanceDisplay.total}" readonly tabindex="-1" />
+        </label>
+      </div>
       <input class="field-input" data-role="spd-input" type="text" placeholder="Speed" value="${row.spd}" />
       <input class="field-input" data-role="hdg-input" type="text" placeholder="Heading" value="${row.hdg}" />
       <input class="field-input" data-role="beacon-input" type="text" placeholder="Beacon" value="${row.beacon}" />
@@ -4373,7 +5050,18 @@ function createAtoRouteRowElement(routeRow, index, route, startTime, onChange, o
   const beaconInput = wrapper.querySelector('[data-role="beacon-input"]');
   const timeInput = wrapper.querySelector('[data-role="time-input"]');
   const distInput = wrapper.querySelector('[data-role="dist-input"]');
+  const distTotalOutput = wrapper.querySelector('[data-role="dist-total-output"]');
   const removeBtn = wrapper.querySelector('[data-role="remove-route"]');
+
+  const syncDistanceTotalOutput = () => {
+    if (!distTotalOutput) return;
+    const routeSnapshot = Array.isArray(route) ? route.map((entry) => ({ ...entry })) : [];
+    routeSnapshot[index] = {
+      ...(routeSnapshot[index] || {}),
+      dist: distInput?.value || row.dist || ""
+    };
+    distTotalOutput.value = formatDistanceNmCompact(getAtoRouteCumulativeDistanceNm(routeSnapshot, index));
+  };
 
   [wpInput, timeInput, distInput, descInput, coordsInput, altInput, spdInput, hdgInput, beaconInput].forEach((input) => {
     if (!input) return;
@@ -4382,17 +5070,20 @@ function createAtoRouteRowElement(routeRow, index, route, startTime, onChange, o
         input.value = sanitizeUpperTextLive(input.value, 24);
       } else if (input === timeInput) {
         input.value = sanitizeTimeInput(input.value);
-      } else if (input === distInput) {
-        input.value = sanitizeFreeText(input.value, 20);
       } else if (input === hdgInput) {
         input.value = sanitizeDigits(input.value, 3);
       } else if (input === beaconInput) {
         input.value = sanitizeUpperTextLive(input.value, 24);
       }
+      if (input === distInput) {
+        syncDistanceTotalOutput();
+      }
     });
     input.addEventListener("change", onChange);
     input.addEventListener("blur", onChange);
   });
+
+  syncDistanceTotalOutput();
 
   if (removeBtn) {
     removeBtn.addEventListener("click", (event) => {
@@ -4421,7 +5112,7 @@ function renderAtoRouteRows(card) {
       () => {
         card._atoData = collectAtoDataFromCard(card);
         updateAtoCardViews(card);
-        saveCurrentMission();
+        persistAtoCardChanges(card);
       },
       () => {
         card._atoData.route.splice(index, 1);
@@ -4431,7 +5122,7 @@ function renderAtoRouteRows(card) {
         renderAtoRouteRows(card);
         card._atoData = collectAtoDataFromCard(card);
         updateAtoCardViews(card);
-        saveCurrentMission();
+        persistAtoCardChanges(card);
       }
     );
 
@@ -4467,7 +5158,7 @@ function createAtoSupportTileElement(tile, index, onChange, onRemove) {
     if (!input) return;
     input.addEventListener("input", () => {
       if (input === titleInput) {
-        input.value = sanitizeUpperText(input.value, 24);
+        input.value = sanitizeUpperTextLive(input.value, 24);
       }
     });
     input.addEventListener("change", onChange);
@@ -4512,7 +5203,7 @@ function createAtoCommTileElement(tile, index, onChange, onRemove) {
     if (!input) return;
     input.addEventListener("input", () => {
       if (input === nameInput) {
-        input.value = sanitizeUpperText(input.value, 24);
+        input.value = sanitizeUpperTextLive(input.value, 24);
       }
     });
     input.addEventListener("change", onChange);
@@ -4557,7 +5248,7 @@ function renderAtoCommTiles(card) {
       () => {
         card._atoData = collectAtoDataFromCard(card);
         updateAtoCardViews(card);
-        saveCurrentMission();
+        persistAtoCardChanges(card);
       },
       () => {
         const removeIndex = card._atoData.comm.indexOf(tile);
@@ -4567,7 +5258,7 @@ function renderAtoCommTiles(card) {
         renderAtoCommTiles(card);
         card._atoData = collectAtoDataFromCard(card);
         updateAtoCardViews(card);
-        saveCurrentMission();
+        persistAtoCardChanges(card);
       }
     );
 
@@ -4599,7 +5290,7 @@ function renderAtoSupportTiles(card) {
       () => {
         card._atoData = collectAtoDataFromCard(card);
         updateAtoCardViews(card);
-        saveCurrentMission();
+        persistAtoCardChanges(card);
       },
       () => {
         const removeIndex = card._atoData.supportTiles.indexOf(tile);
@@ -4609,7 +5300,7 @@ function renderAtoSupportTiles(card) {
         renderAtoSupportTiles(card);
         card._atoData = collectAtoDataFromCard(card);
         updateAtoCardViews(card);
-        saveCurrentMission();
+        persistAtoCardChanges(card);
       }
     );
 
@@ -4645,19 +5336,20 @@ function updateAtoCardViews(card) {
   setText(statics.lead, inherited.leader || "--");
   setText(statics.departureHeader, `DEP ${data.launchDetails || inherited.departure || "--"}`);
   setText(statics.packageFreq, inherited.intra || "--");
-  setText(statics.packageFreqSub, `SEC FREQ\n${data.packageFrequencyNote || "--"}`);
+  setText(statics.packageFreqSub, `SEC FREQ\n${inherited.secFreq || data.packageFrequencyNote || "--"}`);
   setText(statics.takeoffIcao, `DEP ${data.launchDetails || inherited.departure || "--"}`);
-  setText(statics.arrivalIcao, `ARR ${data.recoveryDetails || inherited.destination || "--"}`);
+  setText(statics.arrivalIcao, `DEST ${data.recoveryDetails || inherited.destination || "--"}`);
   setText(statics.intraFreqMeta, " ");
   if (statics.intraFreqRows) {
     statics.intraFreqRows.innerHTML = [
       `<div class="ato-comm-radio-line"><span class="ato-comm-radio-key ato-comm-radio-key-primary">PFREQ</span><span class="ato-comm-radio-value ato-comm-radio-value-primary">${escapeHtml(inherited.intra || "--")}</span></div>`,
-      `<div class="ato-comm-radio-line"><span class="ato-comm-radio-key">SFREQ</span><span class="ato-comm-radio-value">${escapeHtml(data.packageFrequencyNote || "--")}</span></div>`
+      `<div class="ato-comm-radio-line"><span class="ato-comm-radio-key">SFREQ</span><span class="ato-comm-radio-value">${escapeHtml(inherited.secFreq || data.packageFrequencyNote || "--")}</span></div>`
     ].join("");
   }
   setText(statics.totNetHeader, `NET ${formatShortTime(data.totNet)}`);
   setText(statics.totNltHeader, `NLT ${formatShortTime(data.totNlt)}`);
   setText(statics.iffModesBlock, `MODE 1 ${iffModes.mode1}\nMODE 3 ${iffModes.mode3}`);
+  setText(statics.totalDistanceAuto, formatDistanceNm(getAtoTotalDistanceNm(data)));
   setText(statics.chevron, data.collapsed ? "+" : "−");
   renderAtoCommTiles(card);
   renderAtoRouteRows(card);
@@ -4768,6 +5460,8 @@ function collectAtoDataFromCard(card) {
     etaSeconds: Number(rowElement.dataset.etaSeconds)
   }, { wp: `WP${index + 1}`, time: "", dist: "", desc: "", coords: "", alt: "", spd: "", hdg: "", beacon: "" }));
 
+  data.totalDistance = formatDistanceNmCompact(getAtoRouteCumulativeDistanceNm(data.route, data.route.length - 1));
+
   data.comm = (card._atoCommRows || []).map((rowElement, index) => sanitizeAtoCommRow({
     name: rowElement.querySelector('[data-role="name-input"]')?.value,
     description: rowElement.querySelector('[data-role="description-input"]')?.value,
@@ -4797,6 +5491,16 @@ function atoShouldSanitizeOnInput(fieldName) {
     "atoDay",
     "estFlightTime"
   ].includes(fieldName);
+}
+
+function isAtoCardInsideModal(card) {
+  return !!card?.closest("#atoModalEditor");
+}
+
+function persistAtoCardChanges(card) {
+  if (!isAtoCardInsideModal(card)) {
+    saveCurrentMission();
+  }
 }
 
 function createAtoCard(atoData) {
@@ -4834,6 +5538,7 @@ function createAtoCard(atoData) {
       intraFreqRows: card.querySelector('[data-ato-static="intraFreqRows"]'),
       supportList: card.querySelector('[data-ato-static="supportList"]'),
       airfieldCards: card.querySelector('[data-ato-static="airfieldCards"]'),
+      totalDistanceAuto: card.querySelector('[data-ato-static="totalDistanceAuto"]'),
       totNetHeader: card.querySelector('[data-ato-static="totNetHeader"]'),
       totNltHeader: card.querySelector('[data-ato-static="totNltHeader"]'),
       iffModesBlock: card.querySelector('[data-ato-static="iffModesBlock"]'),
@@ -4849,7 +5554,7 @@ function createAtoCard(atoData) {
       input.value = sanitizeAtoValue(fieldName, input.value);
       card._atoData = collectAtoDataFromCard(card);
       updateAtoCardViews(card);
-      saveCurrentMission();
+      persistAtoCardChanges(card);
     };
 
     input.addEventListener("input", () => {
@@ -4873,7 +5578,7 @@ function createAtoCard(atoData) {
       input.value = sanitizeUpperText(input.value, 12);
       card._atoData = collectAtoDataFromCard(card);
       updateAtoCardViews(card);
-      saveCurrentMission();
+      persistAtoCardChanges(card);
     };
     input.addEventListener("input", () => {
       input.value = sanitizeUpperText(input.value, 12);
@@ -4887,7 +5592,7 @@ function createAtoCard(atoData) {
   const toggleCard = () => {
     card._atoData = { ...collectAtoDataFromCard(card), collapsed: !card._atoData.collapsed };
     updateAtoCardViews(card);
-    saveCurrentMission();
+    persistAtoCardChanges(card);
   };
 
   if (card._atoToggle) {
@@ -4910,7 +5615,7 @@ function createAtoCard(atoData) {
       renderAtoCommTiles(card);
       card._atoData = collectAtoDataFromCard(card);
       updateAtoCardViews(card);
-      saveCurrentMission();
+      persistAtoCardChanges(card);
     });
   }
 
@@ -4924,7 +5629,7 @@ function createAtoCard(atoData) {
       renderAtoRouteRows(card);
       card._atoData = collectAtoDataFromCard(card);
       updateAtoCardViews(card);
-      saveCurrentMission();
+      persistAtoCardChanges(card);
     });
   }
 
@@ -4937,7 +5642,7 @@ function createAtoCard(atoData) {
       renderAtoSupportTiles(card);
       card._atoData = collectAtoDataFromCard(card);
       updateAtoCardViews(card);
-      saveCurrentMission();
+      persistAtoCardChanges(card);
     });
   }
 
@@ -4952,7 +5657,7 @@ function createAtoCard(atoData) {
       wrapper.className = "ato-airfield-card";
       wrapper.innerHTML = `
         <div class="ato-airfield-card-top">
-          <div class="ato-airfield-card-label">DIVERT</div>
+          <div class="ato-airfield-card-label">ALTN</div>
           <button class="mini-action-btn package-delete-btn" data-role="remove-divert-card" type="button">Retirer</button>
         </div>
         <div class="ato-airfield-card-title">--</div>
@@ -4998,6 +5703,155 @@ function updateAtoPackageLinks() {
   const atos = buildAtoCardsFromPackages(getCurrentAtosFromDom());
   renderAtos(atos);
   saveCurrentMission();
+}
+
+function collectAtosForModal() {
+  return normalizeAtosArray(getCurrentAtosFromDom());
+}
+
+function getAtoModalSelectedItem() {
+  if (!atoModalState?.items?.length) return null;
+  return atoModalState.items.find((item) => item.id === atoModalState.selectedId) || atoModalState.items[0] || null;
+}
+
+function renderAtoModalEditor() {
+  if (!atoModalEditor) return;
+
+  atoModalEditor.innerHTML = "";
+  const selectedItem = getAtoModalSelectedItem();
+
+  if (!selectedItem) {
+    const emptyState = document.createElement("div");
+    emptyState.className = "ato-empty-state";
+    emptyState.textContent = "Aucune fiche ATO disponible. Utilise d'abord Update Package pour generer les cartes.";
+    atoModalEditor.appendChild(emptyState);
+    return;
+  }
+
+  const card = createAtoCard({ ...selectedItem, collapsed: false });
+  if (!card) return;
+
+  card.classList.remove("is-collapsed");
+  atoModalEditor.appendChild(card);
+}
+
+function syncAtoModalCurrentItem() {
+  if (!atoModalState?.items?.length || !atoModalState.selectedId) return;
+  const card = atoModalEditor?.querySelector(".ato-card");
+  if (!card) return;
+  const selectedItem = getAtoModalSelectedItem();
+
+  const currentData = normalizeAtoData({
+    ...collectAtoDataFromCard(card),
+    collapsed: typeof selectedItem?.collapsed === "boolean" ? selectedItem.collapsed : true
+  });
+  atoModalState.items = atoModalState.items.map((item) => item.id === atoModalState.selectedId ? currentData : item);
+}
+
+function renderAtoModalSelect() {
+  if (!atoModalSelect) return;
+
+  const items = atoModalState?.items || [];
+  if (!items.length) {
+    atoModalSelect.innerHTML = '<option value="">Aucun ATO</option>';
+    atoModalSelect.value = "";
+    renderAtoModalEditor();
+    return;
+  }
+
+  if (!items.some((item) => item.id === atoModalState.selectedId)) {
+    atoModalState.selectedId = items[0].id;
+  }
+
+  atoModalSelect.innerHTML = items.map((item, index) => {
+    const callsign = item?.inherited?.callsign || `ATO ${index + 1}`;
+    const mission = item?.inherited?.mission || "TASK";
+    return `<option value="${escapeHtml(item.id)}">${escapeHtml(`${callsign} · ${mission}`)}</option>`;
+  }).join("");
+
+  atoModalSelect.value = atoModalState.selectedId;
+  renderAtoModalEditor();
+}
+
+function openAtoModal() {
+  if (!atoModal || !appShell.classList.contains("mode-edition")) return;
+
+  const items = collectAtosForModal();
+  atoModalState = {
+    items,
+    selectedId: items[0]?.id || ""
+  };
+
+  renderAtoModalSelect();
+  atoModal.classList.add("is-open");
+  atoModal.setAttribute("aria-hidden", "false");
+}
+
+function closeAtoModal() {
+  if (!atoModal) return;
+
+  atoModal.classList.remove("is-open");
+  atoModal.setAttribute("aria-hidden", "true");
+  atoModalState = null;
+
+  if (atoModalEditor) {
+    atoModalEditor.innerHTML = "";
+  }
+}
+
+function resetAtoModalCurrentItem() {
+  if (!atoModalState?.items?.length || !atoModalState.selectedId) return;
+
+  const currentItem = getAtoModalSelectedItem();
+  if (!currentItem) return;
+
+  const resetItem = normalizeAtoData({
+    ...createDefaultAto(),
+    id: currentItem.id,
+    packageId: currentItem.packageId || "",
+    inherited: currentItem.inherited,
+    collapsed: typeof currentItem.collapsed === "boolean" ? currentItem.collapsed : true
+  });
+
+  atoModalState.items = atoModalState.items.map((item) => item.id === atoModalState.selectedId ? resetItem : item);
+  renderAtoModalEditor();
+}
+
+function validateAtoModal() {
+  if (!atoModalState) return;
+
+  syncAtoModalCurrentItem();
+  renderAtos(atoModalState.items);
+  saveCurrentMission();
+  closeAtoModal();
+}
+
+function bindAtoModalUi() {
+  editAtoBtn?.addEventListener("click", openAtoModal);
+  atoModalCloseBtn?.addEventListener("click", closeAtoModal);
+  atoModalCancelBtn?.addEventListener("click", closeAtoModal);
+  atoModalBackdrop?.addEventListener("click", closeAtoModal);
+
+  atoModalSelect?.addEventListener("change", () => {
+    if (!atoModalState) return;
+    syncAtoModalCurrentItem();
+    atoModalState.selectedId = atoModalSelect.value || atoModalState.items[0]?.id || "";
+    renderAtoModalEditor();
+  });
+
+  atoModalResetBtn?.addEventListener("click", () => {
+    resetAtoModalCurrentItem();
+  });
+
+  atoModalValidateBtn?.addEventListener("click", () => {
+    validateAtoModal();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && atoModal?.classList.contains("is-open")) {
+      closeAtoModal();
+    }
+  });
 }
 
 /* =========================================================
@@ -5129,6 +5983,81 @@ function formatAcoAltitude(value) {
   return `${formatFeet(value)} ft`;
 }
 
+function acoIntervalsOverlap(left, right) {
+  return left.lower < right.upper && right.lower < left.upper;
+}
+
+function buildAcoOverviewBandLayout(acos = []) {
+  const items = normalizeAcosArray(acos)
+    .map((aco, index) => {
+      const floor = toIntOrFallback(aco.floorAltitude, 0);
+      const ceiling = toIntOrFallback(aco.ceilingAltitude, 0);
+      const lower = Math.min(floor, ceiling);
+      const upper = Math.max(floor, ceiling);
+
+      return {
+        aco,
+        index,
+        lower,
+        upper
+      };
+    })
+    .filter((item) => item.upper > item.lower);
+
+  const sorted = [...items].sort((left, right) =>
+    left.lower - right.lower || left.upper - right.upper || left.index - right.index
+  );
+  const columnUpperBounds = [];
+
+  sorted.forEach((item) => {
+    let assignedColumn = columnUpperBounds.findIndex((upperBound) => item.lower >= upperBound);
+    if (assignedColumn === -1) {
+      assignedColumn = columnUpperBounds.length;
+      columnUpperBounds.push(item.upper);
+    } else {
+      columnUpperBounds[assignedColumn] = item.upper;
+    }
+
+    item.columnIndex = assignedColumn;
+  });
+
+  sorted.forEach((item) => {
+    item.componentId = -1;
+  });
+
+  let componentCount = 0;
+  for (let index = 0; index < sorted.length; index += 1) {
+    const source = sorted[index];
+    if (source.componentId !== -1) continue;
+
+    source.componentId = componentCount;
+    const queue = [source];
+
+    while (queue.length) {
+      const current = queue.shift();
+      sorted.forEach((candidate) => {
+        if (candidate.componentId !== -1) return;
+        if (!acoIntervalsOverlap(current, candidate)) return;
+        candidate.componentId = componentCount;
+        queue.push(candidate);
+      });
+    }
+
+    componentCount += 1;
+  }
+
+  const componentColumns = new Map();
+  sorted.forEach((item) => {
+    const currentMax = componentColumns.get(item.componentId) || 0;
+    componentColumns.set(item.componentId, Math.max(currentMax, (item.columnIndex || 0) + 1));
+  });
+
+  return sorted.map((item) => ({
+    ...item,
+    columns: componentColumns.get(item.componentId) || 1
+  }));
+}
+
 function createAcoCardTemplate() {
   const template = document.createElement("template");
   template.innerHTML = `
@@ -5227,6 +6156,20 @@ function collectAcoDataFromCard(card) {
   return normalizeAcoData(data);
 }
 
+function acoShouldSanitizeOnInput(fieldName) {
+  return ["floorAltitude", "transitAltitude", "ceilingAltitude"].includes(fieldName);
+}
+
+function isAcoCardInsideModal(card) {
+  return !!card?.closest("#acoModalEditor");
+}
+
+function persistAcoCardChanges(card) {
+  if (!isAcoCardInsideModal(card)) {
+    saveCurrentMission();
+  }
+}
+
 function createAcoCard(acoData) {
   if (!acoCardTemplate) return null;
 
@@ -5259,17 +6202,23 @@ function createAcoCard(acoData) {
       input.value = sanitizeAcoValue(fieldName, input.value);
       card._acoData = collectAcoDataFromCard(card);
       updateAcoCardViews(card);
-      saveCurrentMission();
+      persistAcoCardChanges(card);
     };
 
-    input.addEventListener("input", sync);
+    input.addEventListener("input", () => {
+      if (acoShouldSanitizeOnInput(fieldName)) {
+        input.value = sanitizeAcoValue(fieldName, input.value);
+      }
+    });
+
     input.addEventListener("change", sync);
+    input.addEventListener("blur", sync);
   });
 
   const toggleCard = () => {
     card._acoData = { ...collectAcoDataFromCard(card), collapsed: !card._acoData.collapsed };
     updateAcoCardViews(card);
-    saveCurrentMission();
+    persistAcoCardChanges(card);
   };
 
   if (card._acoToggle) {
@@ -5291,18 +6240,20 @@ function renderAcoOverviewChart(acos = []) {
 
   acoOverviewBands.innerHTML = "";
 
-  normalizeAcosArray(acos).forEach((aco) => {
+  const layouts = buildAcoOverviewBandLayout(acos);
+  const columnGap = 8;
+
+  layouts.forEach(({ aco, lower, upper, columnIndex, columns }) => {
     const inherited = aco.inherited;
-    const floor = toIntOrFallback(aco.floorAltitude, 0);
-    const ceiling = toIntOrFallback(aco.ceilingAltitude, 0);
-    const lower = Math.min(floor, ceiling);
-    const upper = Math.max(floor, ceiling);
+    const totalGap = Math.max(columns - 1, 0) * columnGap;
 
     const band = document.createElement("div");
     band.className = "aco-overview-band";
     band.style.setProperty("--aco-band-color", inherited.color || getRandomPackageColor());
     band.style.bottom = `${percentFromAcoAltitude(lower)}%`;
     band.style.height = `${Math.max(percentFromAcoAltitude(upper) - percentFromAcoAltitude(lower), 5)}%`;
+    band.style.width = `calc((100% - ${totalGap}px) / ${columns})`;
+    band.style.left = `calc(${columnIndex} * ((100% - ${totalGap}px) / ${columns} + ${columnGap}px))`;
     band.innerHTML = `
       <span class="aco-overview-band-name">${inherited.callsign || "PACKAGE"}</span>
       <span class="aco-overview-band-range">${formatFeet(lower)} ft → ${formatFeet(upper)} ft</span>
@@ -5342,6 +6293,155 @@ function updateAcoPackageLinks() {
   saveCurrentMission();
 }
 
+function collectAcosForModal() {
+  return normalizeAcosArray(getCurrentAcosFromDom());
+}
+
+function getAcoModalSelectedItem() {
+  if (!acoModalState?.items?.length) return null;
+  return acoModalState.items.find((item) => item.id === acoModalState.selectedId) || acoModalState.items[0] || null;
+}
+
+function renderAcoModalEditor() {
+  if (!acoModalEditor) return;
+
+  acoModalEditor.innerHTML = "";
+  const selectedItem = getAcoModalSelectedItem();
+
+  if (!selectedItem) {
+    const emptyState = document.createElement("div");
+    emptyState.className = "aco-empty-state";
+    emptyState.textContent = "Aucune fiche ACO disponible. Utilise d'abord Update Package pour generer les cartes.";
+    acoModalEditor.appendChild(emptyState);
+    return;
+  }
+
+  const card = createAcoCard({ ...selectedItem, collapsed: false });
+  if (!card) return;
+
+  card.classList.remove("is-collapsed");
+  acoModalEditor.appendChild(card);
+}
+
+function syncAcoModalCurrentItem() {
+  if (!acoModalState?.items?.length || !acoModalState.selectedId) return;
+  const card = acoModalEditor?.querySelector(".aco-card");
+  if (!card) return;
+  const selectedItem = getAcoModalSelectedItem();
+
+  const currentData = normalizeAcoData({
+    ...collectAcoDataFromCard(card),
+    collapsed: typeof selectedItem?.collapsed === "boolean" ? selectedItem.collapsed : true
+  });
+  acoModalState.items = acoModalState.items.map((item) => item.id === acoModalState.selectedId ? currentData : item);
+}
+
+function renderAcoModalSelect() {
+  if (!acoModalSelect) return;
+
+  const items = acoModalState?.items || [];
+  if (!items.length) {
+    acoModalSelect.innerHTML = '<option value="">Aucun ACO</option>';
+    acoModalSelect.value = "";
+    renderAcoModalEditor();
+    return;
+  }
+
+  if (!items.some((item) => item.id === acoModalState.selectedId)) {
+    acoModalState.selectedId = items[0].id;
+  }
+
+  acoModalSelect.innerHTML = items.map((item, index) => {
+    const callsign = item?.inherited?.callsign || `ACO ${index + 1}`;
+    const mission = item?.inherited?.mission || "TASK";
+    return `<option value="${escapeHtml(item.id)}">${escapeHtml(`${callsign} · ${mission}`)}</option>`;
+  }).join("");
+
+  acoModalSelect.value = acoModalState.selectedId;
+  renderAcoModalEditor();
+}
+
+function openAcoModal() {
+  if (!acoModal || !appShell.classList.contains("mode-edition")) return;
+
+  const items = collectAcosForModal();
+  acoModalState = {
+    items,
+    selectedId: items[0]?.id || ""
+  };
+
+  renderAcoModalSelect();
+  acoModal.classList.add("is-open");
+  acoModal.setAttribute("aria-hidden", "false");
+}
+
+function closeAcoModal() {
+  if (!acoModal) return;
+
+  acoModal.classList.remove("is-open");
+  acoModal.setAttribute("aria-hidden", "true");
+  acoModalState = null;
+
+  if (acoModalEditor) {
+    acoModalEditor.innerHTML = "";
+  }
+}
+
+function resetAcoModalCurrentItem() {
+  if (!acoModalState?.items?.length || !acoModalState.selectedId) return;
+
+  const currentItem = getAcoModalSelectedItem();
+  if (!currentItem) return;
+
+  const resetItem = normalizeAcoData({
+    ...createDefaultAco(),
+    id: currentItem.id,
+    packageId: currentItem.packageId || "",
+    inherited: currentItem.inherited,
+    collapsed: typeof currentItem.collapsed === "boolean" ? currentItem.collapsed : true
+  });
+
+  acoModalState.items = acoModalState.items.map((item) => item.id === acoModalState.selectedId ? resetItem : item);
+  renderAcoModalEditor();
+}
+
+function validateAcoModal() {
+  if (!acoModalState) return;
+
+  syncAcoModalCurrentItem();
+  renderAcos(acoModalState.items);
+  saveCurrentMission();
+  closeAcoModal();
+}
+
+function bindAcoModalUi() {
+  editAcoBtn?.addEventListener("click", openAcoModal);
+  acoModalCloseBtn?.addEventListener("click", closeAcoModal);
+  acoModalCancelBtn?.addEventListener("click", closeAcoModal);
+  acoModalBackdrop?.addEventListener("click", closeAcoModal);
+
+  acoModalSelect?.addEventListener("change", () => {
+    if (!acoModalState) return;
+    syncAcoModalCurrentItem();
+    acoModalState.selectedId = acoModalSelect.value || acoModalState.items[0]?.id || "";
+    renderAcoModalEditor();
+  });
+
+  acoModalResetBtn?.addEventListener("click", () => {
+    resetAcoModalCurrentItem();
+  });
+
+  acoModalValidateBtn?.addEventListener("click", () => {
+    validateAcoModal();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && acoModal?.classList.contains("is-open")) {
+      closeAcoModal();
+    }
+  });
+}
+
 /* =========================================================
    TIMELINE
 ========================================================= */
@@ -5372,6 +6472,10 @@ function sanitizeTimelineEventValue(fieldName, value) {
   }
 
   return sanitizeFreeText(text, 80);
+}
+
+function timelineShouldSanitizeOnInput(fieldName) {
+  return fieldName === "time";
 }
 
 function normalizeTimelineEvent(event = {}) {
@@ -5751,6 +6855,18 @@ function updateTimelineEventRow(row, event, inherited) {
   row.style.setProperty("--timeline-row-color", inherited.color || getRandomPackageColor());
 }
 
+function isTimelineCardInsideModal(card) {
+  return !!card?.closest("#timelineModalEditor");
+}
+
+function persistTimelineCardChanges(card, { refreshViews = false } = {}) {
+  if (isTimelineCardInsideModal(card)) return;
+  if (refreshViews) {
+    refreshTimelineViews();
+  }
+  saveCurrentMission();
+}
+
 function createTimelineEventRow(card, event, index) {
   const inherited = card._timelineData.inherited;
   const row = document.createElement("div");
@@ -5787,12 +6903,18 @@ function createTimelineEventRow(card, event, index) {
       row._eventData[fieldName] = input.value;
       card._timelineData.events[row._eventIndex] = normalizeTimelineEvent(row._eventData);
       updateTimelineEventRow(row, card._timelineData.events[row._eventIndex], inherited);
-      refreshTimelineViews();
-      saveCurrentMission();
+      persistTimelineCardChanges(card, { refreshViews: true });
     };
 
-    input.addEventListener("input", sync);
+    input.addEventListener("input", () => {
+      if (timelineShouldSanitizeOnInput(fieldName)) {
+        input.value = sanitizeTimelineEventValue(fieldName, input.value);
+      } else if (fieldName === "label") {
+        input.value = sanitizeUpperTextLive(input.value, 32);
+      }
+    });
     input.addEventListener("change", sync);
+    input.addEventListener("blur", sync);
   });
 
   const deleteBtn = row.querySelector(".timeline-delete-btn");
@@ -5800,8 +6922,7 @@ function createTimelineEventRow(card, event, index) {
     deleteBtn.addEventListener("click", () => {
       card._timelineData.events.splice(row._eventIndex, 1);
       renderTimelinePackageEventRows(card);
-      refreshTimelineViews();
-      saveCurrentMission();
+      persistTimelineCardChanges(card, { refreshViews: true });
     });
   }
 
@@ -5855,8 +6976,7 @@ function createTimelinePackageCard(timelinePackageData) {
     addButton.addEventListener("click", () => {
       card._timelineData.events.push(createDefaultTimelineEvent("manual"));
       renderTimelinePackageEventRows(card);
-      refreshTimelineViews();
-      saveCurrentMission();
+      persistTimelineCardChanges(card, { refreshViews: true });
     });
   }
 
@@ -5870,7 +6990,7 @@ function createTimelinePackageCard(timelinePackageData) {
     if (chevron) {
       chevron.textContent = card._timelineData.collapsed ? "+" : "−";
     }
-    saveCurrentMission();
+    persistTimelineCardChanges(card);
   };
 
   if (head) {
@@ -5921,6 +7041,153 @@ function updateTimelineFromAtos() {
   const timelinePackages = buildTimelinePackagesFromAtos(getCurrentTimelinePackagesFromDom());
   renderTimeline(timelinePackages);
   saveCurrentMission();
+}
+
+function collectTimelinePackagesForModal() {
+  return normalizeTimelinePackagesArray(getCurrentTimelinePackagesFromDom());
+}
+
+function getTimelineModalSelectedItem() {
+  if (!timelineModalState?.items?.length) return null;
+  return timelineModalState.items.find((item) => item.id === timelineModalState.selectedId) || timelineModalState.items[0] || null;
+}
+
+function renderTimelineModalEditor() {
+  if (!timelineModalEditor) return;
+
+  timelineModalEditor.innerHTML = "";
+  const selectedItem = getTimelineModalSelectedItem();
+
+  if (!selectedItem) {
+    const emptyState = document.createElement("div");
+    emptyState.className = "timeline-empty-state";
+    emptyState.textContent = "Aucun package timeline disponible. Utilise d'abord UPDATE pour generer les cartes depuis les ATO.";
+    timelineModalEditor.appendChild(emptyState);
+    return;
+  }
+
+  const card = createTimelinePackageCard({ ...selectedItem, collapsed: false });
+  card.classList.remove("is-collapsed");
+  timelineModalEditor.appendChild(card);
+}
+
+function syncTimelineModalCurrentItem() {
+  if (!timelineModalState?.items?.length || !timelineModalState.selectedId) return;
+  const card = timelineModalEditor?.querySelector(".timeline-package-card");
+  if (!card) return;
+  const selectedItem = getTimelineModalSelectedItem();
+
+  const currentData = normalizeTimelinePackage({
+    ...card._timelineData,
+    collapsed: typeof selectedItem?.collapsed === "boolean" ? selectedItem.collapsed : true
+  });
+  timelineModalState.items = timelineModalState.items.map((item) => item.id === timelineModalState.selectedId ? currentData : item);
+}
+
+function renderTimelineModalSelect() {
+  if (!timelineModalSelect) return;
+
+  const items = timelineModalState?.items || [];
+  if (!items.length) {
+    timelineModalSelect.innerHTML = '<option value="">Aucun package</option>';
+    timelineModalSelect.value = "";
+    renderTimelineModalEditor();
+    return;
+  }
+
+  if (!items.some((item) => item.id === timelineModalState.selectedId)) {
+    timelineModalState.selectedId = items[0].id;
+  }
+
+  timelineModalSelect.innerHTML = items.map((item, index) => {
+    const callsign = item?.inherited?.callsign || `TIMELINE ${index + 1}`;
+    const mission = item?.inherited?.mission || "TASK";
+    return `<option value="${escapeHtml(item.id)}">${escapeHtml(`${callsign} · ${mission}`)}</option>`;
+  }).join("");
+
+  timelineModalSelect.value = timelineModalState.selectedId;
+  renderTimelineModalEditor();
+}
+
+function openTimelineModal() {
+  if (!timelineModal || !appShell.classList.contains("mode-edition")) return;
+
+  const items = collectTimelinePackagesForModal();
+  timelineModalState = {
+    items,
+    selectedId: items[0]?.id || ""
+  };
+
+  renderTimelineModalSelect();
+  timelineModal.classList.add("is-open");
+  timelineModal.setAttribute("aria-hidden", "false");
+}
+
+function closeTimelineModal() {
+  if (!timelineModal) return;
+
+  timelineModal.classList.remove("is-open");
+  timelineModal.setAttribute("aria-hidden", "true");
+  timelineModalState = null;
+
+  if (timelineModalEditor) {
+    timelineModalEditor.innerHTML = "";
+  }
+}
+
+function resetTimelineModalCurrentItem() {
+  if (!timelineModalState?.items?.length || !timelineModalState.selectedId) return;
+
+  const currentItem = getTimelineModalSelectedItem();
+  if (!currentItem) return;
+
+  const resetItem = normalizeTimelinePackage({
+    ...createDefaultTimelinePackage(),
+    id: currentItem.id,
+    packageId: currentItem.packageId || "",
+    inherited: currentItem.inherited,
+    collapsed: typeof currentItem.collapsed === "boolean" ? currentItem.collapsed : true
+  });
+
+  timelineModalState.items = timelineModalState.items.map((item) => item.id === timelineModalState.selectedId ? resetItem : item);
+  renderTimelineModalEditor();
+}
+
+function validateTimelineModal() {
+  if (!timelineModalState) return;
+
+  syncTimelineModalCurrentItem();
+  renderTimeline(timelineModalState.items);
+  saveCurrentMission();
+  closeTimelineModal();
+}
+
+function bindTimelineModalUi() {
+  editTimelineBtn?.addEventListener("click", openTimelineModal);
+  timelineModalCloseBtn?.addEventListener("click", closeTimelineModal);
+  timelineModalCancelBtn?.addEventListener("click", closeTimelineModal);
+  timelineModalBackdrop?.addEventListener("click", closeTimelineModal);
+
+  timelineModalSelect?.addEventListener("change", () => {
+    if (!timelineModalState) return;
+    syncTimelineModalCurrentItem();
+    timelineModalState.selectedId = timelineModalSelect.value || timelineModalState.items[0]?.id || "";
+    renderTimelineModalEditor();
+  });
+
+  timelineModalResetBtn?.addEventListener("click", () => {
+    resetTimelineModalCurrentItem();
+  });
+
+  timelineModalValidateBtn?.addEventListener("click", () => {
+    validateTimelineModal();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && timelineModal?.classList.contains("is-open")) {
+      closeTimelineModal();
+    }
+  });
 }
 
 /* =========================================================
@@ -6286,7 +7553,7 @@ function updateKneeboardPackageMeta() {
   kneeboardPackageMeta.textContent = [
     `${ato.inherited.callsign || "PACKAGE"} · ${ato.inherited.mission || "TASK"}`,
     `Package ${ato.inherited.packageName || "--"} · ${ato.inherited.aircraftCount || "--"} x ${ato.inherited.aircraftType || "--"}`,
-    `DEP ${ato.launchDetails || ato.inherited.departure || "--"} · TGT ${ato.targetName || "--"} · RTB ${ato.recoveryDetails || ato.inherited.destination || "--"}`,
+    `DEP ${ato.launchDetails || ato.inherited.departure || "--"} · TGT ${ato.targetName || "--"} · ARR ${ato.recoveryDetails || ato.inherited.destination || "--"}`,
     `Route coords exportees en ${coordFormat}`
   ].join("\n");
 }
@@ -6788,7 +8055,7 @@ function buildKneeboardCommPlanItems(atoData = {}) {
   const ato = syncAtoCommWithAirfields(normalizeAtoData(atoData), getCurrentAirfieldsFromDom());
   const items = [];
   const primary = ato.inherited.intra || "--";
-  const secondary = ato.packageFrequencyNote || "--";
+  const secondary = ato.inherited.secFreq || ato.packageFrequencyNote || "--";
 
   items.push({
     title: "INTRA-FLIGHT",
@@ -7158,7 +8425,7 @@ function renderKneeboardToCanvas(atoData, options = {}) {
 
   drawCanvasTextBlock(
     ctx,
-    `PRIMARY ${ato.inherited.intra || "--"} · SEC ${ato.packageFrequencyNote || "--"}`,
+    `PRIMARY ${ato.inherited.intra || "--"} · SEC ${ato.inherited.secFreq || ato.packageFrequencyNote || "--"}`,
     margin + 32,
     204,
     860,
@@ -7419,7 +8686,8 @@ function updatePackageEditability(scope = document) {
   const isEdition = appShell.classList.contains("mode-edition");
 
   editableNodes.forEach((node) => {
-    node.setAttribute("contenteditable", isEdition ? "true" : "false");
+    const isMainPackagePanel = !!node.closest("#packagePanel");
+    node.setAttribute("contenteditable", isEdition && !isMainPackagePanel ? "true" : "false");
   });
 }
 
@@ -7431,6 +8699,16 @@ function setMode(isEdition) {
   modeSwitch.setAttribute("aria-pressed", String(isEdition));
 
   updatePackageEditability(document);
+
+  if (!isEdition) {
+    closeOverviewModal();
+    closeWeatherModal();
+    closeAirfieldModal();
+    closePackageModal();
+    closeAtoModal();
+    closeAcoModal();
+    closeTimelineModal();
+  }
 }
 
 function bindField(config) {
@@ -7666,6 +8944,270 @@ function bindKneeboardExportUi() {
   });
 }
 
+function bindOverviewModalUi() {
+  editOverviewBtn?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openOverviewModal();
+  });
+
+  overviewModalCloseBtn?.addEventListener("click", closeOverviewModal);
+  overviewModalCancelBtn?.addEventListener("click", closeOverviewModal);
+  overviewModalBackdrop?.addEventListener("click", closeOverviewModal);
+
+  overviewModalResetBtn?.addEventListener("click", () => {
+    resetOverviewModalFields();
+  });
+
+  overviewModalValidateBtn?.addEventListener("click", () => {
+    validateOverviewModal();
+  });
+
+  [
+    overviewModalInputs.startTime,
+    overviewModalInputs.totTime,
+    overviewModalInputs.endTime
+  ].forEach((input) => {
+    if (!input) return;
+    input.addEventListener("input", () => {
+      input.value = sanitizeTimeInput(input.value);
+    });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && overviewModal?.classList.contains("is-open")) {
+      closeOverviewModal();
+    }
+  });
+}
+
+function bindWeatherModalUi() {
+  editWeatherBtn?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openWeatherModal();
+  });
+
+  weatherModalCloseBtn?.addEventListener("click", closeWeatherModal);
+  weatherModalCancelBtn?.addEventListener("click", closeWeatherModal);
+  weatherModalBackdrop?.addEventListener("click", closeWeatherModal);
+
+  weatherModalResetBtn?.addEventListener("click", () => {
+    resetWeatherModalFields();
+  });
+
+  weatherModalValidateBtn?.addEventListener("click", () => {
+    validateWeatherModal();
+  });
+
+  [
+    weatherModalInputs.weatherValidTime,
+    weatherModalInputs.temperatureC,
+    weatherModalInputs.windDirection,
+    weatherModalInputs.windSpeed,
+    weatherModalInputs.windGust,
+    weatherModalInputs.fogBase,
+    weatherModalInputs.fogTop,
+    weatherModalInputs.layers[0].base,
+    weatherModalInputs.layers[0].top,
+    weatherModalInputs.layers[1].base,
+    weatherModalInputs.layers[1].top,
+    weatherModalInputs.layers[2].base,
+    weatherModalInputs.layers[2].top
+  ].forEach((input) => {
+    if (!input) return;
+    const maxLength = input === weatherModalInputs.weatherValidTime
+      ? 4
+      : input === weatherModalInputs.temperatureC
+        ? 3
+        : input === weatherModalInputs.windDirection || input === weatherModalInputs.windSpeed || input === weatherModalInputs.windGust
+          ? 3
+          : 5;
+    input.addEventListener("input", () => {
+      input.value = sanitizeDigits(input.value, maxLength);
+    });
+  });
+
+  weatherModalInputs.qnhInHg?.addEventListener("input", () => {
+    weatherModalInputs.qnhInHg.value = sanitizeDecimalInput(weatherModalInputs.qnhInHg.value, 5);
+  });
+
+  weatherModalInputs.weatherArea?.addEventListener("input", () => {
+    weatherModalInputs.weatherArea.value = sanitizeUpperTextLive(weatherModalInputs.weatherArea.value, 16);
+  });
+
+  weatherModalInputs.layers.forEach((layer) => {
+    layer.cover?.addEventListener("change", () => {
+      layer.cover.value = String(layer.cover.value || "").toUpperCase();
+    });
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && weatherModal?.classList.contains("is-open")) {
+      closeWeatherModal();
+    }
+  });
+}
+
+function bindAirfieldModalUi() {
+  editAirfieldBtn?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openAirfieldModal();
+  });
+
+  airfieldModalCloseBtn?.addEventListener("click", closeAirfieldModal);
+  airfieldModalCancelBtn?.addEventListener("click", closeAirfieldModal);
+  airfieldModalBackdrop?.addEventListener("click", closeAirfieldModal);
+
+  airfieldModalSelect?.addEventListener("change", () => {
+    if (!airfieldModalState) return;
+    syncAirfieldModalCurrentItem();
+    airfieldModalState.selectedId = airfieldModalSelect.value;
+    applyAirfieldModalItemToFields(getAirfieldModalSelectedItem() || createDefaultAirfield());
+  });
+
+  airfieldModalAddBtn?.addEventListener("click", () => {
+    if (!airfieldModalState) return;
+    syncAirfieldModalCurrentItem();
+    const newAirfield = createDefaultAirfield();
+    airfieldModalState.items.push(newAirfield);
+    airfieldModalState.selectedId = newAirfield.id;
+    renderAirfieldModalSelect();
+  });
+
+  airfieldModalDeleteBtn?.addEventListener("click", () => {
+    if (!airfieldModalState?.items?.length || !airfieldModalState.selectedId) return;
+    airfieldModalState.items = airfieldModalState.items.filter((item) => item.id !== airfieldModalState.selectedId);
+    airfieldModalState.selectedId = airfieldModalState.items[0]?.id || "";
+    renderAirfieldModalSelect();
+  });
+
+  airfieldModalResetBtn?.addEventListener("click", () => {
+    if (!airfieldModalState?.selectedId) {
+      resetAirfieldModalFields();
+      return;
+    }
+    const resetItem = createDefaultAirfield();
+    resetItem.id = airfieldModalState.selectedId;
+    airfieldModalState.items = airfieldModalState.items.map((item) => item.id === airfieldModalState.selectedId ? resetItem : item);
+    applyAirfieldModalItemToFields(resetItem);
+    renderAirfieldModalSelect();
+  });
+
+  airfieldModalValidateBtn?.addEventListener("click", () => {
+    validateAirfieldModal();
+  });
+
+  airfieldModalInputs.icao?.addEventListener("input", () => {
+    airfieldModalInputs.icao.value = sanitizeUpperText(airfieldModalInputs.icao.value, 8);
+  });
+
+  airfieldModalInputs.ilsCourse?.addEventListener("input", () => {
+    airfieldModalInputs.ilsCourse.value = sanitizeDigits(airfieldModalInputs.ilsCourse.value, 3);
+  });
+
+  airfieldModalInputs.runway?.addEventListener("input", () => {
+    airfieldModalInputs.runway.value = sanitizeUpperTextLive(airfieldModalInputs.runway.value, 20);
+  });
+
+  airfieldModalInputs.ilsRunway?.addEventListener("input", () => {
+    airfieldModalInputs.ilsRunway.value = sanitizeUpperTextLive(airfieldModalInputs.ilsRunway.value, 20);
+  });
+
+  airfieldModalInputs.beacon?.addEventListener("input", () => {
+    airfieldModalInputs.beacon.value = sanitizeUpperTextLive(airfieldModalInputs.beacon.value, 24);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && airfieldModal?.classList.contains("is-open")) {
+      closeAirfieldModal();
+    }
+  });
+}
+
+function bindPackageModalUi() {
+  editPackageBtn?.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    openPackageModal();
+  });
+
+  packageModalCloseBtn?.addEventListener("click", closePackageModal);
+  packageModalCancelBtn?.addEventListener("click", closePackageModal);
+  packageModalBackdrop?.addEventListener("click", closePackageModal);
+
+  packageModalSelect?.addEventListener("change", () => {
+    if (!packageModalState) return;
+    syncPackageModalCurrentItem();
+    packageModalState.selectedId = packageModalSelect.value;
+    applyPackageModalItemToFields(getPackageModalSelectedItem() || createDefaultPackage());
+  });
+
+  packageModalAddBtn?.addEventListener("click", () => {
+    if (!packageModalState) return;
+    syncPackageModalCurrentItem();
+    const newPackage = createDefaultPackage();
+    packageModalState.items.push(newPackage);
+    packageModalState.selectedId = newPackage.id;
+    renderPackageModalSelect();
+  });
+
+  packageModalDeleteBtn?.addEventListener("click", () => {
+    if (!packageModalState?.items?.length || !packageModalState.selectedId) return;
+    packageModalState.items = packageModalState.items.filter((item) => item.id !== packageModalState.selectedId);
+    packageModalState.selectedId = packageModalState.items[0]?.id || "";
+    renderPackageModalSelect();
+  });
+
+  packageModalRandomColorBtn?.addEventListener("click", () => {
+    packageModalInputs.color.value = getRandomPackageColor();
+  });
+
+  packageModalAddWingmanBtn?.addEventListener("click", () => {
+    const builder = packageModalInputs.wingmenBuilder;
+    if (!builder) return;
+    const row = createPackageModalWingmanRow("");
+    builder.appendChild(row);
+    refreshPackageModalWingmenIndices();
+    row.querySelector("[data-package-modal-wingman-input]")?.focus();
+  });
+
+  packageModalResetBtn?.addEventListener("click", () => {
+    if (!packageModalState?.selectedId) {
+      resetPackageModalFields();
+      return;
+    }
+    const resetItem = createDefaultPackage();
+    resetItem.id = packageModalState.selectedId;
+    packageModalState.items = packageModalState.items.map((item) => item.id === packageModalState.selectedId ? resetItem : item);
+    applyPackageModalItemToFields(resetItem);
+    renderPackageModalSelect();
+  });
+
+  packageModalValidateBtn?.addEventListener("click", () => {
+    validatePackageModal();
+  });
+
+  packageModalInputs.callsign?.addEventListener("input", () => {
+    packageModalInputs.callsign.value = sanitizeUpperText(packageModalInputs.callsign.value, 24);
+  });
+
+  packageModalInputs.aircraftCount?.addEventListener("input", () => {
+    packageModalInputs.aircraftCount.value = sanitizeDigits(packageModalInputs.aircraftCount.value, 2);
+  });
+
+  packageModalInputs.aircraftType?.addEventListener("input", () => {
+    packageModalInputs.aircraftType.value = sanitizeUpperTextLive(packageModalInputs.aircraftType.value, 24);
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && packageModal?.classList.contains("is-open")) {
+      closePackageModal();
+    }
+  });
+}
+
 /* =========================================================
    INIT
 ========================================================= */
@@ -7682,6 +9224,13 @@ window.addEventListener("scroll", syncTopbarScrolledState, { passive: true });
 syncTopbarScrolledState();
 bindMizImportUi();
 bindKneeboardExportUi();
+bindOverviewModalUi();
+bindWeatherModalUi();
+bindAirfieldModalUi();
+bindPackageModalUi();
+bindAtoModalUi();
+bindAcoModalUi();
+bindTimelineModalUi();
 
 topbarActionsBtn?.addEventListener("click", (event) => {
   event.stopPropagation();
@@ -7738,22 +9287,6 @@ publishMissionBtn.addEventListener("click", (event) => {
   event.stopPropagation();
   publishMission();
 });
-
-if (addPackageBtn) {
-  addPackageBtn.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    addPackage();
-  });
-}
-
-if (addAirfieldBtn) {
-  addAirfieldBtn.addEventListener("click", (event) => {
-    event.preventDefault();
-    event.stopPropagation();
-    addAirfield();
-  });
-}
 
 if (updateAtoBtn) {
   updateAtoBtn.addEventListener("click", (event) => {
