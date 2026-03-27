@@ -87,6 +87,10 @@
               Paramètres généraux de mission, statut, planning et références de base.
             </p>
           </div>
+
+          <div class="panel-header-actions">
+            <button id="editOverviewBtn" class="topbar-btn panel-action-btn" type="button">EDIT</button>
+          </div>
         </div>
 
         <div class="panel-content">
@@ -209,10 +213,11 @@
 
       <!-- WEATHER -->
       <section class="panel panel--collapsible is-collapsed" id="weatherPanel">
-        <button
+        <div
           id="weatherToggle"
           class="panel-header panel-header--collapsible"
-          type="button"
+          role="button"
+          tabindex="0"
           aria-expanded="false"
           aria-controls="weatherContent"
         >
@@ -253,9 +258,10 @@
           </div>
 
           <div class="panel-header-actions">
+            <button id="editWeatherBtn" class="topbar-btn panel-action-btn" type="button">EDIT</button>
             <span id="weatherChevron" class="panel-chevron">+</span>
           </div>
-        </button>
+        </div>
 
         <div id="weatherContent" class="panel-content">
           <div class="weather-layout">
@@ -538,7 +544,7 @@
           </div>
 
           <div class="panel-header-actions">
-            <button id="addAirfieldBtn" class="topbar-btn panel-action-btn" type="button">Ajouter</button>
+            <button id="editAirfieldBtn" class="topbar-btn panel-action-btn" type="button">EDIT</button>
             <span id="airfieldChevron" class="panel-chevron">+</span>
           </div>
         </div>
@@ -572,7 +578,7 @@
           </div>
 
           <div class="panel-header-actions">
-            <button id="addPackageBtn" class="topbar-btn panel-action-btn" type="button">Ajouter</button>
+            <button id="editPackageBtn" class="topbar-btn panel-action-btn" type="button">EDIT</button>
             <span id="packageChevron" class="panel-chevron">+</span>
           </div>
         </div>
@@ -603,7 +609,10 @@
           </div>
 
           <div class="panel-header-actions">
-            <button id="updateAtoBtn" class="topbar-btn panel-action-btn" type="button">Update Package</button>
+            <div class="ato-header-actions-stack">
+              <button id="editAtoBtn" class="topbar-btn panel-action-btn" type="button">EDIT</button>
+              <button id="updateAtoBtn" class="topbar-btn panel-action-btn" type="button">UPDATE</button>
+            </div>
             <span id="atoChevron" class="panel-chevron">+</span>
           </div>
         </div>
@@ -636,7 +645,10 @@
           </div>
 
           <div class="panel-header-actions">
-            <button id="updateAcoBtn" class="topbar-btn panel-action-btn" type="button">Update Package</button>
+            <div class="aco-header-actions-stack">
+              <button id="editAcoBtn" class="topbar-btn panel-action-btn" type="button">EDIT</button>
+              <button id="updateAcoBtn" class="topbar-btn panel-action-btn" type="button">UPDATE</button>
+            </div>
             <span id="acoChevron" class="panel-chevron">+</span>
           </div>
         </div>
@@ -672,6 +684,47 @@
         </div>
       </section>
 
+      <div id="acoModal" class="miz-modal" aria-hidden="true">
+        <div id="acoModalBackdrop" class="miz-modal-backdrop"></div>
+
+        <div
+          class="miz-modal-dialog aco-modal-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="acoModalTitle"
+          aria-describedby="acoModalSubtitle"
+        >
+          <div class="miz-modal-header">
+            <div>
+              <div class="miz-modal-kicker">Airspace Control Order · Airspace Cards</div>
+              <h2 id="acoModalTitle" class="miz-modal-title">EDIT ACO</h2>
+              <p id="acoModalSubtitle" class="miz-modal-subtitle">
+                Sélectionne une fiche ACO existante, modifie-la dans la fenêtre puis valide pour appliquer les changements.
+              </p>
+            </div>
+
+            <button id="acoModalCloseBtn" class="mini-action-btn" type="button">Fermer</button>
+          </div>
+
+          <div class="aco-modal-toolbar">
+            <label class="aco-modal-select-wrap export-field">
+              <span class="export-field-label">ACO</span>
+              <select id="acoModalSelect" class="field-input field-select export-package-select"></select>
+            </label>
+          </div>
+
+          <div class="aco-modal-body">
+            <div id="acoModalEditor" class="aco-modal-editor"></div>
+          </div>
+
+          <div class="miz-modal-actions">
+            <button id="acoModalCancelBtn" class="mini-action-btn" type="button">ANNULER</button>
+            <button id="acoModalResetBtn" class="mini-action-btn" type="button">RESET</button>
+            <button id="acoModalValidateBtn" class="topbar-btn" type="button">VALIDER</button>
+          </div>
+        </div>
+      </div>
+
       <section class="panel panel--collapsible is-collapsed" id="timelinePanel">
         <div
           id="timelineToggle"
@@ -692,7 +745,10 @@
           </div>
 
           <div class="panel-header-actions">
-            <button id="updateTimelineBtn" class="topbar-btn panel-action-btn" type="button">Update Timeline</button>
+            <div class="timeline-header-actions-stack">
+              <button id="editTimelineBtn" class="topbar-btn panel-action-btn" type="button">EDIT</button>
+              <button id="updateTimelineBtn" class="topbar-btn panel-action-btn" type="button">UPDATE</button>
+            </div>
             <span id="timelineChevron" class="panel-chevron">+</span>
           </div>
         </div>
@@ -729,6 +785,47 @@
           </div>
         </div>
       </section>
+
+      <div id="timelineModal" class="miz-modal" aria-hidden="true">
+        <div id="timelineModalBackdrop" class="miz-modal-backdrop"></div>
+
+        <div
+          class="miz-modal-dialog timeline-modal-dialog"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="timelineModalTitle"
+          aria-describedby="timelineModalSubtitle"
+        >
+          <div class="miz-modal-header">
+            <div>
+              <div class="miz-modal-kicker">Mission Timeline · Package Events</div>
+              <h2 id="timelineModalTitle" class="miz-modal-title">EDIT TIMELINE</h2>
+              <p id="timelineModalSubtitle" class="miz-modal-subtitle">
+                Sélectionne un package timeline existant, modifie ses événements puis valide pour appliquer les changements.
+              </p>
+            </div>
+
+            <button id="timelineModalCloseBtn" class="mini-action-btn" type="button">Fermer</button>
+          </div>
+
+          <div class="timeline-modal-toolbar">
+            <label class="timeline-modal-select-wrap export-field">
+              <span class="export-field-label">Package</span>
+              <select id="timelineModalSelect" class="field-input field-select export-package-select"></select>
+            </label>
+          </div>
+
+          <div class="timeline-modal-body">
+            <div id="timelineModalEditor" class="timeline-modal-editor"></div>
+          </div>
+
+          <div class="miz-modal-actions">
+            <button id="timelineModalCancelBtn" class="mini-action-btn" type="button">ANNULER</button>
+            <button id="timelineModalResetBtn" class="mini-action-btn" type="button">RESET</button>
+            <button id="timelineModalValidateBtn" class="topbar-btn" type="button">VALIDER</button>
+          </div>
+        </div>
+      </div>
 
       <section class="panel panel--collapsible is-collapsed" id="publicationPanel">
         <div
@@ -783,6 +880,480 @@
         </div>
       </section>
     </main>
+  </div>
+
+  <div id="overviewModal" class="miz-modal" aria-hidden="true">
+    <div id="overviewModalBackdrop" class="miz-modal-backdrop"></div>
+
+    <div
+      class="miz-modal-dialog overview-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="overviewModalTitle"
+      aria-describedby="overviewModalSubtitle"
+    >
+      <div class="miz-modal-header">
+        <div>
+          <div class="miz-modal-kicker">Mission Briefing · Overview</div>
+          <h2 id="overviewModalTitle" class="miz-modal-title">EDIT OVERVIEW</h2>
+          <p id="overviewModalSubtitle" class="miz-modal-subtitle">
+            Modifie le bloc Overview sans toucher directement à la page, puis valide pour appliquer les changements.
+          </p>
+        </div>
+
+        <button id="overviewModalCloseBtn" class="mini-action-btn" type="button">Fermer</button>
+      </div>
+
+      <div class="overview-modal-body">
+        <div class="overview-modal-grid">
+          <label class="export-field">
+            <span class="export-field-label">Nom de l'opération</span>
+            <input id="overviewModalOperationNameInput" class="field-input" type="text" placeholder="Nom de l'opération" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Carte</span>
+            <input id="overviewModalMapNameInput" class="field-input" type="text" placeholder="Carte" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Date in-game</span>
+            <input id="overviewModalDateInGameInput" class="field-input field-input-date" type="date" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Date IRL</span>
+            <input id="overviewModalDateIRLInput" class="field-input field-input-date" type="date" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Heure début</span>
+            <input id="overviewModalStartTimeInput" class="field-input field-input-time" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">TOT</span>
+            <input id="overviewModalTotTimeInput" class="field-input field-input-time" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Heure de fin</span>
+            <input id="overviewModalEndTimeInput" class="field-input field-input-time" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Statut</span>
+            <select id="overviewModalStatusInput" class="field-input field-select">
+              <option value="DRAFT">DRAFT</option>
+              <option value="PLANNED">PLANNED</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="miz-modal-actions">
+        <button id="overviewModalCancelBtn" class="mini-action-btn" type="button">ANNULER</button>
+        <button id="overviewModalResetBtn" class="mini-action-btn" type="button">RESET</button>
+        <button id="overviewModalValidateBtn" class="topbar-btn" type="button">VALIDER</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="weatherModal" class="miz-modal" aria-hidden="true">
+    <div id="weatherModalBackdrop" class="miz-modal-backdrop"></div>
+
+    <div
+      class="miz-modal-dialog weather-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="weatherModalTitle"
+      aria-describedby="weatherModalSubtitle"
+    >
+      <div class="miz-modal-header">
+        <div>
+          <div class="miz-modal-kicker">Mission Environment · Weather</div>
+          <h2 id="weatherModalTitle" class="miz-modal-title">EDIT WEATHER</h2>
+          <p id="weatherModalSubtitle" class="miz-modal-subtitle">
+            Modifie le bloc météo hors page puis valide pour mettre à jour le rendu.
+          </p>
+        </div>
+
+        <button id="weatherModalCloseBtn" class="mini-action-btn" type="button">Fermer</button>
+      </div>
+
+      <div class="weather-modal-body">
+        <div class="weather-modal-grid">
+          <label class="export-field">
+            <span class="export-field-label">Weather Area</span>
+            <input id="weatherModalAreaInput" class="field-input" type="text" placeholder="ICAO CODE" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Valid Time</span>
+            <input id="weatherModalValidTimeInput" class="field-input field-input-time" type="text" inputmode="numeric" maxlength="4" placeholder="HHMM" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Température</span>
+            <input id="weatherModalTempInput" class="field-input" type="text" inputmode="numeric" maxlength="3" placeholder="15" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">QNH</span>
+            <input id="weatherModalQnhInput" class="field-input" type="text" placeholder="29.92" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Wind Dir</span>
+            <input id="weatherModalWindDirInput" class="field-input" type="text" inputmode="numeric" maxlength="3" placeholder="270" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Wind Speed</span>
+            <input id="weatherModalWindSpeedInput" class="field-input" type="text" inputmode="numeric" maxlength="3" placeholder="08" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Wind Gust</span>
+            <input id="weatherModalWindGustInput" class="field-input" type="text" inputmode="numeric" maxlength="3" placeholder="04" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Fog</span>
+            <select id="weatherModalFogEnabledInput" class="field-input field-select">
+              <option value="NO">Non</option>
+              <option value="YES">Oui</option>
+            </select>
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Fog Base</span>
+            <input id="weatherModalFogBaseInput" class="field-input" type="text" inputmode="numeric" maxlength="5" placeholder="Base ft" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Fog Top</span>
+            <input id="weatherModalFogTopInput" class="field-input" type="text" inputmode="numeric" maxlength="5" placeholder="Top ft" />
+          </label>
+
+          <div class="weather-modal-layer-grid">
+            <div class="weather-modal-layer-title">Couche 1</div>
+            <label class="export-field">
+              <span class="export-field-label">Cover</span>
+              <select id="weatherModalLayer1CoverInput" class="field-input field-select">
+                <option value="">Aucune</option>
+                <option value="FEW">FEW</option>
+                <option value="SCT">SCT</option>
+                <option value="BKN">BKN</option>
+                <option value="OVC">OVC</option>
+              </select>
+            </label>
+            <label class="export-field">
+              <span class="export-field-label">Base</span>
+              <input id="weatherModalLayer1BaseInput" class="field-input" type="text" inputmode="numeric" maxlength="5" placeholder="Base ft" />
+            </label>
+            <label class="export-field">
+              <span class="export-field-label">Top</span>
+              <input id="weatherModalLayer1TopInput" class="field-input" type="text" inputmode="numeric" maxlength="5" placeholder="Top ft" />
+            </label>
+          </div>
+
+          <div class="weather-modal-layer-grid">
+            <div class="weather-modal-layer-title">Couche 2</div>
+            <label class="export-field">
+              <span class="export-field-label">Cover</span>
+              <select id="weatherModalLayer2CoverInput" class="field-input field-select">
+                <option value="">Aucune</option>
+                <option value="FEW">FEW</option>
+                <option value="SCT">SCT</option>
+                <option value="BKN">BKN</option>
+                <option value="OVC">OVC</option>
+              </select>
+            </label>
+            <label class="export-field">
+              <span class="export-field-label">Base</span>
+              <input id="weatherModalLayer2BaseInput" class="field-input" type="text" inputmode="numeric" maxlength="5" placeholder="Base ft" />
+            </label>
+            <label class="export-field">
+              <span class="export-field-label">Top</span>
+              <input id="weatherModalLayer2TopInput" class="field-input" type="text" inputmode="numeric" maxlength="5" placeholder="Top ft" />
+            </label>
+          </div>
+
+          <div class="weather-modal-layer-grid">
+            <div class="weather-modal-layer-title">Couche 3</div>
+            <label class="export-field">
+              <span class="export-field-label">Cover</span>
+              <select id="weatherModalLayer3CoverInput" class="field-input field-select">
+                <option value="">Aucune</option>
+                <option value="FEW">FEW</option>
+                <option value="SCT">SCT</option>
+                <option value="BKN">BKN</option>
+                <option value="OVC">OVC</option>
+              </select>
+            </label>
+            <label class="export-field">
+              <span class="export-field-label">Base</span>
+              <input id="weatherModalLayer3BaseInput" class="field-input" type="text" inputmode="numeric" maxlength="5" placeholder="Base ft" />
+            </label>
+            <label class="export-field">
+              <span class="export-field-label">Top</span>
+              <input id="weatherModalLayer3TopInput" class="field-input" type="text" inputmode="numeric" maxlength="5" placeholder="Top ft" />
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="miz-modal-actions">
+        <button id="weatherModalCancelBtn" class="mini-action-btn" type="button">ANNULER</button>
+        <button id="weatherModalResetBtn" class="mini-action-btn" type="button">RESET</button>
+        <button id="weatherModalValidateBtn" class="topbar-btn" type="button">VALIDER</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="airfieldModal" class="miz-modal" aria-hidden="true">
+    <div id="airfieldModalBackdrop" class="miz-modal-backdrop"></div>
+
+    <div
+      class="miz-modal-dialog airfield-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="airfieldModalTitle"
+      aria-describedby="airfieldModalSubtitle"
+    >
+      <div class="miz-modal-header">
+        <div>
+          <div class="miz-modal-kicker">Mission Environment · Airfield</div>
+          <h2 id="airfieldModalTitle" class="miz-modal-title">EDIT AIRFIELD</h2>
+          <p id="airfieldModalSubtitle" class="miz-modal-subtitle">
+            Sélectionne un airfield existant pour le modifier, ajoute-en un nouveau ou supprime celui qui est sélectionné.
+          </p>
+        </div>
+
+        <button id="airfieldModalCloseBtn" class="mini-action-btn" type="button">Fermer</button>
+      </div>
+
+      <div class="airfield-modal-toolbar">
+        <label class="airfield-modal-select-wrap export-field">
+          <span class="export-field-label">Airfield</span>
+          <select id="airfieldModalSelect" class="field-input field-select export-package-select"></select>
+        </label>
+
+        <div class="airfield-modal-toolbar-actions">
+          <button id="airfieldModalAddBtn" class="mini-action-btn" type="button">Ajouter</button>
+          <button id="airfieldModalDeleteBtn" class="mini-action-btn" type="button">Supprimer</button>
+        </div>
+      </div>
+
+      <div class="airfield-modal-body">
+        <div class="airfield-modal-grid">
+          <label class="export-field">
+            <span class="export-field-label">ICAO</span>
+            <input id="airfieldModalIcaoInput" class="field-input" type="text" placeholder="LTFM" />
+          </label>
+
+          <label class="export-field airfield-modal-field-wide">
+            <span class="export-field-label">Name</span>
+            <input id="airfieldModalNameInput" class="field-input" type="text" placeholder="Incirlik Air Base" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Runway</span>
+            <input id="airfieldModalRunwayInput" class="field-input" type="text" placeholder="04/22" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">VHF</span>
+            <input id="airfieldModalVhfInput" class="field-input" type="text" placeholder="123.000" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">UHF</span>
+            <input id="airfieldModalUhfInput" class="field-input" type="text" placeholder="250.000" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">ILS Freq</span>
+            <input id="airfieldModalIlsFreqInput" class="field-input" type="text" placeholder="110.30" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">ILS Course</span>
+            <input id="airfieldModalIlsCourseInput" class="field-input field-input-time" type="text" inputmode="numeric" maxlength="3" placeholder="044" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">ILS Runway</span>
+            <input id="airfieldModalIlsRunwayInput" class="field-input" type="text" placeholder="RWY 04" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Beacon</span>
+            <input id="airfieldModalBeaconInput" class="field-input" type="text" placeholder="TACAN / NDB / VOR" />
+          </label>
+
+          <label class="export-field airfield-modal-field-wide">
+            <span class="export-field-label">Notes</span>
+            <input id="airfieldModalNotesInput" class="field-input" type="text" placeholder="Infos utiles" />
+          </label>
+        </div>
+      </div>
+
+      <div class="miz-modal-actions">
+        <button id="airfieldModalCancelBtn" class="mini-action-btn" type="button">ANNULER</button>
+        <button id="airfieldModalResetBtn" class="mini-action-btn" type="button">RESET</button>
+        <button id="airfieldModalValidateBtn" class="topbar-btn" type="button">VALIDER</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="packageModal" class="miz-modal" aria-hidden="true">
+    <div id="packageModalBackdrop" class="miz-modal-backdrop"></div>
+
+    <div
+      class="miz-modal-dialog package-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="packageModalTitle"
+      aria-describedby="packageModalSubtitle"
+    >
+      <div class="miz-modal-header">
+        <div>
+          <div class="miz-modal-kicker">Mission Tasking · Package</div>
+          <h2 id="packageModalTitle" class="miz-modal-title">EDIT PACKAGE</h2>
+          <p id="packageModalSubtitle" class="miz-modal-subtitle">
+            Sélectionne un package existant pour le modifier, ajoute-en un nouveau ou supprime celui qui est sélectionné.
+          </p>
+        </div>
+
+        <button id="packageModalCloseBtn" class="mini-action-btn" type="button">Fermer</button>
+      </div>
+
+      <div class="package-modal-toolbar">
+        <label class="package-modal-select-wrap export-field">
+          <span class="export-field-label">Package</span>
+          <select id="packageModalSelect" class="field-input field-select export-package-select"></select>
+        </label>
+
+        <div class="package-modal-toolbar-actions">
+          <button id="packageModalAddBtn" class="mini-action-btn" type="button">Ajouter</button>
+          <button id="packageModalDeleteBtn" class="mini-action-btn" type="button">Supprimer</button>
+        </div>
+      </div>
+
+      <div class="package-modal-body">
+        <div class="package-modal-grid">
+          <label class="export-field">
+            <span class="export-field-label">Color</span>
+            <div class="package-modal-color-row">
+              <input id="packageModalColorInput" class="field-input package-modal-color-input" type="color" />
+              <button id="packageModalRandomColorBtn" class="mini-action-btn" type="button">Random color</button>
+            </div>
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Callsign</span>
+            <input id="packageModalCallsignInput" class="field-input" type="text" placeholder="STALKER" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Package Name</span>
+            <select id="packageModalPackageNameInput" class="field-input field-select"></select>
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Mission</span>
+            <select id="packageModalMissionInput" class="field-input field-select"></select>
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Aircraft Count</span>
+            <input id="packageModalAircraftCountInput" class="field-input" type="text" inputmode="numeric" maxlength="2" placeholder="4" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Aircraft Type</span>
+            <input id="packageModalAircraftTypeInput" class="field-input" type="text" placeholder="F/A-18C" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Departure</span>
+            <select id="packageModalDepartureInput" class="field-input field-select"></select>
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">Leader</span>
+            <input id="packageModalLeaderInput" class="field-input" type="text" placeholder="Seluj" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">PFREQ</span>
+            <input id="packageModalIntraInput" class="field-input" type="text" placeholder="305.000" />
+          </label>
+
+          <label class="export-field">
+            <span class="export-field-label">SFREQ</span>
+            <input id="packageModalSecFreqInput" class="field-input" type="text" placeholder="264.000" />
+          </label>
+
+          <label class="export-field package-modal-field-wide">
+            <span class="export-field-label">Wingmen</span>
+            <div id="packageModalWingmenBuilder" class="package-modal-wingmen-builder"></div>
+            <div class="package-modal-wingmen-actions">
+              <button id="packageModalAddWingmanBtn" class="mini-action-btn" type="button">Ajouter un wingman</button>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="miz-modal-actions">
+        <button id="packageModalCancelBtn" class="mini-action-btn" type="button">ANNULER</button>
+        <button id="packageModalResetBtn" class="mini-action-btn" type="button">RESET</button>
+        <button id="packageModalValidateBtn" class="topbar-btn" type="button">VALIDER</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="atoModal" class="miz-modal" aria-hidden="true">
+    <div id="atoModalBackdrop" class="miz-modal-backdrop"></div>
+
+    <div
+      class="miz-modal-dialog ato-modal-dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="atoModalTitle"
+      aria-describedby="atoModalSubtitle"
+    >
+      <div class="miz-modal-header">
+        <div>
+          <div class="miz-modal-kicker">Air Tasking Order · Flight Cards</div>
+          <h2 id="atoModalTitle" class="miz-modal-title">EDIT ATO</h2>
+          <p id="atoModalSubtitle" class="miz-modal-subtitle">
+            Sélectionne une fiche ATO existante, modifie-la dans la fenêtre puis valide pour appliquer les changements.
+          </p>
+        </div>
+
+        <button id="atoModalCloseBtn" class="mini-action-btn" type="button">Fermer</button>
+      </div>
+
+      <div class="ato-modal-toolbar">
+        <label class="ato-modal-select-wrap export-field">
+          <span class="export-field-label">ATO</span>
+          <select id="atoModalSelect" class="field-input field-select export-package-select"></select>
+        </label>
+      </div>
+
+      <div class="ato-modal-body">
+        <div id="atoModalEditor" class="ato-modal-editor"></div>
+      </div>
+
+      <div class="miz-modal-actions">
+        <button id="atoModalCancelBtn" class="mini-action-btn" type="button">ANNULER</button>
+        <button id="atoModalResetBtn" class="mini-action-btn" type="button">RESET</button>
+        <button id="atoModalValidateBtn" class="topbar-btn" type="button">VALIDER</button>
+      </div>
+    </div>
   </div>
 
   <div id="mizImportModal" class="miz-modal" aria-hidden="true">
@@ -1129,10 +1700,21 @@
       <div class="package-card-footer">
         <div class="package-footer-line">
           <span class="package-footer-item">
-            <span class="package-label-inline">Intra :</span>
+            <span class="package-label-inline">PFREQ :</span>
             <span
               class="package-editable"
               data-package-input="intra"
+              data-placeholder="FREQ"
+              contenteditable="false"
+              spellcheck="false"
+            >FREQ</span>
+          </span>
+
+          <span class="package-footer-item">
+            <span class="package-label-inline">SFREQ :</span>
+            <span
+              class="package-editable"
+              data-package-input="secFreq"
               data-placeholder="FREQ"
               contenteditable="false"
               spellcheck="false"
